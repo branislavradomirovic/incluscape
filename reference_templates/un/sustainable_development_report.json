@@ -1,0 +1,40 @@
+{
+  "id": "un_sdg_report",
+  "body": "UN",
+  "category": "Reports",
+  "name": "UN Sustainable Development Goal Report",
+  "description": "Standard reporting framework for progress against the 2030 Agenda and the 17 Sustainable Development Goals, with emphasis on SDG 10 (Reduced Inequalities) and SDG 16 (Peace, Justice and Strong Institutions).",
+  "source_url": "https://unstats.un.org/sdgs/report/",
+  "version": "1.0",
+  "key_sections": [
+    "Executive Summary",
+    "Country/Region Context",
+    "Methodology and Data Sources",
+    "Progress by SDG Goal",
+    "SDG 10: Reduced Inequalities",
+    "SDG 16: Peace, Justice, Strong Institutions",
+    "Intersecting Issues and Leave No One Behind",
+    "Challenges and Gaps",
+    "Best Practices and Lessons Learned",
+    "Recommendations",
+    "Annexes: Statistical Data and Indicators"
+  ],
+  "key_requirements": [
+    "Baseline data with year of measurement",
+    "Progress indicators mapped to official SDG indicator framework",
+    "Disaggregated data by gender, age, disability, ethnicity",
+    "'Leave No One Behind' analysis",
+    "Identification of most vulnerable and marginalized groups",
+    "Financing and resource mobilisation section",
+    "Partnerships and multi-stakeholder engagement",
+    "Statistical annex with raw data",
+    "Alignment with national development plans",
+    "Reference period and next reporting cycle stated"
+  ],
+  "keywords": [
+    "SDG", "sustainable development", "2030 agenda", "inequality",
+    "leave no one behind", "poverty", "inclusion", "indicators",
+    "disaggregated data", "monitoring", "progress", "goals"
+  ],
+  "typical_length_pages": "30-100"
+}

@@ -1,0 +1,41 @@
+{
+  "id": "un_human_rights_policy",
+  "body": "UN",
+  "category": "Policies",
+  "name": "UN Human Rights Policy Framework",
+  "description": "Standard framework for UN human rights policy documents addressing social inclusion, non-discrimination, and protection of vulnerable groups.",
+  "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+  "version": "1.0",
+  "key_sections": [
+    "Executive Summary",
+    "Legal Framework and Mandate",
+    "Scope and Objectives",
+    "Definitions and Key Concepts",
+    "Target Population and Vulnerable Groups",
+    "Non-Discrimination Principles",
+    "Implementation Mechanisms",
+    "Stakeholder Engagement and Participation",
+    "Monitoring, Evaluation and Reporting",
+    "Budget and Resources",
+    "Accountability and Oversight",
+    "Timeline and Milestones"
+  ],
+  "key_requirements": [
+    "Explicit reference to international human rights instruments (UDHR, ICCPR, ICESCR)",
+    "Clear definition of vulnerable and marginalized groups",
+    "Articulation of non-discrimination and equality principles",
+    "Mechanisms for participation of affected communities",
+    "Accountability framework with responsible authorities named",
+    "Measurable targets and indicators aligned with SDGs",
+    "Timeline with concrete milestones",
+    "Resource allocation plan with budget estimates",
+    "Grievance and redress mechanisms",
+    "Cross-cutting issues: gender, disability, indigenous peoples"
+  ],
+  "keywords": [
+    "human rights", "inclusion", "non-discrimination", "equality",
+    "vulnerable groups", "participation", "accountability", "SDGs",
+    "marginalized", "protection", "dignity", "universal"
+  ],
+  "typical_length_pages": "15-60"
+}

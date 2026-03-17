@@ -8,9 +8,17 @@ import pandas as pd
 from database.db_manager import DatabaseManager
 from change_tracking.change_detector import ChangeDetector
 from change_tracking.version_manager import VersionManager
+from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="Change Monitor — INCLUSCAPE", page_icon="🔍", layout="wide")
-st.title("🔍 Change Monitor")
+render_sidebar()
+
+col1, col2 = st.columns([20, 1])
+with col1:
+    st.title("🔍 Change Monitor")
+with col2:
+    render_help_button("🔍 Changes")
 
 db = DatabaseManager()
 db.initialize()

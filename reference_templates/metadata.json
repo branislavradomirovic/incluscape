@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "description": "INCLUSCAPE reference template catalogue for semantic compliance analysis",
+  "bodies": ["UN", "UNESCO", "EU", "World Bank", "OECD", "National", "Other"],
+  "templates": [
+    {
+      "file": "un/human_rights_policy.json",
+      "body": "UN",
+      "category": "Policies",
+      "name": "UN Human Rights Policy Framework"
+    },
+    {
+      "file": "un/sustainable_development_report.json",
+      "body": "UN",
+      "category": "Reports",
+      "name": "UN Sustainable Development Goal Report"
+    },
+    {
+      "file": "unesco/education_inclusion_policy.json",
+      "body": "UNESCO",
+      "category": "Policies",
+      "name": "UNESCO Education for Inclusion Policy"
+    },
+    {
+      "file": "eu/equality_directive.json",
+      "body": "EU",
+      "category": "Policies",
+      "name": "EU Equality and Non-Discrimination Directive"
+    },
+    {
+      "file": "eu/social_inclusion_report.json",
+      "body": "EU",
+      "category": "Reports",
+      "name": "EU Social Inclusion Progress Report"
+    }
+  ]
+}

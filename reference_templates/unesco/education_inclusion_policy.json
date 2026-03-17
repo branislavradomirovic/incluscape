@@ -1,0 +1,43 @@
+{
+  "id": "unesco_education_inclusion_policy",
+  "body": "UNESCO",
+  "category": "Policies",
+  "name": "UNESCO Education for Inclusion Policy",
+  "description": "Policy framework aligned with UNESCO's Salamanca Statement and Framework for Action on Special Needs Education, and the 2030 Education Agenda (SDG 4), focusing on inclusive, equitable quality education for all.",
+  "source_url": "https://www.unesco.org/en/education/inclusive-education",
+  "version": "1.0",
+  "key_sections": [
+    "Policy Statement and Vision",
+    "Legal and Normative Framework",
+    "Definition of Inclusive Education",
+    "Scope: Groups with Special Educational Needs",
+    "System-Level Changes Required",
+    "Teacher Training and Capacity Building",
+    "Curriculum Adaptation and Universal Design for Learning",
+    "Physical and Technological Accessibility",
+    "Family and Community Engagement",
+    "Early Childhood Intervention",
+    "Transition Pathways (school to higher education / employment)",
+    "Financing and Resource Allocation",
+    "Monitoring, Evaluation and Quality Assurance",
+    "Implementation Roadmap"
+  ],
+  "key_requirements": [
+    "Alignment with Salamanca Statement (1994) or 2030 Education Agenda",
+    "Explicit definition of inclusive education vs. integration/segregation",
+    "Coverage of disability, language minorities, migrants, Roma and other excluded groups",
+    "Teacher training requirements and timelines",
+    "Curriculum adaptation or Universal Design for Learning (UDL) approach",
+    "Accessibility standards (physical and digital)",
+    "Family engagement mechanisms",
+    "Data collection and disaggregated enrolment statistics",
+    "Budget allocation per target group",
+    "Clear responsible authority and coordination mechanism"
+  ],
+  "keywords": [
+    "inclusive education", "special needs", "Salamanca", "UDL",
+    "disability", "access", "equity", "SDG 4", "teacher training",
+    "curriculum", "marginalized", "early childhood", "literacy"
+  ],
+  "typical_length_pages": "20-50"
+}

@@ -7,9 +7,17 @@ from database.db_manager import DatabaseManager
 from geospatial.location_extractor import LocationExtractor
 from geospatial.geocoder import Geocoder
 from geospatial.map_generator import MapGenerator
+from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="Map — INCLUSCAPE", page_icon="🗺️", layout="wide")
-st.title("🗺️ Geospatial View")
+render_sidebar()
+
+col1, col2 = st.columns([20, 1])
+with col1:
+    st.title("🗺️ Geospatial View")
+with col2:
+    render_help_button("🗺️ Map")
 
 db = DatabaseManager()
 db.initialize()

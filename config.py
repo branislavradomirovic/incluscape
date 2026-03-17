@@ -10,6 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent
 class Config:
     APP_NAME: str = "INCLUSCAPE"
     APP_VERSION: str = "1.0.0"
+    DOCUMENT_CATEGORIES: list = [
+        "Questionnaire",
+        "Policies",
+        "Instructions",
+        "Forms",
+        "Reports",
+        "Monitoring",
+    ]
 
     # Paths
     BASE_DIR: Path = BASE_DIR
@@ -24,7 +32,7 @@ class Config:
     SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-in-production")
 
     # File handling
-    MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", str(50 * 1024 * 1024)))
+    MAX_FILE_SIZE: int = int(os.getenv("MAX_FILE_SIZE", str(10 * 1024 * 1024)))
     ALLOWED_EXTENSIONS: list = ["pdf", "docx", "doc", "xlsx", "xls"]
 
     # OCR
@@ -42,6 +50,22 @@ class Config:
     ENABLE_GEOCODING: bool = os.getenv("ENABLE_GEOCODING", "False").lower() == "true"
     DEFAULT_MAP_CENTER: list = [44.0, 21.0]  # Serbia default
     DEFAULT_MAP_ZOOM: int = 7
+
+    # Semantic Analysis provider
+    SEMANTIC_LLM_PROVIDER: str = os.getenv("SEMANTIC_LLM_PROVIDER", "gemini").lower()
+
+    # Google Gemini
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+
+    # Ollama (local)
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2.5:14b-instruct")
+
+    ENABLE_SEMANTIC_ANALYSIS: bool = os.getenv("ENABLE_SEMANTIC_ANALYSIS", "False").lower() == "true"
+    REFERENCE_TEMPLATES_DIR: str = os.getenv(
+        "REFERENCE_TEMPLATES_DIR", str(BASE_DIR / "reference_templates")
+    )
 
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

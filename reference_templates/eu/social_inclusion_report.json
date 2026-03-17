@@ -1,0 +1,45 @@
+{
+  "id": "eu_social_inclusion_report",
+  "body": "EU",
+  "category": "Reports",
+  "name": "EU Social Inclusion Progress Report",
+  "description": "Reporting framework aligned with the European Pillar of Social Rights Action Plan and the Social Scoreboard, tracking progress on poverty, social exclusion, employment, and social protection.",
+  "source_url": "https://op.europa.eu/webpub/empl/european-pillar-of-social-rights/en/",
+  "version": "1.0",
+  "key_sections": [
+    "Executive Summary",
+    "Country/Region Context",
+    "European Pillar of Social Rights Alignment",
+    "Chapter 1: Equal Opportunities and Access to Labour Market",
+    "Chapter 2: Fair Working Conditions",
+    "Chapter 3: Social Protection and Inclusion",
+    "Headline Targets Progress (poverty, employment, skills)",
+    "Vulnerable Groups Analysis",
+    "Gender Equality Dimension",
+    "Child Poverty and Youth",
+    "Persons with Disabilities",
+    "Migrants and Ethnic Minorities",
+    "Financing: ESF+, ERDF Contributions",
+    "Challenges and Policy Gaps",
+    "Recommendations",
+    "Statistical Annex"
+  ],
+  "key_requirements": [
+    "Alignment with European Pillar of Social Rights (20 principles)",
+    "At-risk-of-poverty-or-social-exclusion (AROPE) rate reported",
+    "Employment rate and gender pay gap data",
+    "Social protection expenditure as % of GDP",
+    "Child poverty rate with disaggregation",
+    "NEET (Not in Education, Employment or Training) rate",
+    "Housing and homelessness indicators",
+    "Access to healthcare indicators",
+    "Cohesion Fund and ESF+ absorption rates if applicable",
+    "Comparison with EU/national targets and baselines"
+  ],
+  "keywords": [
+    "social inclusion", "poverty", "AROPE", "European Pillar",
+    "social rights", "employment", "ESF+", "child poverty",
+    "NEET", "social protection", "cohesion", "inequality", "exclusion"
+  ],
+  "typical_length_pages": "40-120"
+}

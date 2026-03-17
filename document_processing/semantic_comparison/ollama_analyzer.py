@@ -1,0 +1,143 @@
+"""
+Ollama-powered semantic analysis for INCLUSCAPE.
+
+Uses local Ollama HTTP API to provide:
+  - classify_document()
+  - compare_with_template()
+"""
+
+import json
+import logging
+import urllib.request
+from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+_CLASSIFY_PROMPT = """\
+You are an expert in international governance, social inclusion, and policy analysis.
+
+Analyse the document text below and classify it.
+
+Respond ONLY with valid JSON - no markdown fences, no extra text - using this exact schema:
+{{
+    "body": "<one of: UN | UNESCO | EU | World Bank | OECD | National | Other>",
+    "category": "<one of: Policies | Reports | Questionnaire | Instructions | Forms | Monitoring | Guideline | Resolution | Directive | Other>",
+    "topic": "<short topic phrase>",
+    "social_inclusion_aspects": ["<aspect 1>", "<aspect 2>"],
+    "confidence": <float 0.0-1.0>,
+    "reasoning": "<one sentence explanation>"
+}}
+
+Document text (first 3 000 characters):
+{text}
+"""
+
+_COMPARE_PROMPT = """\
+You are an expert in international governance, social inclusion, and policy analysis.
+
+Compare the USER DOCUMENT against the REFERENCE TEMPLATE and produce a structured compliance report.
+
+REFERENCE TEMPLATE
+Body: {body}
+Category: {category}
+Name: {template_name}
+Description: {template_description}
+
+Expected key sections:
+{key_sections}
+
+Required elements / criteria:
+{key_requirements}
+
+USER DOCUMENT TEXT (first 4 000 characters):
+{document_text}
+
+Respond ONLY with valid JSON - no markdown fences, no extra text - using this exact schema:
+{{
+    "compliance_score": <float 0.0-1.0>,
+    "present_elements": ["<element found>"],
+    "missing_elements": ["<required element absent>"],
+    "partial_elements": ["<element partially addressed>"],
+    "strengths": ["<what the document does well>"],
+    "gaps": ["<what is missing or insufficient>"],
+    "recommendations": ["<specific actionable improvement>"],
+    "summary": "<2-3 sentence overall assessment>"
+}}
+"""
+
+
+class OllamaSemanticAnalyzer:
+    def __init__(self, base_url: Optional[str] = None, model: Optional[str] = None):
+        from config import Config
+
+        self._base_url = (base_url or Config.OLLAMA_BASE_URL).rstrip("/")
+        self._model_name = model or Config.OLLAMA_MODEL
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    @property
+    def provider(self) -> str:
+        return "ollama"
+
+    def _call(self, prompt: str) -> Dict[str, Any]:
+        endpoint = f"{self._base_url}/api/generate"
+        payload = json.dumps({
+            "model": self._model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.1,
+            },
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            endpoint,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        raw = (data.get("response") or "").strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        return json.loads(raw.strip())
+
+    def classify_document(self, text: str) -> Dict[str, Any]:
+        try:
+            result = self._call(_CLASSIFY_PROMPT.format(text=text[:3000]))
+            return result
+        except Exception as exc:
+            logger.error("ollama classify_document failed: %s", exc)
+            return {
+                "error": str(exc),
+                "body": "Other",
+                "category": "Other",
+                "confidence": 0.0,
+            }
+
+    def compare_with_template(self, document_text: str, template: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            key_sections = "\n".join(f"  - {s}" for s in template.get("key_sections", []))
+            key_requirements = "\n".join(
+                f"  - {r}" for r in template.get("key_requirements", [])
+            )
+            prompt = _COMPARE_PROMPT.format(
+                body=template.get("body", ""),
+                category=template.get("category", ""),
+                template_name=template.get("name", ""),
+                template_description=template.get("description", ""),
+                key_sections=key_sections,
+                key_requirements=key_requirements,
+                document_text=document_text[:4000],
+            )
+            return self._call(prompt)
+        except Exception as exc:
+            logger.error("ollama compare_with_template failed: %s", exc)
+            return {"error": str(exc), "compliance_score": 0.0}

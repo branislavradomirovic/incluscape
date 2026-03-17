@@ -31,3 +31,6 @@ python-dateutil==2.9.0
 # Configuration & Utilities
 python-dotenv==1.0.1
 pydantic==2.6.3
+
+# Semantic Analysis
+google-generativeai==0.8.3

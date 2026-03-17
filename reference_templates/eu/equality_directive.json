@@ -1,0 +1,41 @@
+{
+  "id": "eu_equality_directive",
+  "body": "EU",
+  "category": "Policies",
+  "name": "EU Equality and Non-Discrimination Directive",
+  "description": "Policy framework aligned with EU Equal Treatment Directives (2000/43/EC, 2000/78/EC) and the EU Strategy for the Rights of Persons with Disabilities 2021-2030, addressing non-discrimination in employment and service access.",
+  "source_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32000L0043",
+  "version": "1.0",
+  "key_sections": [
+    "Purpose and Scope",
+    "Definitions (direct discrimination, indirect discrimination, harassment)",
+    "Protected Characteristics / Grounds",
+    "Prohibition of Discrimination in Employment",
+    "Prohibition of Discrimination in Access to Services",
+    "Reasonable Accommodation Obligations",
+    "Positive Action Measures",
+    "Enforcement, Complaints and Remedies",
+    "Equality Body and Institutional Framework",
+    "Reporting and Data Collection Obligations",
+    "Awareness-Raising and Training",
+    "Transposition and Implementation Timeline"
+  ],
+  "key_requirements": [
+    "Reference to EU Treaty provisions (Art. 19 TFEU) and/or ECHR",
+    "Coverage of all protected grounds: race, ethnicity, religion, disability, age, sexual orientation",
+    "Clear definitions of direct and indirect discrimination",
+    "Reasonable accommodation duty with undue burden threshold",
+    "Effective enforcement mechanism and sanctions",
+    "Access to justice provisions (burden of proof reversal)",
+    "Designation of equality body or ombudsman",
+    "Data collection disaggregated by protected characteristics",
+    "Positive action provisions",
+    "Awareness and training obligations for public authorities"
+  ],
+  "keywords": [
+    "equal treatment", "non-discrimination", "protected characteristics",
+    "reasonable accommodation", "harassment", "enforcement", "equality body",
+    "disability", "race", "ethnicity", "religion", "TFEU", "directive"
+  ],
+  "typical_length_pages": "10-30"
+}

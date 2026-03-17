@@ -1,6 +1,6 @@
 # INCLUSCAPE
 
-**INCLUSCAPE** is a Python/Streamlit SaaS application for **social inclusion document analysis**. Upload unstructured policy documents, operational procedures, forms, and reports — INCLUSCAPE extracts structured data, fills predefined report templates, monitors document changes over time, and visualizes information on an interactive map.
+**INCLUSCAPE** is a Python/Streamlit SaaS application for **social inclusion document analysis**. Upload questionnaires, policies, instructions, forms, reports, and monitoring documents — INCLUSCAPE extracts structured data, fills predefined report templates, monitors document changes over time, and visualizes information on an interactive map.
 
 ## Features
 

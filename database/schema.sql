@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS documents (
     organisation_id INTEGER NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
     uploaded_by     INTEGER REFERENCES users(id),
     title           TEXT    NOT NULL,
-    document_type   TEXT    NOT NULL CHECK(document_type IN ('policy','procedure','form','report','template','other')),
+    document_type   TEXT    NOT NULL CHECK(document_type IN ('Questionnaire','Policies','Instructions','Forms','Reports','Monitoring')),
     file_name       TEXT    NOT NULL,
     file_path       TEXT    NOT NULL,
     file_size       INTEGER,
@@ -188,3 +188,54 @@ CREATE TABLE IF NOT EXISTS audit_log (
     ip_address  TEXT,
     occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ------------------------------------------------------------
+-- Semantic / Compliance Analysis
+-- ------------------------------------------------------------
+
+-- Reference templates sourced from international bodies (UN, UNESCO, EU, …)
+CREATE TABLE IF NOT EXISTS reference_templates (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    body            TEXT    NOT NULL,  -- UN | UNESCO | EU | World Bank | OECD | National | Other
+    category        TEXT    NOT NULL,  -- Policies | Reports | Questionnaire | …
+    name            TEXT    NOT NULL,
+    description     TEXT,
+    source_url      TEXT,              -- official source URL for the reference framework
+    source_hash     TEXT,              -- hash of fetched source content
+    source_last_checked TIMESTAMP,     -- last successful source check
+    effective_date  TIMESTAMP,         -- when this template version became active
+    supersedes_template_id INTEGER REFERENCES reference_templates(id),
+    change_summary  TEXT,
+    file_path       TEXT,              -- path to JSON file under reference_templates/
+    key_sections    TEXT,              -- JSON array
+    key_requirements TEXT,             -- JSON array
+    keywords        TEXT,              -- JSON array
+    version         TEXT    NOT NULL DEFAULT '1.0',
+    is_active       INTEGER NOT NULL DEFAULT 1,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ref_tmpl_body     ON reference_templates(body);
+CREATE INDEX IF NOT EXISTS idx_ref_tmpl_category ON reference_templates(category);
+
+-- Results of Gemini-powered semantic comparison for each uploaded document
+CREATE TABLE IF NOT EXISTS semantic_analyses (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id           INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    reference_template_id INTEGER REFERENCES reference_templates(id),
+    model_used            TEXT,
+    body_detected         TEXT,
+    category_detected     TEXT,
+    compliance_score      REAL,       -- 0.0 – 1.0
+    present_elements      TEXT,       -- JSON array
+    missing_elements      TEXT,       -- JSON array
+    partial_elements      TEXT,       -- JSON array
+    strengths             TEXT,       -- JSON array
+    gaps                  TEXT,       -- JSON array
+    recommendations       TEXT,       -- JSON array
+    summary               TEXT,
+    full_response_json    TEXT,
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_sem_analysis_doc ON semantic_analyses(document_id);
