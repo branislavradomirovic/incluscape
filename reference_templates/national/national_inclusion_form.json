@@ -1,0 +1,27 @@
+{
+  "id": "national_inclusion_form",
+  "body": "National",
+  "category": "Forms",
+  "name": "National Social Inclusion Evidence Form",
+  "description": "Form structure for documenting compliance and implementation evidence for national inclusion measures.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "Institution Details",
+    "Measure Identification",
+    "Implementation Evidence",
+    "Target Group Coverage",
+    "Risks and Mitigations",
+    "Validation and Sign-off"
+  ],
+  "key_requirements": [
+    "Mandatory control and evidence fields",
+    "Owner and timeline fields",
+    "Risk and mitigation fields",
+    "Approval metadata"
+  ],
+  "keywords": [
+    "form", "evidence", "implementation", "mitigation", "approval"
+  ],
+  "typical_length_pages": "2-15"
+}

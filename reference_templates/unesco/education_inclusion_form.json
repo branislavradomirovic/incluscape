@@ -1,0 +1,28 @@
+{
+  "id": "unesco_education_inclusion_form",
+  "body": "UNESCO",
+  "category": "Forms",
+  "name": "UNESCO Inclusive Education Action Form",
+  "description": "Operational form for capturing planned and delivered inclusion actions within education systems.",
+  "source_url": "https://www.unesco.org/en/education/inclusive-education",
+  "version": "1.0",
+  "key_sections": [
+    "Action Overview",
+    "Target Learners",
+    "Accessibility Measures",
+    "Resources and Budget",
+    "Expected Outcomes",
+    "Validation and Sign-off"
+  ],
+  "key_requirements": [
+    "Target group and need clearly specified",
+    "Accessibility and accommodation fields mandatory",
+    "Owner and timeline fields mandatory",
+    "Evidence attachments listed",
+    "Approval signature metadata"
+  ],
+  "keywords": [
+    "form", "inclusive education", "action plan", "accessibility", "budget", "outcomes"
+  ],
+  "typical_length_pages": "2-10"
+}

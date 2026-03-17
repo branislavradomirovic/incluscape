@@ -41,7 +41,7 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
 # ── Home page ──────────────────────────────────────────────────────────────
-col1, col2 = st.columns([20, 1])
+col1, col2 = st.columns([14, 4])
 with col1:
     st.title("🌍 INCLUSCAPE")
 with col2:

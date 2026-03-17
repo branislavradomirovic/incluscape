@@ -1,0 +1,28 @@
+{
+  "id": "eu_equality_form",
+  "body": "EU",
+  "category": "Forms",
+  "name": "EU Equality Compliance Evidence Form",
+  "description": "Form framework for collecting and validating compliance evidence against EU equality requirements.",
+  "source_url": "https://eur-lex.europa.eu/eli/dir/2000/43/oj",
+  "version": "1.0",
+  "key_sections": [
+    "Entity Details",
+    "Applicable Directive Scope",
+    "Compliance Controls",
+    "Evidence and References",
+    "Risk Register",
+    "Approval"
+  ],
+  "key_requirements": [
+    "Mandatory scope and applicability fields",
+    "Control-to-evidence linkage",
+    "Risk scoring and mitigation fields",
+    "Reviewer and approver metadata",
+    "Version and submission timestamps"
+  ],
+  "keywords": [
+    "form", "equality", "evidence", "control", "risk", "approval"
+  ],
+  "typical_length_pages": "2-12"
+}

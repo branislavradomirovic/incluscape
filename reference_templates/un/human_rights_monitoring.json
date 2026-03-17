@@ -1,0 +1,28 @@
+{
+  "id": "un_human_rights_monitoring",
+  "body": "UN",
+  "category": "Monitoring",
+  "name": "UN Human Rights Monitoring Framework",
+  "description": "Monitoring framework for tracking inclusion outcomes and rights-protection performance over time.",
+  "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+  "version": "1.0",
+  "key_sections": [
+    "Indicators and Baselines",
+    "Data Sources",
+    "Disaggregation Strategy",
+    "Risk Signals",
+    "Corrective Actions",
+    "Reporting Cycle"
+  ],
+  "key_requirements": [
+    "Baseline and target per KPI",
+    "Data disaggregated for protected groups",
+    "Trend and variance tracking",
+    "Escalation triggers for rights risks",
+    "Periodic public/internal reporting"
+  ],
+  "keywords": [
+    "monitoring", "indicator", "baseline", "target", "variance", "rights risk"
+  ],
+  "typical_length_pages": "10-35"
+}

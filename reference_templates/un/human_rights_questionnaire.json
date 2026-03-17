@@ -1,0 +1,29 @@
+{
+  "id": "un_human_rights_questionnaire",
+  "body": "UN",
+  "category": "Questionnaire",
+  "name": "UN Human Rights Inclusion Questionnaire",
+  "description": "Questionnaire structure aligned with UN human-rights-based inclusion assessments.",
+  "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+  "version": "1.0",
+  "key_sections": [
+    "Respondent Profile",
+    "Target Groups",
+    "Inclusion Barriers",
+    "Access to Services",
+    "Participation and Voice",
+    "Protection and Redress",
+    "Monitoring Indicators"
+  ],
+  "key_requirements": [
+    "Questions are non-discriminatory and inclusive",
+    "Disaggregated data fields by sex, disability, age",
+    "Coverage of vulnerable and marginalized groups",
+    "Consent and confidentiality statements",
+    "Mechanism to report rights violations"
+  ],
+  "keywords": [
+    "questionnaire", "human rights", "inclusion", "non-discrimination", "access", "vulnerable groups"
+  ],
+  "typical_length_pages": "5-20"
+}

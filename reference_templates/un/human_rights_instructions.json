@@ -1,0 +1,28 @@
+{
+  "id": "un_human_rights_instructions",
+  "body": "UN",
+  "category": "Instructions",
+  "name": "UN Human Rights Implementation Instructions",
+  "description": "Operational instruction framework for implementing human-rights inclusion obligations.",
+  "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+  "version": "1.0",
+  "key_sections": [
+    "Purpose and Scope",
+    "Roles and Responsibilities",
+    "Step-by-Step Procedures",
+    "Safeguards and Accessibility",
+    "Escalation and Grievance Handling",
+    "Record-Keeping"
+  ],
+  "key_requirements": [
+    "Clear accountable owners",
+    "Accessible process steps for all target groups",
+    "Decision criteria and exceptions documented",
+    "Complaint and remedy pathway included",
+    "Monitoring and reporting cadence defined"
+  ],
+  "keywords": [
+    "instructions", "procedure", "rights-based", "accessibility", "accountability", "grievance"
+  ],
+  "typical_length_pages": "8-30"
+}

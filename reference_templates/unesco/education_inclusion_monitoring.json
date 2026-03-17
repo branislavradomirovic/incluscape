@@ -1,0 +1,28 @@
+{
+  "id": "unesco_education_inclusion_monitoring",
+  "body": "UNESCO",
+  "category": "Monitoring",
+  "name": "UNESCO Inclusive Education Monitoring Framework",
+  "description": "Monitoring template aligned with SDG4 and inclusive education quality-assurance practices.",
+  "source_url": "https://www.unesco.org/en/education/inclusive-education",
+  "version": "1.0",
+  "key_sections": [
+    "Indicator Catalogue",
+    "Data Collection Plan",
+    "Disaggregation Dimensions",
+    "Progress Dashboard",
+    "Corrective Measures",
+    "Reporting and Governance"
+  ],
+  "key_requirements": [
+    "SDG4-related inclusion indicators",
+    "Regular data collection schedule",
+    "Disaggregation by disability, gender, language and socioeconomic status",
+    "Gap closure actions and owners",
+    "Public/accountability reporting mechanism"
+  ],
+  "keywords": [
+    "monitoring", "SDG4", "indicator", "disaggregation", "quality assurance", "progress"
+  ],
+  "typical_length_pages": "12-40"
+}

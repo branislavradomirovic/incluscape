@@ -1,0 +1,34 @@
+{
+  "id": "national_inclusion_policy",
+  "body": "National",
+  "category": "Policies",
+  "name": "National Social Inclusion Policy Framework",
+  "description": "Reference framework for national social inclusion strategy and policy documents.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "Executive Summary",
+    "Legal and Institutional Framework",
+    "Strategic Objectives",
+    "Target Groups",
+    "Measures and Programs",
+    "Implementation Governance",
+    "Budget and Financing",
+    "Monitoring and Evaluation",
+    "Risk Management",
+    "Timeline and Milestones"
+  ],
+  "key_requirements": [
+    "Clear target populations and geographic scope",
+    "Evidence-based baseline and needs assessment",
+    "Defined implementing institutions and accountability",
+    "Budgeted measures with financing sources",
+    "KPIs and reporting cycle",
+    "Measures for anti-discrimination and equal access",
+    "Consultation with affected communities"
+  ],
+  "keywords": [
+    "national strategy", "social inclusion", "policy", "target groups", "implementation", "monitoring"
+  ],
+  "typical_length_pages": "20-120"
+}

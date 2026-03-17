@@ -1,4 +1,5 @@
 import streamlit as st
+from pathlib import Path
 
 
 # ── Navigation definition ──────────────────────────────────────────────────
@@ -12,6 +13,8 @@ _NAV = [
     ("🔎", "Compliance", "pages/6_Compliance.py"),
     ("❓", "Help",       "pages/7_Help.py"),
 ]
+
+_LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "INCLUSCAPE Logo.png"
 
 # ── Help descriptions ──────────────────────────────────────────────────────
 _HELP = {
@@ -58,15 +61,30 @@ def render_sidebar() -> None:
         """
         <style>
             [data-testid="stSidebarNav"] { display: none; }
+            .block-container { padding-top: 1.1rem; }
+            [data-testid="stPageLink"] { margin-top: 0.08rem; margin-bottom: 0.08rem; }
+            @media (max-width: 1400px) {
+                .block-container h1 {
+                    font-size: 2.35rem;
+                }
+            }
+            @media (max-width: 1100px) {
+                .block-container h1 {
+                    font-size: 2.05rem;
+                }
+            }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
     with st.sidebar:
-        st.markdown("## 🌍 INCLUSCAPE")
-        st.markdown("*Social Inclusion Document Analyzer*")
-        st.markdown("---")
+        if _LOGO_PATH.exists():
+            left, center, right = st.columns([1, 8, 1])
+            with center:
+                st.image(str(_LOGO_PATH), use_column_width=True)
+            
+        st.markdown("<div style='text-align: center; font-size: 0.95rem; margin-top: -1.4rem; margin-bottom: 0.2rem;'><i>Social Inclusion Document Analyzer</i></div>", unsafe_allow_html=True)
 
         st.markdown("### Navigation")
         for icon, label, page in _NAV:

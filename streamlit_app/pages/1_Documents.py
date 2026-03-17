@@ -15,7 +15,7 @@ from streamlit_app.components.help_button import render_help_button
 st.set_page_config(page_title="Documents — INCLUSCAPE", page_icon="📄", layout="wide")
 render_sidebar()
 
-col1, col2 = st.columns([20, 1])
+col1, col2 = st.columns([14, 4])
 with col1:
     st.title("📄 Document Management")
 with col2:

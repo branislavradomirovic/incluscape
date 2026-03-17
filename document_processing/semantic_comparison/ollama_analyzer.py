@@ -8,6 +8,7 @@ Uses local Ollama HTTP API to provide:
 
 import json
 import logging
+import socket
 import urllib.request
 from typing import Any, Dict, Optional
 
@@ -72,6 +73,12 @@ class OllamaSemanticAnalyzer:
 
         self._base_url = (base_url or Config.OLLAMA_BASE_URL).rstrip("/")
         self._model_name = model or Config.OLLAMA_MODEL
+        self._timeout_sec = Config.OLLAMA_TIMEOUT_SEC
+        self._keep_alive = Config.OLLAMA_KEEP_ALIVE
+        self._num_ctx = Config.OLLAMA_NUM_CTX
+        self._num_thread = Config.OLLAMA_NUM_THREAD
+        self._num_gpu = Config.OLLAMA_NUM_GPU
+        self._num_batch = Config.OLLAMA_NUM_BATCH
 
     @property
     def model_name(self) -> str:
@@ -83,13 +90,23 @@ class OllamaSemanticAnalyzer:
 
     def _call(self, prompt: str) -> Dict[str, Any]:
         endpoint = f"{self._base_url}/api/generate"
+        options = {
+            "temperature": 0.1,
+            "num_ctx": self._num_ctx,
+        }
+        if self._num_thread is not None:
+            options["num_thread"] = self._num_thread
+        if self._num_gpu is not None:
+            options["num_gpu"] = self._num_gpu
+        if self._num_batch is not None:
+            options["num_batch"] = self._num_batch
+
         payload = json.dumps({
             "model": self._model_name,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": 0.1,
-            },
+            "keep_alive": self._keep_alive,
+            "options": options,
         }).encode("utf-8")
 
         req = urllib.request.Request(
@@ -99,7 +116,7 @@ class OllamaSemanticAnalyzer:
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=self._timeout_sec) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         raw = (data.get("response") or "").strip()
@@ -113,6 +130,17 @@ class OllamaSemanticAnalyzer:
         try:
             result = self._call(_CLASSIFY_PROMPT.format(text=text[:3000]))
             return result
+        except socket.timeout:
+            logger.error("ollama classify_document timed out after %ss", self._timeout_sec)
+            return {
+                "error": (
+                    f"Ollama request timed out after {self._timeout_sec}s. "
+                    "Increase OLLAMA_TIMEOUT_SEC or use a smaller/faster model."
+                ),
+                "body": "Other",
+                "category": "Other",
+                "confidence": 0.0,
+            }
         except Exception as exc:
             logger.error("ollama classify_document failed: %s", exc)
             return {
@@ -138,6 +166,15 @@ class OllamaSemanticAnalyzer:
                 document_text=document_text[:4000],
             )
             return self._call(prompt)
+        except socket.timeout:
+            logger.error("ollama compare_with_template timed out after %ss", self._timeout_sec)
+            return {
+                "error": (
+                    f"Ollama request timed out after {self._timeout_sec}s. "
+                    "Increase OLLAMA_TIMEOUT_SEC or use a smaller/faster model."
+                ),
+                "compliance_score": 0.0,
+            }
         except Exception as exc:
             logger.error("ollama compare_with_template failed: %s", exc)
             return {"error": str(exc), "compliance_score": 0.0}

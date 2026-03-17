@@ -1,0 +1,28 @@
+{
+  "id": "unesco_education_inclusion_instructions",
+  "body": "UNESCO",
+  "category": "Instructions",
+  "name": "UNESCO Inclusive Education Implementation Instructions",
+  "description": "Instructional framework for operationalizing inclusive education commitments in schools and systems.",
+  "source_url": "https://www.unesco.org/en/education/inclusive-education",
+  "version": "1.0",
+  "key_sections": [
+    "Implementation Scope",
+    "Roles by Governance Level",
+    "Classroom Adaptation Procedures",
+    "Referral and Support Pathways",
+    "Safeguarding and Child Protection",
+    "Monitoring Checklist"
+  ],
+  "key_requirements": [
+    "Clear responsibilities for teachers and administrators",
+    "Universal Design for Learning guidance",
+    "Pathway for specialist support referrals",
+    "Accessible communication requirements",
+    "Implementation timeline and review cycle"
+  ],
+  "keywords": [
+    "instructions", "inclusive education", "UDL", "support pathways", "teachers", "safeguarding"
+  ],
+  "typical_length_pages": "10-32"
+}

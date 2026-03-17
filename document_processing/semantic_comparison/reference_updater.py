@@ -128,10 +128,14 @@ class ReferenceTemplateUpdater:
         return out
 
     def refresh_bodies(self, bodies: Optional[List[str]] = None) -> List[Dict]:
-        bodies = bodies or ["UNESCO", "EU"]
-        placeholders = ", ".join("?" for _ in bodies)
-        rows = self.db.fetchall(
-            f"SELECT * FROM reference_templates WHERE is_active = 1 AND body IN ({placeholders}) ORDER BY body, name",
-            tuple(bodies),
-        )
+        if bodies:
+            placeholders = ", ".join("?" for _ in bodies)
+            rows = self.db.fetchall(
+                f"SELECT * FROM reference_templates WHERE is_active = 1 AND body IN ({placeholders}) ORDER BY body, category, name",
+                tuple(bodies),
+            )
+        else:
+            rows = self.db.fetchall(
+                "SELECT * FROM reference_templates WHERE is_active = 1 ORDER BY body, category, name"
+            )
         return [self.refresh_template(row) for row in rows]

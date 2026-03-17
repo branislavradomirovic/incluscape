@@ -129,6 +129,12 @@ class CategoryMatcher:
                 t for t in self.get_all_templates()
                 if t.get("body", "").lower() == body.lower()
             ]
+        if not matched:
+            # Final fallback: same category across all bodies
+            matched = [
+                t for t in self.get_all_templates()
+                if t.get("category", "").lower() == category.lower()
+            ]
 
         return {
             "classification": classification,

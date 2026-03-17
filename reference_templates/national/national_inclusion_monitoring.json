@@ -1,0 +1,28 @@
+{
+  "id": "national_inclusion_monitoring",
+  "body": "National",
+  "category": "Monitoring",
+  "name": "National Social Inclusion Monitoring Framework",
+  "description": "Monitoring reference for tracking national social inclusion outcomes over time.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "KPI Catalogue",
+    "Baselines and Targets",
+    "Data Sources and Frequency",
+    "Disaggregation Strategy",
+    "Performance Review",
+    "Corrective Measures"
+  ],
+  "key_requirements": [
+    "Measurable KPIs with targets",
+    "Disaggregated reporting",
+    "Variance and trend analysis",
+    "Corrective action ownership",
+    "Periodic governance reporting"
+  ],
+  "keywords": [
+    "monitoring", "KPI", "baseline", "target", "trend", "corrective action"
+  ],
+  "typical_length_pages": "10-60"
+}

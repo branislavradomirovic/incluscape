@@ -1,0 +1,27 @@
+{
+  "id": "national_inclusion_instructions",
+  "body": "National",
+  "category": "Instructions",
+  "name": "National Social Inclusion Implementation Instructions",
+  "description": "Operational instructions for implementing national inclusion measures across institutions.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "Purpose and Scope",
+    "Roles and Responsibilities",
+    "Procedure Steps",
+    "Eligibility and Prioritization",
+    "Escalation",
+    "Documentation Requirements"
+  ],
+  "key_requirements": [
+    "Clear ownership and deadlines",
+    "Standardized procedural steps",
+    "Accessible communication requirements",
+    "Escalation for unresolved cases"
+  ],
+  "keywords": [
+    "instructions", "procedure", "implementation", "responsibility", "escalation"
+  ],
+  "typical_length_pages": "8-40"
+}

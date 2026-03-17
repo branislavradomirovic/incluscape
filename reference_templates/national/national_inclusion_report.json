@@ -1,0 +1,30 @@
+{
+  "id": "national_inclusion_report",
+  "body": "National",
+  "category": "Reports",
+  "name": "National Social Inclusion Progress Report",
+  "description": "Reference framework for periodic reports on national social inclusion policy implementation.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "Reporting Period and Scope",
+    "Progress Against Objectives",
+    "Indicator Trends",
+    "Budget Execution",
+    "Regional/Local Comparison",
+    "Challenges and Bottlenecks",
+    "Corrective Actions",
+    "Annex with Data Tables"
+  ],
+  "key_requirements": [
+    "Baseline vs current indicator comparison",
+    "Disaggregated outcomes for vulnerable groups",
+    "Budget execution rates",
+    "Clear explanation of deviations",
+    "Action plan for unresolved gaps"
+  ],
+  "keywords": [
+    "progress report", "indicator", "outcomes", "budget execution", "gaps", "corrective action"
+  ],
+  "typical_length_pages": "25-150"
+}

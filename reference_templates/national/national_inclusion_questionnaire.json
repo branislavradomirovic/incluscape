@@ -1,0 +1,27 @@
+{
+  "id": "national_inclusion_questionnaire",
+  "body": "National",
+  "category": "Questionnaire",
+  "name": "National Social Inclusion Questionnaire",
+  "description": "Questionnaire framework for collecting national and local inclusion evidence.",
+  "source_url": "",
+  "version": "1.0",
+  "key_sections": [
+    "Respondent Information",
+    "Service Access",
+    "Barriers and Discrimination",
+    "Program Participation",
+    "Satisfaction and Outcomes",
+    "Open Feedback"
+  ],
+  "key_requirements": [
+    "Disaggregated demographic fields",
+    "Coverage of access barriers",
+    "Questions on rights and equal treatment",
+    "Confidentiality and consent statement"
+  ],
+  "keywords": [
+    "questionnaire", "national", "inclusion", "access barriers", "discrimination"
+  ],
+  "typical_length_pages": "4-20"
+}

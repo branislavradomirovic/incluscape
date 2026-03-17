@@ -1,0 +1,29 @@
+{
+  "id": "unesco_education_inclusion_questionnaire",
+  "body": "UNESCO",
+  "category": "Questionnaire",
+  "name": "UNESCO Inclusive Education Questionnaire",
+  "description": "Questionnaire framework for collecting evidence on inclusive and equitable education implementation.",
+  "source_url": "https://www.unesco.org/en/education/inclusive-education",
+  "version": "1.0",
+  "key_sections": [
+    "School/System Profile",
+    "Learner Diversity",
+    "Access and Participation",
+    "Learning Supports",
+    "Teacher Capacity",
+    "Family and Community Participation",
+    "Outcome Tracking"
+  ],
+  "key_requirements": [
+    "Disaggregated learner data",
+    "Questions on accessibility and accommodations",
+    "Coverage of exclusion drivers",
+    "Teacher inclusion competency indicators",
+    "Mechanisms for parent/community feedback"
+  ],
+  "keywords": [
+    "inclusive education", "questionnaire", "access", "participation", "accommodations", "equity"
+  ],
+  "typical_length_pages": "6-24"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "eu_equality_instructions",
+  "body": "EU",
+  "category": "Instructions",
+  "name": "EU Equality Compliance Instructions",
+  "description": "Operational instructions for applying EU equality and anti-discrimination obligations.",
+  "source_url": "https://eur-lex.europa.eu/eli/dir/2000/43/oj",
+  "version": "1.0",
+  "key_sections": [
+    "Scope and Legal Basis",
+    "Responsible Roles",
+    "Operational Procedure",
+    "Accommodation and Accessibility",
+    "Incident Escalation",
+    "Record and Audit Controls"
+  ],
+  "key_requirements": [
+    "Legal references to applicable EU directives",
+    "Clear responsible units and deadlines",
+    "Escalation for discrimination incidents",
+    "Documented accommodation process",
+    "Audit-ready records and retention policy"
+  ],
+  "keywords": [
+    "EU directive", "instructions", "anti-discrimination", "accommodation", "audit", "compliance"
+  ],
+  "typical_length_pages": "8-28"
+}

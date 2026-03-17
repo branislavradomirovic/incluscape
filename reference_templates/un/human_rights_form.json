@@ -1,0 +1,28 @@
+{
+  "id": "un_human_rights_form",
+  "body": "UN",
+  "category": "Forms",
+  "name": "UN Human Rights Compliance Form",
+  "description": "Template form structure for capturing compliance evidence against UN rights and inclusion principles.",
+  "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+  "version": "1.0",
+  "key_sections": [
+    "Organisation Information",
+    "Legal Basis",
+    "Inclusion Measures",
+    "Risk and Safeguards",
+    "Evidence Attachments",
+    "Approvals"
+  ],
+  "key_requirements": [
+    "Mandatory identity and context fields",
+    "Explicit non-discrimination declarations",
+    "Evidence references for each measure",
+    "Approval/signature workflow",
+    "Retention and audit metadata"
+  ],
+  "keywords": [
+    "form", "compliance", "evidence", "declaration", "approval", "audit"
+  ],
+  "typical_length_pages": "2-12"
+}

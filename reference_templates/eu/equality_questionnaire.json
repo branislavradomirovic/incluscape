@@ -1,0 +1,28 @@
+{
+  "id": "eu_equality_questionnaire",
+  "body": "EU",
+  "category": "Questionnaire",
+  "name": "EU Equality and Inclusion Questionnaire",
+  "description": "Questionnaire aligned with EU equality and non-discrimination policy monitoring needs.",
+  "source_url": "https://eur-lex.europa.eu/eli/dir/2000/43/oj",
+  "version": "1.0",
+  "key_sections": [
+    "Respondent and Context",
+    "Protected Characteristics Coverage",
+    "Access to Services and Employment",
+    "Reasonable Accommodation",
+    "Incidents and Complaints",
+    "Follow-up Actions"
+  ],
+  "key_requirements": [
+    "Coverage of protected groups and intersectionality",
+    "Questions on direct/indirect discrimination",
+    "Complaint and redress channels assessed",
+    "Disaggregated data fields",
+    "Evidence of implemented safeguards"
+  ],
+  "keywords": [
+    "EU", "equality", "questionnaire", "discrimination", "protected groups", "redress"
+  ],
+  "typical_length_pages": "6-20"
+}

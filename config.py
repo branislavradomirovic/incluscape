@@ -7,6 +7,13 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 
+def _optional_int(name: str):
+    raw = os.getenv(name, "").strip()
+    if raw == "":
+        return None
+    return int(raw)
+
+
 class Config:
     APP_NAME: str = "INCLUSCAPE"
     APP_VERSION: str = "1.0.0"
@@ -61,6 +68,14 @@ class Config:
     # Ollama (local)
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2.5:14b-instruct")
+    OLLAMA_TIMEOUT_SEC: int = int(os.getenv("OLLAMA_TIMEOUT_SEC", "300"))
+    OLLAMA_KEEP_ALIVE: str = os.getenv("OLLAMA_KEEP_ALIVE", "30m")
+    OLLAMA_NUM_CTX: int = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
+    OLLAMA_NUM_THREAD = _optional_int("OLLAMA_NUM_THREAD")
+    OLLAMA_NUM_GPU = _optional_int("OLLAMA_NUM_GPU")
+    OLLAMA_NUM_BATCH = _optional_int("OLLAMA_NUM_BATCH")
+    COMPLIANCE_STEP_TIMEOUT_SEC: int = int(os.getenv("COMPLIANCE_STEP_TIMEOUT_SEC", "120"))
+    COMPLIANCE_TOKENIZE_CHAR_LIMIT: int = int(os.getenv("COMPLIANCE_TOKENIZE_CHAR_LIMIT", "250000"))
 
     ENABLE_SEMANTIC_ANALYSIS: bool = os.getenv("ENABLE_SEMANTIC_ANALYSIS", "False").lower() == "true"
     REFERENCE_TEMPLATES_DIR: str = os.getenv(

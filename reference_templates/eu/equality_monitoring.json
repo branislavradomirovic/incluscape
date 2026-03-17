@@ -1,0 +1,28 @@
+{
+  "id": "eu_equality_monitoring",
+  "body": "EU",
+  "category": "Monitoring",
+  "name": "EU Equality Monitoring Framework",
+  "description": "Monitoring framework for tracking equality outcomes and anti-discrimination performance over time.",
+  "source_url": "https://op.europa.eu/webpub/empl/european-pillar-of-social-rights/en/",
+  "version": "1.0",
+  "key_sections": [
+    "KPI Set and Baselines",
+    "Data Collection Sources",
+    "Protected Group Disaggregation",
+    "Trend Analysis",
+    "Corrective Action Tracking",
+    "Governance Reporting"
+  ],
+  "key_requirements": [
+    "Time-series KPI monitoring",
+    "Disaggregated equality metrics",
+    "Defined thresholds and alerts",
+    "Action ownership and deadlines",
+    "Periodic review and publication"
+  ],
+  "keywords": [
+    "monitoring", "equality", "KPI", "disaggregation", "trend", "corrective action"
+  ],
+  "typical_length_pages": "12-38"
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh and version UNESCO/EU reference templates from source URLs."""
+"""Refresh and version all active reference templates from source URLs."""
 
 import sys
 from pathlib import Path
@@ -14,7 +14,7 @@ def main() -> int:
     db = DatabaseManager()
     db.initialize()
     updater = ReferenceTemplateUpdater(db)
-    results = updater.refresh_bodies(["UNESCO", "EU"])
+    results = updater.refresh_bodies()
 
     checked = len(results)
     updated = sum(1 for r in results if r.get("updated"))
