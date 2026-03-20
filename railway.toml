@@ -5,7 +5,7 @@ dockerfile = "./Dockerfile"
 
 [deploy]
 numReplicas = 1
-startCommand = "bash start.sh"
+startCommand = "streamlit run streamlit_app/app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.fileWatcherType=none"
 
 [env]
 # Ollama Configuration
