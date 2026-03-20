@@ -6,7 +6,7 @@ pypdf==4.1.0
 python-docx==1.1.0
 openpyxl==3.1.2
 pytesseract==0.3.10
-Pillow>=11.2.1,<12
+Pillow>=10.2.0,<11
 
 # NLP & Text Processing
 # Note: spaCy is optional in this project (imports are lazy with graceful fallback).
