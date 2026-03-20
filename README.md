@@ -61,17 +61,29 @@ This keeps local AI quality and speed, while preserving a stable external demo U
 
 ## Branching Policy
 
-- `main`: customer-facing demo branch (auto-deployed)
+### Fast Production Mode
+
+This is the default workflow for this project.
+
+- `main`: live demo branch, auto-deployed by Streamlit Community Cloud
+- preferred flow: make changes locally, run checks, commit, push to `main`
+
+Use this mode when you want the latest version visible to customers immediately after push.
+
+### Structured PR Mode
+
+Use this when a change is larger, riskier, or needs review.
+
 - `dev`: integration branch for ongoing work
 - `feature/<name>`: short-lived branches for focused changes
 
-Recommended flow:
+Recommended PR flow:
 
 1. Create a feature branch from `dev`
 2. Commit and push frequently
-3. Merge feature branch into `dev` after local validation
+3. Open PR `feature/<name>` -> `dev`
 4. Run pre-deploy checks
-5. Merge `dev` into `main` when ready to showcase
+5. Open PR `dev` -> `main` when ready to showcase
 
 ### PR Workflow Commands
 
@@ -92,7 +104,7 @@ git push -u origin feature/<short-name>
 
 ### Required GitHub Settings
 
-Enable branch protection for `dev` and `main` in GitHub:
+If you use Structured PR Mode, enable branch protection for `dev` and `main` in GitHub:
 
 1. Require a pull request before merging
 2. Require status checks to pass
