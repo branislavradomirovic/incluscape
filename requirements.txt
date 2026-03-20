@@ -35,10 +35,7 @@ fpdf2==2.7.9
 # Configuration & Utilities
 python-dotenv==1.0.1
 pydantic==2.6.3
+protobuf>=4.25.3,<5
 
 # Semantic Analysis
 google-generativeai==0.8.3
-
-# Keep gRPC stack on versions that provide wheels for modern Python versions.
-grpcio>=1.71.0,<2
-grpcio-status>=1.71.0,<2
