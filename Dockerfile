@@ -4,8 +4,6 @@ WORKDIR /app
 
 # Install system dependencies + Ollama prerequisites
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
     curl \
     ca-certificates \
     zstd \

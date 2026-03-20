@@ -10,7 +10,7 @@ startCommand = "bash start.sh"
 [env]
 # Ollama Configuration
 OLLAMA_BASE_URL = "http://ollama:11434"
-OLLAMA_MODEL = "qwen2.5:14b-instruct"
+OLLAMA_MODEL = "qwen2.5:1.5b"
 OLLAMA_TIMEOUT_SEC = "600"
 OLLAMA_KEEP_ALIVE = "60m"
 OLLAMA_NUM_CTX = "4096"

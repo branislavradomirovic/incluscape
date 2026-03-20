@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-MODEL="${OLLAMA_MODEL:-qwen2.5:7b}"
+MODEL="${OLLAMA_MODEL:-qwen2.5:1.5b}"
 
 echo "=== INCLUSCAPE Startup ==="
 echo "Model: $MODEL"
