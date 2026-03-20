@@ -987,7 +987,32 @@ latest_saved_analysis = past[0] if past else None
 
 
 last_run = st.session_state.get("compliance_last_run")
-if last_run:
+def _has_useful_compliance_details(result_payload: object) -> bool:
+    if isinstance(result_payload, dict):
+        return any([
+            bool(str(result_payload.get("summary") or "").strip()),
+            bool(result_payload.get("present_elements")),
+            bool(result_payload.get("missing_elements")),
+            bool(result_payload.get("partial_elements")),
+            bool(result_payload.get("strengths")),
+            bool(result_payload.get("gaps")),
+            bool(result_payload.get("recommendations")),
+        ])
+    return bool(str(result_payload or "").strip())
+
+
+_render_last_run = False
+if isinstance(last_run, dict):
+    _last_payload = last_run.get("payload") or {}
+    _last_job = last_run.get("job") or {}
+    _last_doc_id = int(_last_job.get("document_id", document_id) or document_id)
+    _same_document = _last_doc_id == int(document_id)
+    _last_has_details = _has_useful_compliance_details(_last_payload.get("result"))
+    # Prefer latest persisted analysis when the in-memory snapshot is empty/noisy
+    # or belongs to a different document selection.
+    _render_last_run = _same_document and (_last_has_details or not latest_saved_analysis)
+
+if _render_last_run:
     _res_hdr, _res_clr = st.columns([10, 2])
     with _res_clr:
         if st.button("🗑 Clear results", use_container_width=True):
