@@ -14,6 +14,13 @@ def _optional_int(name: str):
     return int(raw)
 
 
+def _optional_csv(name: str):
+    raw = os.getenv(name, "").strip()
+    if raw == "":
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 class Config:
     APP_NAME: str = "INCLUSCAPE"
     APP_VERSION: str = "1.0.0"
@@ -64,6 +71,7 @@ class Config:
     # Google Gemini
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_FALLBACK_MODELS: list = _optional_csv("GEMINI_FALLBACK_MODELS")
 
     # Ollama (local)
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")

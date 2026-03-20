@@ -8,7 +8,7 @@ Wraps google-generativeai to provide:
 
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,8 @@ class GeminiSemanticAnalyzer:
         from config import Config
         self._api_key = api_key or Config.GEMINI_API_KEY
         self._model_name = model or Config.GEMINI_MODEL
-        self._model = None  # lazy-init
+        self._fallback_models: List[str] = [m for m in Config.GEMINI_FALLBACK_MODELS if m]
+        self._models: Dict[str, Any] = {}  # lazy-init cache by model name
 
     @property
     def model_name(self) -> str:
@@ -87,28 +88,72 @@ class GeminiSemanticAnalyzer:
         return "gemini"
 
     # ------------------------------------------------------------------
-    def _get_model(self):
-        if self._model is None:
+    def _candidate_models(self) -> List[str]:
+        candidates = [self._model_name] + self._fallback_models
+        out: List[str] = []
+        for item in candidates:
+            name = str(item or "").strip()
+            if name and name not in out:
+                out.append(name)
+        return out
+
+    def _get_model(self, model_name: str):
+        if model_name not in self._models:
             try:
                 import google.generativeai as genai
+
                 genai.configure(api_key=self._api_key)
-                self._model = genai.GenerativeModel(self._model_name)
+                self._models[model_name] = genai.GenerativeModel(model_name)
             except Exception as exc:
-                logger.error("Failed to initialise Gemini model: %s", exc)
+                logger.error("Failed to initialise Gemini model '%s': %s", model_name, exc)
                 raise
-        return self._model
+        return self._models[model_name]
+
+    @staticmethod
+    def _is_retryable_model_error(exc: Exception) -> bool:
+        text = str(exc).lower()
+        retry_tokens = [
+            "quota",
+            "resource_exhausted",
+            "429",
+            "rate",
+            "too many requests",
+            "model not found",
+            "not found",
+        ]
+        return any(tok in text for tok in retry_tokens)
 
     def _call(self, prompt: str) -> Dict[str, Any]:
         """Send a prompt and parse the JSON response."""
-        model = self._get_model()
-        response = model.generate_content(prompt)
-        raw = response.text.strip()
-        # Strip accidental markdown fences if the model adds them
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        return json.loads(raw)
+        last_exc: Optional[Exception] = None
+        for model_name in self._candidate_models():
+            try:
+                model = self._get_model(model_name)
+                response = model.generate_content(prompt)
+                raw = (response.text or "").strip()
+                if raw.startswith("```"):
+                    raw = raw.split("```")[1]
+                    if raw.startswith("json"):
+                        raw = raw[4:]
+
+                parsed = json.loads(raw)
+                self._model_name = model_name
+                return parsed
+            except Exception as exc:
+                last_exc = exc
+                if self._is_retryable_model_error(exc):
+                    logger.warning(
+                        "Gemini call with model '%s' failed (%s). Trying next fallback model.",
+                        model_name,
+                        exc,
+                    )
+                    continue
+                logger.error("Gemini call failed with model '%s': %s", model_name, exc)
+                raise
+
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("Gemini call failed without a model candidate")
 
     # ------------------------------------------------------------------
     def classify_document(self, text: str) -> Dict[str, Any]:

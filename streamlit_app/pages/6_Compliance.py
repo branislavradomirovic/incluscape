@@ -4,6 +4,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import json
 import re
+import urllib.error
+import urllib.request
 import time
 from datetime import date, datetime
 from typing import Optional
@@ -58,6 +60,26 @@ def get_checker():
 
 
 checker = get_checker()
+
+
+# ── Cached data queries to prevent re-execution on every Streamlit render ──
+@st.cache_data
+def _cached_get_all_templates():
+    """Cache all reference templates (DB + file sources). Invalidate if templates change."""
+    return checker.matcher.get_all_templates()
+
+
+@st.cache_data
+def _cached_get_analyses(document_id: int):
+    """Cache past analyses for a document. Invalidate by clearing cache if needed."""
+    return checker.get_analyses(document_id)
+@st.cache_data
+def _cached_get_documents(org_id: str):
+    """Cache active documents for the organisation. Invalidate if documents are uploaded/deleted."""
+    return db.fetchall(
+        "SELECT id, title, document_type FROM documents WHERE organisation_id = ? AND status = 'active' ORDER BY created_at DESC",
+        (org_id,),
+    )
 
 
 def run_llm_health_check() -> dict:
@@ -224,6 +246,91 @@ def _render_shap_heatmap(shap_proxy: dict, chart_title: str = "SHAP-style heatma
 
 def _to_pdf_safe(text: str) -> str:
     return (text or "").encode("latin-1", "replace").decode("latin-1")
+
+
+def _suggest_url_fix(http_status: Optional[int], detail: str) -> str:
+    if http_status == 404:
+        return "Source moved/removed. Update source_url to current official page."
+    if http_status == 403:
+        return "Access blocked. Use a public permalink/PDF URL or adjust source endpoint."
+    if http_status in (429, 500, 502, 503, 504):
+        return "Temporary server/rate issue. Retry later and keep current template active."
+    if "No source_url configured" in detail:
+        return "Set source_url for this template before refresh."
+    if detail.startswith("Network error"):
+        return "Check internet/proxy/DNS connectivity from runtime environment."
+    return "No action needed."
+
+
+def _probe_source_url_health(template: dict, timeout_sec: int = 20) -> dict:
+    name = template.get("name", "")
+    body = template.get("body", "")
+    category = template.get("category", "")
+    source_url = (template.get("source_url") or "").strip()
+    version = template.get("version", "-")
+
+    row = {
+        "Template": name,
+        "Body": body,
+        "Category": category,
+        "Version": version,
+        "Source URL": source_url,
+        "Status": "Broken",
+        "HTTP": "-",
+        "Method": "-",
+        "Detail": "",
+        "Final URL": "",
+        "Suggested fix": "",
+    }
+
+    if not source_url:
+        row["Detail"] = "No source_url configured"
+        row["Suggested fix"] = _suggest_url_fix(None, row["Detail"])
+        return row
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+
+    status_code: Optional[int] = None
+    final_url = source_url
+    detail = ""
+    method_used = "-"
+
+    for method in ("HEAD", "GET"):
+        method_used = method
+        try:
+            req = urllib.request.Request(source_url, headers=headers, method=method)
+            with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+                status_code = int(resp.getcode() or 0)
+                final_url = resp.geturl() or source_url
+            if 200 <= status_code < 400:
+                row["Status"] = "Healthy"
+                detail = "OK"
+                break
+            detail = f"HTTP {status_code}"
+        except urllib.error.HTTPError as exc:
+            status_code = int(exc.code)
+            detail = f"HTTP {status_code}"
+            if method == "HEAD" and status_code in (403, 405, 501):
+                continue
+            break
+        except urllib.error.URLError as exc:
+            detail = f"Network error: {exc.reason}"
+            break
+        except Exception as exc:
+            detail = f"Error: {exc}"
+            break
+
+    row["HTTP"] = str(status_code) if status_code is not None else "-"
+    row["Method"] = method_used
+    row["Detail"] = detail or "Unknown"
+    row["Final URL"] = final_url
+    if row["Status"] != "Healthy" and status_code is not None and 300 <= status_code < 400:
+        row["Status"] = "Warning"
+    row["Suggested fix"] = _suggest_url_fix(status_code, row["Detail"])
+    return row
 
 
 def _build_executive_pdf(
@@ -422,7 +529,21 @@ if "compliance_run_state" not in st.session_state:
         "updated_at": None,
     }
 if "llm_health" not in st.session_state:
-    st.session_state["llm_health"] = run_llm_health_check()
+    # Do NOT call run_llm_health_check() here — that fires an Ollama inference
+    # call immediately every time the user opens this tab, causing a cold-start
+    # CPU spike.  The probe runs only when the user clicks "Refresh health".
+    st.session_state["llm_health"] = {
+        "ok": None,
+        "latency": 0.0,
+        "error": "Not probed yet — click Refresh health.",
+        "model": "unknown",
+        "provider": provider,
+    }
+if "compliance_url_health_report" not in st.session_state:
+    st.session_state["compliance_url_health_report"] = {
+        "rows": [],
+        "updated_at": None,
+    }
 
 health_col, health_btn_col = st.columns([6, 1])
 with health_btn_col:
@@ -431,7 +552,9 @@ with health_btn_col:
 
 health = st.session_state["llm_health"]
 with health_col:
-    if health["ok"]:
+    if health.get("ok") is None:
+        st.info(f"{health.get('provider', provider).upper()} not probed yet — click **Refresh health** to check availability.")
+    elif health["ok"]:
         st.success(f"{health['provider'].upper()} ready (model `{health['model']}`, probe {health['latency']:.2f}s).")
     else:
         st.warning(f"{health['provider'].upper()} unavailable. Reason: {health['error'][:180]}")
@@ -445,10 +568,7 @@ _render_accent_section_heading(
     "Choose the document scope and reference strategy before starting the analysis.",
 )
 
-docs = db.fetchall(
-    "SELECT id, title, document_type FROM documents WHERE organisation_id = ? AND status = 'active' ORDER BY created_at DESC",
-    (org_id,),
-)
+docs = _cached_get_documents(org_id)
 if not docs:
     st.info("No processed documents found. Upload documents first.")
     st.stop()
@@ -474,7 +594,7 @@ with setup_b:
     selected_label = st.selectbox("Document", doc_labels, key="compliance_selected_document")
     document_id = doc_options[selected_label]
 
-all_templates = checker.matcher.get_all_templates()
+all_templates = _cached_get_all_templates()
 tmpl_options = {f"🤖 Auto-detect ({provider.upper()})": None}
 tmpl_options.update({f"{t['body']} — {t['name']}": t for t in all_templates})
 
@@ -734,13 +854,66 @@ _render_accent_section_heading(
 )
 
 with st.expander("Show Tools", expanded=False):
-    if st.button("Refresh all reference sources", use_container_width=True):
+    if st.button(f"Refresh UN/OECD/EU/UNESCO references ({provider.capitalize()} enrichment)", use_container_width=True):
         checker.matcher.seed_database()
         updater = ReferenceTemplateUpdater(db)
-        refresh_results = updater.refresh_bodies()
+        target_bodies = ["UN", "OECD", "EU", "UNESCO"]
+        refresh_results = updater.refresh_bodies(bodies=target_bodies, use_llm=True)
         changed = sum(1 for r in refresh_results if r.get("updated"))
         errors = [r for r in refresh_results if r.get("error")]
-        st.success(f"Refresh complete: {changed} updated, {len(refresh_results) - changed - len(errors)} unchanged, {len(errors)} errors.")
+        llm_ok = sum(1 for r in refresh_results if r.get("llm_enriched"))
+        llm_errors = [r for r in refresh_results if r.get("llm_error")]
+        st.success(
+            f"Refresh complete (bodies: {', '.join(target_bodies)}): "
+            f"{changed} updated, {len(refresh_results) - changed - len(errors)} unchanged, {len(errors)} source errors, "
+            f"{provider.capitalize()} enriched: {llm_ok}, warnings: {len(llm_errors)}."
+        )
+        if llm_errors:
+            st.markdown(f"**{provider.capitalize()} enrichment warnings**")
+            for row in llm_errors[:30]:
+                st.markdown(f"- [{row.get('body', 'Unknown')}] {row.get('name', '')}: {row.get('llm_error')}")
+
+    st.markdown("---")
+    st.markdown("**Source URL health checker (pre-refresh diagnostics)**")
+    if st.button("Run source URL health checker", use_container_width=True):
+        target_bodies = {"UN", "OECD", "EU", "UNESCO"}
+        templates_for_check = [
+            t for t in (all_templates or [])
+            if (t.get("body") or "").strip().upper() in target_bodies
+        ]
+        rows = [_probe_source_url_health(t) for t in templates_for_check]
+        st.session_state["compliance_url_health_report"] = {
+            "rows": rows,
+            "updated_at": time.time(),
+        }
+        broken_count = sum(1 for r in rows if r.get("Status") != "Healthy")
+        st.info(
+            f"Health check complete for {len(rows)} templates. "
+            f"Healthy: {len(rows) - broken_count}, Broken/Warning: {broken_count}."
+        )
+
+    url_health = st.session_state.get("compliance_url_health_report") or {}
+    url_rows = url_health.get("rows") or []
+    if url_rows:
+        broken_only = st.checkbox("Show only broken/warning URLs", value=True)
+        shown_rows = [r for r in url_rows if r.get("Status") != "Healthy"] if broken_only else url_rows
+        if shown_rows:
+            health_df = pd.DataFrame(shown_rows)
+            st.dataframe(health_df, use_container_width=True, hide_index=True)
+            csv_bytes = health_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "Download URL health report (CSV)",
+                data=csv_bytes,
+                file_name=f"reference_url_health_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+        else:
+            st.success("All checked source URLs are currently healthy.")
+
+        updated_at = url_health.get("updated_at")
+        if isinstance(updated_at, (int, float)):
+            st.caption(f"Last URL health check: {datetime.fromtimestamp(updated_at).strftime('%Y-%m-%d %H:%M:%S')}")
 
     st.markdown("---")
     st.markdown("**External reference documents for selected category**")
@@ -767,7 +940,7 @@ with st.expander("Show Tools", expanded=False):
 
     st.markdown("---")
     st.markdown("**Past analyses for selected document**")
-    past = checker.get_analyses(document_id)
+    past = _cached_get_analyses(document_id)
     if past:
         df = pd.DataFrame([
             {
@@ -860,58 +1033,83 @@ if last_run:
             detected_body = result.get("body_detected") or "Unknown body"
             detected_category = result.get("category_detected") or "Unknown category"
 
-            doc_tokens = _tokenize(document_text)
-            candidate_templates = _select_reference_candidates(all_templates, detected_body, detected_category)
-            scored_refs = sorted(
-                [_score_reference_template(t, doc_tokens, detected_body, detected_category) for t in candidate_templates],
-                key=lambda x: x["score"],
-                reverse=True,
-            )[:10]
-
-            current_ref_id = ref.get("id")
-            reference_rows = []
-            for idx, item in enumerate(scored_refs, 1):
-                tmpl = item["template"]
-                is_used = (current_ref_id is not None and tmpl.get("id") == current_ref_id) or (
-                    ref.get("name") and tmpl.get("name") == ref.get("name")
+            # ── Cache heavy per-run artifacts so they are not recomputed on every
+            # Streamlit rerender (tokenisation + scoring loop + PDF build are the
+            # main CPU consumers after the LLM call finishes). ────────────────────
+            _arts_key = f"_compliance_arts_{last_run.get('finished_at', 0)}"
+            _cached_arts = st.session_state.get(_arts_key)
+            if _cached_arts is None:
+                doc_tokens = _tokenize(document_text)
+                candidate_templates = _select_reference_candidates(all_templates, detected_body, detected_category)
+                scored_refs = sorted(
+                    [_score_reference_template(t, doc_tokens, detected_body, detected_category) for t in candidate_templates],
+                    key=lambda x: x["score"],
+                    reverse=True,
+                )[:10]
+                current_ref_id = ref.get("id")
+                reference_rows = []
+                for idx, item in enumerate(scored_refs, 1):
+                    tmpl = item["template"]
+                    is_used = (current_ref_id is not None and tmpl.get("id") == current_ref_id) or (
+                        ref.get("name") and tmpl.get("name") == ref.get("name")
+                    )
+                    reference_rows.append({
+                        "Rank": idx,
+                        "Reference document": tmpl.get("name", ""),
+                        "Body": tmpl.get("body", ""),
+                        "Category": tmpl.get("category", ""),
+                        "Relevance score": f"{item['score']:.0%}",
+                        "Keyword": f"{item['keyword_coverage']:.0%}",
+                        "Requirements": f"{item['requirements_coverage']:.0%}",
+                        "Sections": f"{item['sections_coverage']:.0%}",
+                        "Used in final check": "Yes" if is_used else "No",
+                    })
+                xai_template = ref if ref else {
+                    "body": detected_body,
+                    "category": detected_category,
+                    "name": "Auto-detected template context",
+                    "keywords": [],
+                    "key_requirements": (result.get("missing_elements") or []) + (result.get("present_elements") or []),
+                    "key_sections": [],
+                }
+                xai_metrics = _score_reference_template(xai_template, doc_tokens, detected_body, detected_category)
+                shap_proxy = _compute_shap_proxy(result, xai_metrics)
+                executive_summary = _build_executive_summary(result, worker_elapsed)
+                pdf_bytes, pdf_error = _build_executive_pdf(
+                    document_label=job.get("selected_label") or selected_label,
+                    provider_name=provider,
+                    model_name=health.get("model", "unknown"),
+                    result=result,
+                    executive_summary=executive_summary,
+                    reference_rows=reference_rows,
+                    xai_metrics=xai_metrics,
+                    shap_proxy=shap_proxy,
                 )
-                reference_rows.append({
-                    "Rank": idx,
-                    "Reference document": tmpl.get("name", ""),
-                    "Body": tmpl.get("body", ""),
-                    "Category": tmpl.get("category", ""),
-                    "Relevance score": f"{item['score']:.0%}",
-                    "Keyword": f"{item['keyword_coverage']:.0%}",
-                    "Requirements": f"{item['requirements_coverage']:.0%}",
-                    "Sections": f"{item['sections_coverage']:.0%}",
-                    "Used in final check": "Yes" if is_used else "No",
-                })
-
-            xai_template = ref if ref else {
-                "body": detected_body,
-                "category": detected_category,
-                "name": "Auto-detected template context",
-                "keywords": [],
-                "key_requirements": (result.get("missing_elements") or []) + (result.get("present_elements") or []),
-                "key_sections": [],
-            }
-            xai_metrics = _score_reference_template(xai_template, doc_tokens, detected_body, detected_category)
-            shap_proxy = _compute_shap_proxy(result, xai_metrics)
+                st.session_state[_arts_key] = {
+                    "pages_len": len(pages),
+                    "tokens_len": len(doc_tokens),
+                    "candidate_count": len(candidate_templates),
+                    "reference_rows": reference_rows,
+                    "xai_metrics": xai_metrics,
+                    "shap_proxy": shap_proxy,
+                    "executive_summary": executive_summary,
+                    "pdf_bytes": pdf_bytes,
+                    "pdf_error": pdf_error,
+                }
+            else:
+                reference_rows = _cached_arts["reference_rows"]
+                xai_metrics = _cached_arts["xai_metrics"]
+                shap_proxy = _cached_arts["shap_proxy"]
+                executive_summary = _cached_arts["executive_summary"]
+                pdf_bytes = _cached_arts["pdf_bytes"]
+                pdf_error = _cached_arts["pdf_error"]
+                # Use range() proxies — O(1) to build, len() returns correct count for trace
+                pages = range(_cached_arts["pages_len"])
+                doc_tokens = range(_cached_arts["tokens_len"])
+                candidate_templates = range(_cached_arts["candidate_count"])
 
             if result.get("error"):
                 st.warning(f"Model returned warning: {result.get('error')}")
-
-            executive_summary = _build_executive_summary(result, worker_elapsed)
-            pdf_bytes, pdf_error = _build_executive_pdf(
-                document_label=job.get("selected_label") or selected_label,
-                provider_name=provider,
-                model_name=health.get("model", "unknown"),
-                result=result,
-                executive_summary=executive_summary,
-                reference_rows=reference_rows,
-                xai_metrics=xai_metrics,
-                shap_proxy=shap_proxy,
-            )
 
             st.subheader("3 · Analysis Results")
             st.info(executive_summary)
@@ -1069,7 +1267,10 @@ elif latest_saved_analysis:
         f"Loaded latest saved analysis from history ({latest_saved_analysis.get('created_at', '-')}). "
         "Run a new analysis to refresh these details."
     )
-    saved_score = latest_saved_analysis.get("compliance_score") or 0.0
+    try:
+        saved_score = float(latest_saved_analysis.get("compliance_score") or 0.0)
+    except Exception:
+        saved_score = 0.0
     saved_colour = "green" if saved_score >= 0.7 else "orange" if saved_score >= 0.4 else "red"
     st.markdown(
         f"### Compliance Score: <span style='color:{saved_colour};font-size:2rem;font-weight:bold'>{saved_score:.0%}</span>",
@@ -1084,35 +1285,121 @@ elif latest_saved_analysis:
     saved_gaps = latest_saved_analysis.get("gaps") or []
     saved_summary = latest_saved_analysis.get("summary") or ""
 
-    # Ensure PDF export is available also for history/fallback results.
-    saved_result_for_pdf = {
-        "compliance_score": saved_score,
-        "present_elements": saved_present,
-        "missing_elements": saved_missing,
-        "partial_elements": saved_partial,
-        "strengths": saved_strengths,
-        "gaps": saved_gaps,
-        "recommendations": saved_recs,
-        "summary": saved_summary,
+    def _to_list_saved(value):
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        return [str(value)]
+
+    saved_present = _to_list_saved(saved_present)
+    saved_missing = _to_list_saved(saved_missing)
+    saved_partial = _to_list_saved(saved_partial)
+    saved_strengths = _to_list_saved(saved_strengths)
+    saved_gaps = _to_list_saved(saved_gaps)
+    saved_recs = _to_list_saved(saved_recs)
+
+    detected_body_saved = latest_saved_analysis.get("body_detected") or "Unknown body"
+    detected_category_saved = latest_saved_analysis.get("category_detected") or "Unknown category"
+    saved_ref_context = {
+        "id": latest_saved_analysis.get("reference_template_id"),
+        "name": latest_saved_analysis.get("reference_name") or "",
+        "body": detected_body_saved,
+        "category": detected_category_saved,
+        "source_url": latest_saved_analysis.get("source_url") or "",
     }
-    saved_exec_summary = _build_executive_summary(saved_result_for_pdf, 0.0)
-    saved_total = max(len(saved_present) + len(saved_missing) + len(saved_partial), 1)
-    saved_xai_metrics = {
-        "keyword_coverage": len(saved_present) / saved_total,
-        "requirements_coverage": max(0.0, 1.0 - (len(saved_missing) / saved_total)),
-        "sections_coverage": max(0.0, 1.0 - (len(saved_partial) / saved_total)),
-    }
-    saved_shap_proxy = _compute_shap_proxy(saved_result_for_pdf, saved_xai_metrics)
-    saved_pdf_bytes, saved_pdf_error = _build_executive_pdf(
-        document_label=selected_label,
-        provider_name=provider,
-        model_name=latest_saved_analysis.get("model_used") or health.get("model", "unknown"),
-        result=saved_result_for_pdf,
-        executive_summary=saved_exec_summary,
-        reference_rows=[],
-        xai_metrics=saved_xai_metrics,
-        shap_proxy=saved_shap_proxy,
-    )
+
+    # ── Cache heavy saved-analysis artifacts keyed by (document_id, analysis id)
+    # so tokenisation / scoring / PDF are not rebuilt on every rerender. ──────
+    _saved_arts_key = f"_compliance_saved_arts_{document_id}_{latest_saved_analysis.get('id', 0)}"
+    _saved_arts = st.session_state.get(_saved_arts_key)
+    current_saved_ref_id = saved_ref_context.get("id")
+    current_saved_ref_name = saved_ref_context.get("name")
+    if _saved_arts is None:
+        saved_pages = db.fetchall(
+            "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
+            (document_id,),
+        )
+        saved_document_text = "\n".join(p["content"] for p in saved_pages if p.get("content"))
+        saved_doc_tokens = _tokenize(saved_document_text)
+        saved_candidate_templates = _select_reference_candidates(all_templates, detected_body_saved, detected_category_saved)
+        saved_scored_refs = sorted(
+            [_score_reference_template(t, saved_doc_tokens, detected_body_saved, detected_category_saved) for t in saved_candidate_templates],
+            key=lambda x: x["score"],
+            reverse=True,
+        )[:10]
+        saved_reference_rows = []
+        for idx, item in enumerate(saved_scored_refs, 1):
+            tmpl = item["template"]
+            is_used = (current_saved_ref_id is not None and tmpl.get("id") == current_saved_ref_id) or (
+                current_saved_ref_name and tmpl.get("name") == current_saved_ref_name
+            )
+            saved_reference_rows.append({
+                "Rank": idx,
+                "Reference document": tmpl.get("name", ""),
+                "Body": tmpl.get("body", ""),
+                "Category": tmpl.get("category", ""),
+                "Relevance score": f"{item['score']:.0%}",
+                "Keyword": f"{item['keyword_coverage']:.0%}",
+                "Requirements": f"{item['requirements_coverage']:.0%}",
+                "Sections": f"{item['sections_coverage']:.0%}",
+                "Used in final check": "Yes" if is_used else "No",
+            })
+        saved_token_debug = {
+            "Document pages loaded": len(saved_pages),
+            "Token sample size": len(saved_doc_tokens),
+            "Tokenization char limit": int(Config.COMPLIANCE_TOKENIZE_CHAR_LIMIT),
+            "Reference candidates": len(saved_candidate_templates),
+        }
+        saved_result_for_pdf = {
+            "compliance_score": saved_score,
+            "present_elements": saved_present,
+            "missing_elements": saved_missing,
+            "partial_elements": saved_partial,
+            "strengths": saved_strengths,
+            "gaps": saved_gaps,
+            "recommendations": saved_recs,
+            "summary": saved_summary,
+            "reference_template": saved_ref_context,
+            "body_detected": detected_body_saved,
+            "category_detected": detected_category_saved,
+        }
+        saved_exec_summary = _build_executive_summary(saved_result_for_pdf, 0.0)
+        saved_xai_template = {
+            "body": detected_body_saved,
+            "category": detected_category_saved,
+            "name": current_saved_ref_name or "Saved analysis template context",
+            "keywords": [],
+            "key_requirements": (saved_missing or []) + (saved_present or []),
+            "key_sections": saved_partial or [],
+        }
+        saved_xai_metrics = _score_reference_template(saved_xai_template, saved_doc_tokens, detected_body_saved, detected_category_saved)
+        saved_shap_proxy = _compute_shap_proxy(saved_result_for_pdf, saved_xai_metrics)
+        saved_pdf_bytes, saved_pdf_error = _build_executive_pdf(
+            document_label=selected_label,
+            provider_name=provider,
+            model_name=latest_saved_analysis.get("model_used") or health.get("model", "unknown"),
+            result=saved_result_for_pdf,
+            executive_summary=saved_exec_summary,
+            reference_rows=saved_reference_rows,
+            xai_metrics=saved_xai_metrics,
+            shap_proxy=saved_shap_proxy,
+        )
+        st.session_state[_saved_arts_key] = {
+            "saved_reference_rows": saved_reference_rows,
+            "saved_token_debug": saved_token_debug,
+            "saved_xai_metrics": saved_xai_metrics,
+            "saved_shap_proxy": saved_shap_proxy,
+            "saved_pdf_bytes": saved_pdf_bytes,
+            "saved_pdf_error": saved_pdf_error,
+        }
+    else:
+        saved_reference_rows = _saved_arts["saved_reference_rows"]
+        saved_token_debug = _saved_arts["saved_token_debug"]
+        saved_xai_metrics = _saved_arts["saved_xai_metrics"]
+        saved_shap_proxy = _saved_arts["saved_shap_proxy"]
+        saved_pdf_bytes = _saved_arts["saved_pdf_bytes"]
+        saved_pdf_error = _saved_arts["saved_pdf_error"]
 
     if saved_pdf_error:
         st.warning(saved_pdf_error)
@@ -1128,22 +1415,13 @@ elif latest_saved_analysis:
             use_container_width=True,
         )
 
+    st.caption(
+        f"Tokenization: {saved_token_debug['Token sample size']} tokens from {saved_token_debug['Document pages loaded']} pages | "
+        f"Candidates scored: {saved_token_debug['Reference candidates']}"
+    )
+
     if saved_summary:
         st.markdown(f"**Model summary:** {saved_summary}")
-
-    def _to_list_saved(value):
-        if isinstance(value, list):
-            return value
-        if value is None:
-            return []
-        return [str(value)]
-
-    saved_present = _to_list_saved(saved_present)
-    saved_missing = _to_list_saved(saved_missing)
-    saved_partial = _to_list_saved(saved_partial)
-    saved_strengths = _to_list_saved(saved_strengths)
-    saved_gaps = _to_list_saved(saved_gaps)
-    saved_recs = _to_list_saved(saved_recs)
 
     with st.expander("LLM Output - Detailed Compliance Sections", expanded=True):
         col_a, col_b = st.columns(2)
@@ -1216,8 +1494,8 @@ elif latest_saved_analysis:
         for idx, item in enumerate(saved_recs[:8], 1):
             st.markdown(f"{idx}. {item}")
 
-    tab_gaps, tab_present, tab_rec, tab_xai = st.tabs(
-        ["⚠️ Gaps & Missing", "✅ Present Elements", "💡 Recommendations", "🧠 XAI"]
+    tab_gaps, tab_present, tab_rec, tab_xai, tab_ref = st.tabs(
+        ["⚠️ Gaps & Missing", "✅ Present Elements", "💡 Recommendations", "🧠 XAI", "📚 Reference"]
     )
 
     with tab_gaps:
@@ -1251,19 +1529,39 @@ elif latest_saved_analysis:
         xai_df = pd.DataFrame([
             {"Metric": "LLM Provider", "Value": provider.upper()},
             {"Metric": "Model", "Value": latest_saved_analysis.get("model_used", "unknown")},
-            {"Metric": "Detected Body", "Value": latest_saved_analysis.get("body_detected", "Unknown body")},
-            {"Metric": "Detected Category", "Value": latest_saved_analysis.get("category_detected", "Unknown category")},
+            {"Metric": "Detected Body", "Value": detected_body_saved},
+            {"Metric": "Detected Category", "Value": detected_category_saved},
             {"Metric": "Compliance Score", "Value": f"{saved_score:.0%}"},
             {"Metric": "Present elements", "Value": str(len(saved_present))},
             {"Metric": "Missing elements", "Value": str(len(saved_missing))},
             {"Metric": "Partial elements", "Value": str(len(saved_partial))},
-            {"Metric": "Keyword coverage (proxy)", "Value": f"{saved_xai_metrics['keyword_coverage']:.0%}"},
-            {"Metric": "Requirement coverage (proxy)", "Value": f"{saved_xai_metrics['requirements_coverage']:.0%}"},
-            {"Metric": "Section coverage (proxy)", "Value": f"{saved_xai_metrics['sections_coverage']:.0%}"},
+            {"Metric": "Token sample size", "Value": str(saved_token_debug["Token sample size"])},
+            {"Metric": "Reference candidates", "Value": str(saved_token_debug["Reference candidates"])},
+            {"Metric": "Keyword coverage", "Value": f"{saved_xai_metrics['keyword_coverage']:.0%}"},
+            {"Metric": "Requirement coverage", "Value": f"{saved_xai_metrics['requirements_coverage']:.0%}"},
+            {"Metric": "Section coverage", "Value": f"{saved_xai_metrics['sections_coverage']:.0%}"},
         ])
         st.dataframe(xai_df, use_container_width=True, hide_index=True)
-        st.caption("This XAI view explains outcome composition using detected category/body and element counts.")
+        st.caption("This XAI view includes tokenization diagnostics and scoring coverage used for SHAP-style attribution.")
         _render_shap_heatmap(saved_shap_proxy)
+
+        with st.expander("Tokenization diagnostics", expanded=False):
+            st.dataframe(
+                pd.DataFrame([
+                    {"Metric": "Document pages loaded", "Value": saved_token_debug["Document pages loaded"]},
+                    {"Metric": "Token sample size", "Value": saved_token_debug["Token sample size"]},
+                    {"Metric": "Tokenization char limit", "Value": saved_token_debug["Tokenization char limit"]},
+                    {"Metric": "Reference candidates", "Value": saved_token_debug["Reference candidates"]},
+                ]),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+    with tab_ref:
+        if saved_reference_rows:
+            st.dataframe(pd.DataFrame(saved_reference_rows), use_container_width=True, hide_index=True)
+        else:
+            st.info("No reference templates scored for this saved analysis context.")
 
 
 

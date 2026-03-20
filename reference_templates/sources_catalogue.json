@@ -1,0 +1,256 @@
+{
+  "_comment": "Master source catalogue for INCLUSCAPE reference templates. Add new bodies or source entries here; the refresh pipeline will automatically fetch, enrich, and seed them into the database.",
+  "_version": "2.0",
+  "_updated": "2026-03-18",
+  "sources": [
+    {
+      "body": "UN",
+      "category": "Policies",
+      "name": "Universal Declaration of Human Rights",
+      "source_url": "https://www.ohchr.org/en/universal-declaration-of-human-rights",
+      "file_hint": "un/human_rights_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Policies",
+      "name": "UN Convention on the Rights of Persons with Disabilities (CRPD)",
+      "source_url": "https://www.ohchr.org/en/instruments-mechanisms/instruments/convention-rights-persons-disabilities",
+      "file_hint": "un/crpd_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Policies",
+      "name": "UN Convention on the Rights of the Child (CRC)",
+      "source_url": "https://www.ohchr.org/en/instruments-mechanisms/instruments/convention-rights-child",
+      "file_hint": "un/crc_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Policies",
+      "name": "UN International Covenant on Civil and Political Rights (ICCPR)",
+      "source_url": "https://www.ohchr.org/en/instruments-mechanisms/instruments/international-covenant-civil-and-political-rights",
+      "file_hint": "un/iccpr_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Reports",
+      "name": "UN Sustainable Development Goal 10 – Reduced Inequalities",
+      "source_url": "https://sdgs.un.org/goals/goal10",
+      "file_hint": "un/sdg10_report.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Reports",
+      "name": "UN Sustainable Development Goal 4 – Quality Education",
+      "source_url": "https://sdgs.un.org/goals/goal4",
+      "file_hint": "un/sdg4_report.json",
+      "enabled": true
+    },
+    {
+      "body": "UN",
+      "category": "Monitoring",
+      "name": "OHCHR Human Rights Monitoring Framework",
+      "source_url": "https://www.ohchr.org/en/monitoring-human-rights",
+      "file_hint": "un/human_rights_monitoring.json",
+      "enabled": true
+    },
+    {
+      "body": "UNESCO",
+      "category": "Policies",
+      "name": "UNESCO Salamanca Statement on Inclusive Education",
+      "source_url": "https://www.unesco.org/en/inclusion/salamanca-statement",
+      "file_hint": "unesco/education_inclusion_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UNESCO",
+      "category": "Policies",
+      "name": "UNESCO Convention against Discrimination in Education",
+      "source_url": "https://www.unesco.org/en/legal-affairs/convention-against-discrimination-education",
+      "file_hint": "unesco/discrimination_education_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "UNESCO",
+      "category": "Reports",
+      "name": "UNESCO Global Education Monitoring Report",
+      "source_url": "https://www.unesco.org/gem-report/en",
+      "file_hint": "unesco/gem_report.json",
+      "enabled": true
+    },
+    {
+      "body": "UNESCO",
+      "category": "Monitoring",
+      "name": "UNESCO Inclusive Education Monitoring Framework",
+      "source_url": "https://www.unesco.org/en/inclusion/education",
+      "file_hint": "unesco/education_inclusion_monitoring.json",
+      "enabled": true
+    },
+    {
+      "body": "EU",
+      "category": "Policies",
+      "name": "EU Equality and Non-Discrimination Directive",
+      "source_url": "https://commission.europa.eu/aid-development-cooperation-fundamental-rights/your-rights-eu/know-your-rights/equality_en",
+      "file_hint": "eu/equality_directive.json",
+      "enabled": true
+    },
+    {
+      "body": "EU",
+      "category": "Policies",
+      "name": "EU Strategy for the Rights of Persons with Disabilities 2021-2030",
+      "source_url": "https://commission.europa.eu/strategy-and-policy/policies/justice-and-fundamental-rights/disability-rights_en",
+      "file_hint": "eu/disability_strategy.json",
+      "enabled": true
+    },
+    {
+      "body": "EU",
+      "category": "Policies",
+      "name": "EU Anti-Racism Action Plan 2020-2025",
+      "source_url": "https://commission.europa.eu/strategy-and-policy/policies/justice-and-fundamental-rights/combatting-discrimination/racism-and-xenophobia/eu-anti-racism-action-plan-2020-2025_en",
+      "file_hint": "eu/anti_racism_action_plan.json",
+      "enabled": true
+    },
+    {
+      "body": "EU",
+      "category": "Reports",
+      "name": "EU Social Inclusion Progress Report (European Pillar of Social Rights)",
+      "source_url": "https://commission.europa.eu/system/files/2021-04/socscoreboardreport2021_en.pdf",
+      "file_hint": "eu/social_inclusion_report.json",
+      "enabled": true
+    },
+    {
+      "body": "EU",
+      "category": "Monitoring",
+      "name": "EU Equality Monitoring Framework (FRA)",
+      "source_url": "https://fra.europa.eu/en/themes/equality-non-discrimination",
+      "file_hint": "eu/equality_monitoring.json",
+      "enabled": true
+    },
+    {
+      "body": "OECD",
+      "category": "Policies",
+      "name": "OECD Policy Framework on Social Inclusion",
+      "source_url": "https://www.oecd.org/social/social-inclusion/",
+      "file_hint": "oecd/social_inclusion_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "OECD",
+      "category": "Policies",
+      "name": "OECD Guidelines on Disability and Inclusion",
+      "source_url": "https://www.oecd.org/health/disability-inclusion.htm",
+      "file_hint": "oecd/disability_inclusion_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "OECD",
+      "category": "Reports",
+      "name": "OECD Society at a Glance – Social Indicators",
+      "source_url": "https://www.oecd.org/els/society-at-a-glance.htm",
+      "file_hint": "oecd/society_at_a_glance.json",
+      "enabled": true
+    },
+    {
+      "body": "OECD",
+      "category": "Monitoring",
+      "name": "OECD Inclusive Growth Monitoring Framework",
+      "source_url": "https://www.oecd.org/inclusive-growth/",
+      "file_hint": "oecd/inclusive_growth_monitoring.json",
+      "enabled": true
+    },
+    {
+      "body": "ILO",
+      "category": "Policies",
+      "name": "ILO Convention on Discrimination (Employment and Occupation) C111",
+      "source_url": "https://www.ilo.org/dyn/normlex/en/f?p=NORMLEXPUB:12100:0::NO::P12100_ILO_CODE:C111",
+      "file_hint": "ilo/discrimination_employment_c111.json",
+      "enabled": true
+    },
+    {
+      "body": "ILO",
+      "category": "Policies",
+      "name": "ILO Vocational Rehabilitation and Employment (Disabled Persons) Convention C159",
+      "source_url": "https://www.ilo.org/dyn/normlex/en/f?p=NORMLEXPUB:12100:0::NO::P12100_ILO_CODE:C159",
+      "file_hint": "ilo/vocational_rehab_c159.json",
+      "enabled": true
+    },
+    {
+      "body": "ILO",
+      "category": "Monitoring",
+      "name": "ILO Decent Work Monitoring Framework",
+      "source_url": "https://www.ilo.org/global/statistics-and-databases/research-and-databases/decent-work-indicators/lang--en/index.htm",
+      "file_hint": "ilo/decent_work_monitoring.json",
+      "enabled": true
+    },
+    {
+      "body": "WHO",
+      "category": "Policies",
+      "name": "WHO Disability and Rehabilitation Action Plan",
+      "source_url": "https://www.who.int/initiatives/decade-of-healthy-ageing/action-plan",
+      "file_hint": "who/disability_rehabilitation_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "WHO",
+      "category": "Policies",
+      "name": "WHO Mental Health Action Plan 2013–2030",
+      "source_url": "https://www.who.int/publications/i/item/9789240031029",
+      "file_hint": "who/mental_health_action_plan.json",
+      "enabled": true
+    },
+    {
+      "body": "WHO",
+      "category": "Monitoring",
+      "name": "WHO World Report on Disability Monitoring Indicators",
+      "source_url": "https://www.who.int/teams/noncommunicable-diseases/sensory-functions-disability-and-rehabilitation/world-report-on-disability",
+      "file_hint": "who/world_report_disability.json",
+      "enabled": true
+    },
+    {
+      "body": "World Bank",
+      "category": "Policies",
+      "name": "World Bank Disability Inclusion Policy",
+      "source_url": "https://www.worldbank.org/en/topic/disability",
+      "file_hint": "worldbank/disability_inclusion_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "World Bank",
+      "category": "Reports",
+      "name": "World Bank Social Inclusion Assessment Framework",
+      "source_url": "https://www.worldbank.org/en/topic/social-inclusion",
+      "file_hint": "worldbank/social_inclusion_report.json",
+      "enabled": true
+    },
+    {
+      "body": "CoE",
+      "category": "Policies",
+      "name": "Council of Europe Disability Strategy 2017–2023",
+      "source_url": "https://www.coe.int/en/web/disability",
+      "file_hint": "coe/disability_strategy.json",
+      "enabled": true
+    },
+    {
+      "body": "CoE",
+      "category": "Policies",
+      "name": "European Convention on Human Rights (ECHR)",
+      "source_url": "https://www.echr.coe.int/european-convention-on-human-rights",
+      "file_hint": "coe/echr_policy.json",
+      "enabled": true
+    },
+    {
+      "body": "National",
+      "category": "Policies",
+      "name": "National Social Inclusion Policy Framework",
+      "source_url": "",
+      "file_hint": "national/national_inclusion_policy.json",
+      "enabled": false,
+      "_note": "No single URL — country-specific. Disabled for auto-refresh. Add country-specific entry here."
+    }
+  ]
+}

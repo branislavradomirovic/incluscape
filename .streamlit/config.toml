@@ -1,5 +1,7 @@
 [server]
 maxUploadSize = 20   # MB — enforced by Streamlit's file uploader widget
+fileWatcherType = "none"
+runOnSave = false
 
 [theme]
 base = "light"

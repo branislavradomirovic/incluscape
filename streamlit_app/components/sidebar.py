@@ -11,6 +11,7 @@ _NAV = [
     ("🔍", "Changes",    "pages/4_Changes.py"),
     ("🗺️", "Map",        "pages/5_Map.py"),
     ("🔎", "Compliance", "pages/6_Compliance.py"),
+    ("🌐", "Sources",    "pages/8_Sources.py"),
     ("❓", "Help",       "pages/7_Help.py"),
 ]
 
@@ -45,6 +46,10 @@ _HELP = {
     "🔎 Compliance": (
         "Semantic analysis against international reference frameworks (UN, UNESCO, EU). "
         "Powered by Gemini or Ollama. Get compliance scores and recommendations."
+    ),
+    "🌐 Sources": (
+        "Manage official external source URLs and refresh the reference repository. "
+        "Python fetches source pages, then Ollama/Gemini enriches requirements locally."
     ),
     "❓ Help": (
         "Comprehensive documentation for all features. "
