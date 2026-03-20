@@ -281,7 +281,7 @@ if last_locations:
     else:
         st.warning(
             "No geocoded locations to display. "
-            "Enable `ENABLE_GEOCODING=True` in .env and re-run."
+            "Enable `ENABLE_GEOCODING=true` in Streamlit Cloud Secrets (or .env locally) and re-run."
         )
 
     # Table view

@@ -39,7 +39,7 @@ org_id = st.session_state.get("org_id", db.get_or_create_organisation("Default O
 provider = Config.SEMANTIC_LLM_PROVIDER.lower()
 
 if not Config.ENABLE_SEMANTIC_ANALYSIS:
-    st.info("Semantic analysis is disabled. Set ENABLE_SEMANTIC_ANALYSIS=True in .env.")
+    st.info("Semantic analysis is disabled. Set ENABLE_SEMANTIC_ANALYSIS=true in Streamlit Cloud Secrets (or .env locally).")
     st.stop()
 
 if provider not in {"gemini", "ollama"}:
