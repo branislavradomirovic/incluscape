@@ -68,6 +68,11 @@ def render_sidebar() -> None:
             [data-testid="stSidebarNav"] { display: none; }
             .block-container { padding-top: 1.1rem; }
 
+            /* Push sidebar content to the very top */
+            section[data-testid="stSidebar"] > div:first-child {
+                padding-top: 0.5rem !important;
+            }
+
             /* Nav links — button style */
             [data-testid="stPageLink"] {
                 margin-top: 0.18rem;
