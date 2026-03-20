@@ -2,6 +2,17 @@
 maxUploadSize = 20   # MB — enforced by Streamlit's file uploader widget
 fileWatcherType = "none"
 runOnSave = false
+port = 8501
+headless = true
+
+[client]
+maxMessageSize = 200   # MB — for handling large file uploads
 
 [theme]
 base = "light"
+
+[logger]
+level = "info"
+
+[browser]
+gatherUsageStats = false
