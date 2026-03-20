@@ -36,15 +36,20 @@ class MapGenerator:
             lon = loc.get("longitude")
             if lat is None or lon is None:
                 continue
+            place_name = loc.get("place_name", "Unknown")
+            location_type = loc.get("location_type", "")
+            context = (loc.get("context", "") or "")[:220]
             popup_html = (
-                f"<b>{loc.get('place_name', 'Unknown')}</b><br>"
-                f"Type: {loc.get('location_type', '')}<br>"
-                f"<small>{loc.get('context', '')[:120]}</small>"
+                "<div style='font-size:15px;line-height:1.45;min-width:280px;max-width:420px;'>"
+                f"<div style='font-size:18px;font-weight:700;margin-bottom:4px'>{place_name}</div>"
+                f"<div style='font-size:14px;margin-bottom:6px'><b>Type:</b> {location_type or 'general'}</div>"
+                f"<div style='font-size:14px;white-space:normal;word-wrap:break-word'>{context}</div>"
+                "</div>"
             )
             folium.Marker(
                 location=[lat, lon],
-                popup=folium.Popup(popup_html, max_width=300),
-                tooltip=loc.get("place_name", ""),
+                popup=folium.Popup(popup_html, max_width=460),
+                tooltip=place_name,
                 icon=folium.Icon(color="blue", icon="info-sign"),
             ).add_to(m)
 

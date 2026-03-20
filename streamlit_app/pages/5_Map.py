@@ -39,6 +39,16 @@ _LOCATION_TABLE_COLUMNS = [
 ]
 
 
+if "map_last_locations" not in st.session_state:
+    st.session_state["map_last_locations"] = []
+if "map_last_extraction_stats" not in st.session_state:
+    st.session_state["map_last_extraction_stats"] = []
+if "map_last_selected_ids" not in st.session_state:
+    st.session_state["map_last_selected_ids"] = []
+if "map_last_signature" not in st.session_state:
+    st.session_state["map_last_signature"] = None
+
+
 def _build_locations_table_rows(rows: list[dict]) -> list[dict]:
     return [
         {
@@ -69,6 +79,22 @@ def _extract_locations_for_document(document_id: int, force_reextract: bool) -> 
         saved = db.fetchall("SELECT * FROM locations WHERE document_id = ?", (document_id,))
 
     if saved:
+        if Config.ENABLE_GEOCODING:
+            for row in saved:
+                if row.get("latitude") is None or row.get("longitude") is None or not row.get("geocoded"):
+                    lat, lon = geocoder.geocode(row.get("place_name", ""))
+                    if lat is None:
+                        continue
+                    row["latitude"] = lat
+                    row["longitude"] = lon
+                    row["geocoded"] = 1
+                    if row.get("id"):
+                        db.update(
+                            "locations",
+                            {"latitude": lat, "longitude": lon, "geocoded": 1},
+                            "id = ?",
+                            (row["id"],),
+                        )
         return saved, {
             "document_id": document_id,
             "source": "saved",
@@ -98,6 +124,7 @@ def _build_doc_stats_rows(extraction_stats: list[dict], documents_by_id: dict[in
     for stat in extraction_stats:
         doc = documents_by_id.get(stat["document_id"], {})
         rows.append({
+            "Document ID": stat["document_id"],
             "Document": doc.get("title", f"Document {stat['document_id']}"),
             "Type": doc.get("document_type", ""),
             "Source": stat.get("source", ""),
@@ -143,9 +170,23 @@ def _render_diagnostics(documents: list[dict], selected_ids: list[int]) -> None:
             hide_index=True,
         )
 
+
+def _run_extraction(selected_ids: list[int], force_reextract: bool) -> None:
+    all_locations: list[dict] = []
+    extraction_stats: list[dict] = []
+    for doc_id in selected_ids:
+        locs, stats = _extract_locations_for_document(doc_id, force_reextract=force_reextract)
+        extraction_stats.append(stats)
+        all_locations.extend(locs)
+
+    st.session_state["map_last_locations"] = all_locations
+    st.session_state["map_last_extraction_stats"] = extraction_stats
+    st.session_state["map_last_selected_ids"] = selected_ids
+    st.session_state["map_last_signature"] = (tuple(sorted(selected_ids)), bool(force_reextract))
+
 # ── Extract locations from selected documents ───────────────────────────────
 docs = db.fetchall(
-    "SELECT id, title, document_type FROM documents WHERE organisation_id = ? AND status = 'active'",
+    "SELECT id, title, document_type FROM documents WHERE organisation_id = ? AND status = 'active' ORDER BY title",
     (org_id,),
 )
 docs_by_id = {d["id"]: d for d in docs}
@@ -155,33 +196,84 @@ selected = st.multiselect(
     "Select documents to extract locations from",
     list(doc_labels.keys()),
     default=list(doc_labels.keys())[:5],
+    key="map_selected_documents",
 )
 selected_ids = [doc_labels[label] for label in selected]
 force_reextract = st.checkbox(
     "Force re-extract selected documents",
     value=False,
     help="Delete saved location rows for the selected documents and rebuild them from document text.",
+    key="map_force_reextract",
 )
 
 _render_diagnostics(docs, selected_ids)
 
+current_signature = (tuple(sorted(selected_ids)), bool(force_reextract))
+selection_changed = st.session_state.get("map_last_signature") != current_signature
+
+if selected_ids and selection_changed:
+    with st.spinner("Auto-refreshing geospatial data for selected documents..."):
+        _run_extraction(selected_ids, force_reextract=force_reextract)
+
 if st.button("🔍 Extract & Map Locations", type="primary") and selected:
-    all_locations: list[dict] = []
-    extraction_stats: list[dict] = []
-    for label in selected:
-        doc_id = doc_labels[label]
-        locs, stats = _extract_locations_for_document(doc_id, force_reextract=force_reextract)
-        extraction_stats.append(stats)
-        all_locations.extend(locs)
+    _run_extraction(selected_ids, force_reextract=force_reextract)
 
-    st.info(f"Found **{len(all_locations)}** location mentions.")
+last_locations = st.session_state.get("map_last_locations") or []
+last_stats = st.session_state.get("map_last_extraction_stats") or []
+last_selected_ids = st.session_state.get("map_last_selected_ids") or []
 
-    geocoded = [l for l in all_locations if l.get("latitude")]
+if last_locations:
+    st.info(f"Found **{len(last_locations)}** location mentions.")
+
+    summary_rows = _build_doc_stats_rows(last_stats, docs_by_id)
+    summary_df = pd.DataFrame(summary_rows)
+
+    selected_summary_doc_id = st.session_state.get("map_selected_summary_doc_id")
+    if selected_summary_doc_id is None and not summary_df.empty:
+        selected_summary_doc_id = int(summary_df.iloc[0]["Document ID"])
+
+    st.subheader("Extraction summary")
+    selector_df = summary_df.copy()
+    selector_df["Show on map"] = selector_df["Document ID"].astype(int) == int(selected_summary_doc_id)
+    edited = st.data_editor(
+        selector_df[["Show on map", "Document", "Type", "Source", "Text chars", "Locations", "Geocoded", "Document ID"]],
+        use_container_width=True,
+        hide_index=True,
+        disabled=["Document", "Type", "Source", "Text chars", "Locations", "Geocoded", "Document ID"],
+        column_config={
+            "Show on map": st.column_config.CheckboxColumn(
+                "Show on map",
+                help="Tick one row to filter map and location list to that document.",
+                default=False,
+            ),
+            "Document ID": None,
+        },
+        key="map_extraction_summary_editor",
+    )
+    selected_rows = edited[edited["Show on map"]]
+    if not selected_rows.empty:
+        selected_summary_doc_id = int(selected_rows.iloc[0]["Document ID"])
+    elif not summary_df.empty:
+        selected_summary_doc_id = int(summary_df.iloc[0]["Document ID"])
+
+    st.session_state["map_selected_summary_doc_id"] = selected_summary_doc_id
+
+    display_locations = [
+        loc for loc in last_locations
+        if int(loc.get("document_id") or -1) == int(selected_summary_doc_id)
+    ]
+
+    geocoded = [l for l in display_locations if l.get("latitude")]
     if geocoded:
         try:
             from streamlit_folium import st_folium
             m = mapper.build_map(geocoded)
-            st_folium(m, use_container_width=True, height=550)
+            st_folium(
+                m,
+                use_container_width=True,
+                height=550,
+                key=f"map_view_{'_'.join(str(i) for i in last_selected_ids) or 'default'}",
+            )
         except ImportError:
             st.warning(
                 "`streamlit-folium` not installed. Run `pip install streamlit-folium`."
@@ -192,18 +284,13 @@ if st.button("🔍 Extract & Map Locations", type="primary") and selected:
             "Enable `ENABLE_GEOCODING=True` in .env and re-run."
         )
 
-    st.subheader("Extraction summary")
-    st.dataframe(
-        pd.DataFrame(_build_doc_stats_rows(extraction_stats, docs_by_id)),
-        use_container_width=True,
-        hide_index=True,
-    )
-
     # Table view
     st.subheader("Location list")
-    table_rows = _build_locations_table_rows(all_locations)
+    table_rows = _build_locations_table_rows(display_locations)
     st.dataframe(
         pd.DataFrame(table_rows, columns=_LOCATION_TABLE_COLUMNS),
         use_container_width=True,
         hide_index=True,
     )
+elif selected:
+    st.info("Click **Extract & Map Locations** to build or refresh the map for selected documents.")

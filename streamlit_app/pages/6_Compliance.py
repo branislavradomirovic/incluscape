@@ -66,13 +66,39 @@ checker = get_checker()
 @st.cache_data
 def _cached_get_all_templates():
     """Cache all reference templates (DB + file sources). Invalidate if templates change."""
-    return checker.matcher.get_all_templates()
+    # Keep only fields used by this page to avoid repeatedly copying large
+    # template payloads (e.g., full_content) across reruns.
+    compact_templates = []
+    for tmpl in checker.matcher.get_all_templates():
+        compact_templates.append({
+            "id": tmpl.get("id"),
+            "name": tmpl.get("name", ""),
+            "body": tmpl.get("body", ""),
+            "category": tmpl.get("category", ""),
+            "source_url": tmpl.get("source_url", ""),
+            "source_last_checked": tmpl.get("source_last_checked"),
+            "created_at": tmpl.get("created_at"),
+            "version": tmpl.get("version"),
+            "keywords": tmpl.get("keywords") or [],
+            "key_requirements": tmpl.get("key_requirements") or [],
+            "key_sections": tmpl.get("key_sections") or [],
+        })
+    return compact_templates
 
 
 @st.cache_data
 def _cached_get_analyses(document_id: int):
     """Cache past analyses for a document. Invalidate by clearing cache if needed."""
-    return checker.get_analyses(document_id)
+    rows = checker.get_analyses(document_id)
+    # Keep history lightweight. The full raw payload is only needed for the
+    # newest row shown in detail.
+    trimmed_rows = []
+    for idx, row in enumerate(rows[:50]):
+        copied = dict(row)
+        if idx > 0:
+            copied["full_response_json"] = None
+        trimmed_rows.append(copied)
+    return trimmed_rows
 @st.cache_data
 def _cached_get_documents(org_id: str):
     """Cache active documents for the organisation. Invalidate if documents are uploaded/deleted."""
@@ -1309,13 +1335,55 @@ elif latest_saved_analysis:
         "source_url": latest_saved_analysis.get("source_url") or "",
     }
 
+    saved_result_for_pdf = {
+        "compliance_score": saved_score,
+        "present_elements": saved_present,
+        "missing_elements": saved_missing,
+        "partial_elements": saved_partial,
+        "strengths": saved_strengths,
+        "gaps": saved_gaps,
+        "recommendations": saved_recs,
+        "summary": saved_summary,
+        "reference_template": saved_ref_context,
+        "body_detected": detected_body_saved,
+        "category_detected": detected_category_saved,
+    }
+
+    # Lightweight defaults ensure XAI/SHAP can always render without forcing
+    # expensive tokenization and reference rescoring on initial page load.
+    saved_reference_rows = []
+    saved_token_debug = {
+        "Document pages loaded": 0,
+        "Token sample size": 0,
+        "Tokenization char limit": int(Config.COMPLIANCE_TOKENIZE_CHAR_LIMIT),
+        "Reference candidates": 0,
+    }
+    saved_xai_metrics = {
+        "keyword_coverage": 0.0,
+        "requirements_coverage": 0.0,
+        "sections_coverage": 0.0,
+    }
+    saved_shap_proxy = _compute_shap_proxy(saved_result_for_pdf, saved_xai_metrics)
+    saved_pdf_bytes = None
+    saved_pdf_error = None
+
     # ── Cache heavy saved-analysis artifacts keyed by (document_id, analysis id)
     # so tokenisation / scoring / PDF are not rebuilt on every rerender. ──────
-    _saved_arts_key = f"_compliance_saved_arts_{document_id}_{latest_saved_analysis.get('id', 0)}"
+    saved_analysis_id = latest_saved_analysis.get("id", 0)
+    _saved_arts_key = f"_compliance_saved_arts_{document_id}_{saved_analysis_id}"
+    _saved_details_loaded_key = f"_compliance_saved_details_loaded_{document_id}_{saved_analysis_id}"
     _saved_arts = st.session_state.get(_saved_arts_key)
+    saved_details_loaded = bool(st.session_state.get(_saved_details_loaded_key, False))
     current_saved_ref_id = saved_ref_context.get("id")
     current_saved_ref_name = saved_ref_context.get("name")
-    if _saved_arts is None:
+    if _saved_arts is None and not saved_details_loaded:
+        load_col, _ = st.columns([3, 9])
+        with load_col:
+            if st.button("Load detailed saved analysis", use_container_width=True):
+                st.session_state[_saved_details_loaded_key] = True
+                st.rerun()
+        st.caption("Detailed evidence (token diagnostics, ranked references, and PDF prep) loads on demand for faster page opening. XAI + SHAP are shown immediately using lightweight metrics.")
+    elif _saved_arts is None:
         saved_pages = db.fetchall(
             "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
             (document_id,),
@@ -1350,19 +1418,6 @@ elif latest_saved_analysis:
             "Token sample size": len(saved_doc_tokens),
             "Tokenization char limit": int(Config.COMPLIANCE_TOKENIZE_CHAR_LIMIT),
             "Reference candidates": len(saved_candidate_templates),
-        }
-        saved_result_for_pdf = {
-            "compliance_score": saved_score,
-            "present_elements": saved_present,
-            "missing_elements": saved_missing,
-            "partial_elements": saved_partial,
-            "strengths": saved_strengths,
-            "gaps": saved_gaps,
-            "recommendations": saved_recs,
-            "summary": saved_summary,
-            "reference_template": saved_ref_context,
-            "body_detected": detected_body_saved,
-            "category_detected": detected_category_saved,
         }
         saved_exec_summary = _build_executive_summary(saved_result_for_pdf, 0.0)
         saved_xai_template = {
@@ -1542,7 +1597,10 @@ elif latest_saved_analysis:
             {"Metric": "Section coverage", "Value": f"{saved_xai_metrics['sections_coverage']:.0%}"},
         ])
         st.dataframe(xai_df, use_container_width=True, hide_index=True)
-        st.caption("This XAI view includes tokenization diagnostics and scoring coverage used for SHAP-style attribution.")
+        if _saved_arts is None and not saved_details_loaded:
+            st.caption("Quick XAI mode: SHAP proxy is computed from saved compliance outputs. Click 'Load detailed saved analysis' for token/reference coverage diagnostics.")
+        else:
+            st.caption("This XAI view includes tokenization diagnostics and scoring coverage used for SHAP-style attribution.")
         _render_shap_heatmap(saved_shap_proxy)
 
         with st.expander("Tokenization diagnostics", expanded=False):

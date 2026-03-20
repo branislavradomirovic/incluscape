@@ -1,38 +1,64 @@
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 class Geocoder:
-    """Geocode place names to lat/lon using geopy Nominatim."""
+    """Geocode place names to lat/lon using free geocoding providers."""
 
     def __init__(self, user_agent: str = "incluscape-geocoder"):
-        self._geolocator = None
+        self._providers = None
         self.user_agent = user_agent
 
-    def _get_geolocator(self):
-        if self._geolocator is None:
+    def _get_providers(self) -> List[Tuple[str, Callable[[str], object]]]:
+        if self._providers is None:
+            providers: List[Tuple[str, Callable[[str], object]]] = []
             try:
-                from geopy.geocoders import Nominatim
+                from geopy.geocoders import ArcGIS, Nominatim, Photon
                 from geopy.extra.rate_limiter import RateLimiter
-                geolocator = Nominatim(user_agent=self.user_agent)
-                self._geolocator = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+
+                nominatim = Nominatim(user_agent=self.user_agent)
+                photon = Photon(user_agent=self.user_agent)
+                arcgis = ArcGIS(user_agent=self.user_agent)
+
+                # Use free providers in a fallback chain for better coordinate coverage.
+                providers.append(("nominatim", RateLimiter(nominatim.geocode, min_delay_seconds=1.0)))
+                providers.append(("photon", RateLimiter(photon.geocode, min_delay_seconds=0.7)))
+                providers.append(("arcgis", RateLimiter(arcgis.geocode, min_delay_seconds=0.5)))
             except Exception as exc:
                 logger.warning("geopy not available: %s", exc)
-                self._geolocator = False
-        return self._geolocator
+            self._providers = providers
+        return self._providers or []
+
+    @staticmethod
+    def _candidate_queries(place_name: str) -> List[str]:
+        base = (place_name or "").strip()
+        if not base:
+            return []
+        queries = [base]
+        if "," not in base:
+            queries.append(f"{base}, Serbia")
+        return queries
 
     def geocode(self, place_name: str) -> Tuple[Optional[float], Optional[float]]:
-        geocode_fn = self._get_geolocator()
-        if not geocode_fn:
+        providers = self._get_providers()
+        if not providers:
             return None, None
-        try:
-            location = geocode_fn(place_name)
-            if location:
-                return location.latitude, location.longitude
-        except Exception as exc:
-            logger.debug("Geocoding failed for '%s': %s", place_name, exc)
+
+        for query in self._candidate_queries(place_name):
+            for provider_name, geocode_fn in providers:
+                try:
+                    location = geocode_fn(query)
+                    if location:
+                        return location.latitude, location.longitude
+                except Exception as exc:
+                    logger.debug(
+                        "Geocoding failed for '%s' with provider '%s': %s",
+                        query,
+                        provider_name,
+                        exc,
+                    )
         return None, None
 
     def geocode_batch(self, locations: List[Dict]) -> List[Dict]:
