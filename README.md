@@ -48,6 +48,58 @@ streamlit run streamlit_app/app.py
 
 The app will be available at **http://localhost:8501**
 
+## Environment Profiles
+
+Use one codebase with different providers per environment.
+
+| Environment | Hosting | Provider | Key Variables |
+|---|---|---|---|
+| Local development | Your notebook | Ollama | `SEMANTIC_LLM_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=qwen2.5:14b-instruct` |
+| Customer demo | Streamlit Community Cloud | Gemini | `SEMANTIC_LLM_PROVIDER=gemini`, `GEMINI_API_KEY=...`, `ENABLE_SEMANTIC_ANALYSIS=true` |
+
+This keeps local AI quality and speed, while preserving a stable external demo URL from GitHub.
+
+## Branching Policy
+
+- `main`: customer-facing demo branch (auto-deployed)
+- `dev`: integration branch for ongoing work
+- `feature/<name>`: short-lived branches for focused changes
+
+Recommended flow:
+
+1. Create a feature branch from `dev`
+2. Commit and push frequently
+3. Merge feature branch into `dev` after local validation
+4. Run pre-deploy checks
+5. Merge `dev` into `main` when ready to showcase
+
+## Pre-Deploy Check
+
+Run this before every merge to `main`:
+
+```bash
+bash scripts/pre_deploy_check.sh
+```
+
+The check script validates:
+
+- required project files
+- Python syntax compilation for app modules
+- local environment sample consistency
+
+## Demo Checklist
+
+Before pushing to `main`, confirm all items below:
+
+1. App starts locally without errors (`streamlit run streamlit_app/app.py`)
+2. Core pages load: Documents, Reports, Changes, Map, Compliance
+3. Semantic analysis works in target demo environment
+4. No secrets committed (API keys only in platform secrets)
+5. `bash scripts/pre_deploy_check.sh` passes
+6. Demo dataset is present and recent outputs are clean
+7. Commit message clearly describes customer-visible change
+8. Push to `main` completed and cloud deployment is green
+
 ## Project Structure
 
 ```
