@@ -4,15 +4,15 @@ from pathlib import Path
 
 # ── Navigation definition ──────────────────────────────────────────────────
 _NAV = [
-    ("🏠", "Home",       "streamlit_app/app.py"),
-    ("📄", "Documents",  "streamlit_app/pages/1_Documents.py"),
-    ("📋", "Templates",  "streamlit_app/pages/2_Templates.py"),
-    ("📊", "Reports",    "streamlit_app/pages/3_Reports.py"),
-    ("🔍", "Changes",    "streamlit_app/pages/4_Changes.py"),
-    ("🗺️", "Map",        "streamlit_app/pages/5_Map.py"),
-    ("🔎", "Compliance", "streamlit_app/pages/6_Compliance.py"),
-    ("🌐", "Sources",    "streamlit_app/pages/8_Sources.py"),
-    ("❓", "Help",       "streamlit_app/pages/7_Help.py"),
+    ("🏠", "Home",       "app.py"),
+    ("📄", "Documents",  "pages/1_Documents.py"),
+    ("📋", "Templates",  "pages/2_Templates.py"),
+    ("📊", "Reports",    "pages/3_Reports.py"),
+    ("🔍", "Changes",    "pages/4_Changes.py"),
+    ("🗺️", "Map",        "pages/5_Map.py"),
+    ("🔎", "Compliance", "pages/6_Compliance.py"),
+    ("🌐", "Sources",    "pages/8_Sources.py"),
+    ("❓", "Help",       "pages/7_Help.py"),
 ]
 
 _LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "INCLUSCAPE Logo.png"
@@ -102,7 +102,7 @@ def render_sidebar() -> None:
         # Link to dedicated Help page
         col1, col2 = st.columns([2, 1])
         with col1:
-            st.page_link("streamlit_app/pages/7_Help.py", label="📖 Full Documentation", icon="❓")
+            st.page_link("pages/7_Help.py", label="📖 Full Documentation", icon="❓")
         
         # Quick reference in expander
         with st.expander("⚡ Quick Guide", expanded=False):
