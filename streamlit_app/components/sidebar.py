@@ -67,16 +67,34 @@ def render_sidebar() -> None:
         <style>
             [data-testid="stSidebarNav"] { display: none; }
             .block-container { padding-top: 1.1rem; }
-            [data-testid="stPageLink"] { margin-top: 0.08rem; margin-bottom: 0.08rem; }
+
+            /* Nav links — button style */
+            [data-testid="stPageLink"] {
+                margin-top: 0.18rem;
+                margin-bottom: 0.18rem;
+            }
+            [data-testid="stPageLink"] a {
+                display: flex !important;
+                align-items: center !important;
+                width: 100% !important;
+                padding: 0.42rem 0.75rem !important;
+                border-radius: 0.4rem !important;
+                border: 1px solid rgba(49, 51, 63, 0.18) !important;
+                background: rgba(49, 51, 63, 0.04) !important;
+                font-weight: 500 !important;
+                text-decoration: none !important;
+                transition: background 0.15s ease, border-color 0.15s ease;
+            }
+            [data-testid="stPageLink"] a:hover {
+                background: rgba(49, 51, 63, 0.11) !important;
+                border-color: rgba(49, 51, 63, 0.32) !important;
+            }
+
             @media (max-width: 1400px) {
-                .block-container h1 {
-                    font-size: 2.35rem;
-                }
+                .block-container h1 { font-size: 2.35rem; }
             }
             @media (max-width: 1100px) {
-                .block-container h1 {
-                    font-size: 2.05rem;
-                }
+                .block-container h1 { font-size: 2.05rem; }
             }
         </style>
         """,
@@ -85,11 +103,14 @@ def render_sidebar() -> None:
 
     with st.sidebar:
         if _LOGO_PATH.exists():
-            left, center, right = st.columns([1, 8, 1])
-            with center:
-                st.image(str(_LOGO_PATH), use_column_width=True)
-            
-        st.markdown("<div style='text-align: center; font-size: 0.95rem; margin-top: -1.4rem; margin-bottom: 0.2rem;'><i>Social Inclusion Document Analyzer</i></div>", unsafe_allow_html=True)
+            st.image(str(_LOGO_PATH), use_column_width=True)
+
+        st.markdown(
+            "<div style='text-align: center; font-size: 0.93rem; "
+            "margin-top: 0.3rem; margin-bottom: 0.6rem;'>"
+            "<i>Social Inclusion Document Analyzer</i></div>",
+            unsafe_allow_html=True,
+        )
 
         st.markdown("### Navigation")
         for icon, label, page in _NAV:
@@ -98,11 +119,8 @@ def render_sidebar() -> None:
         st.markdown("---")
 
         st.markdown("### 📚 Help & Resources")
-        
-        # Link to dedicated Help page
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.page_link("pages/7_Help.py", label="📖 Full Documentation", icon="❓")
+
+        st.page_link("pages/7_Help.py", label="📖 Full Documentation", icon="❓")
         
         # Quick reference in expander
         with st.expander("⚡ Quick Guide", expanded=False):
