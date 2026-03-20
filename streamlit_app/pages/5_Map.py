@@ -208,15 +208,9 @@ force_reextract = st.checkbox(
 
 _render_diagnostics(docs, selected_ids)
 
-current_signature = (tuple(sorted(selected_ids)), bool(force_reextract))
-selection_changed = st.session_state.get("map_last_signature") != current_signature
-
-if selected_ids and selection_changed:
-    with st.spinner("Auto-refreshing geospatial data for selected documents..."):
-        _run_extraction(selected_ids, force_reextract=force_reextract)
-
 if st.button("🔍 Extract & Map Locations", type="primary") and selected:
-    _run_extraction(selected_ids, force_reextract=force_reextract)
+    with st.spinner("Extracting and geocoding locations..."):
+        _run_extraction(selected_ids, force_reextract=force_reextract)
 
 last_locations = st.session_state.get("map_last_locations") or []
 last_stats = st.session_state.get("map_last_extraction_stats") or []

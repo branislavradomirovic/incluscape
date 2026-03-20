@@ -1,3 +1,4 @@
+import base64
 import streamlit as st
 from pathlib import Path
 
@@ -68,20 +69,6 @@ def render_sidebar() -> None:
             [data-testid="stSidebarNav"] { display: none; }
             .block-container { padding-top: 1.1rem; }
 
-            /* Push sidebar content to the very top — covers Streamlit 1.32–1.55 */
-            section[data-testid="stSidebar"] > div:first-child {
-                padding-top: 0rem !important;
-            }
-            [data-testid="stSidebarContent"] {
-                padding-top: 0rem !important;
-            }
-            [data-testid="stSidebarContent"] > div:first-child {
-                padding-top: 0rem !important;
-            }
-            [data-testid="stSidebarUserContent"] {
-                padding-top: 0rem !important;
-            }
-
             /* Nav links — button style */
             [data-testid="stPageLink"] {
                 margin-top: 0.18rem;
@@ -116,13 +103,24 @@ def render_sidebar() -> None:
     )
 
     with st.sidebar:
+        # Render logo + subtitle as inline HTML so margin-top pulls it
+        # flush to the top regardless of Streamlit's container padding.
+        logo_html = ""
         if _LOGO_PATH.exists():
-            st.image(str(_LOGO_PATH), use_column_width=True)
-
+            try:
+                logo_b64 = base64.b64encode(_LOGO_PATH.read_bytes()).decode()
+                logo_html = (
+                    f'<img src="data:image/png;base64,{logo_b64}" '
+                    'style="width:85%;max-width:220px;display:block;margin:0 auto;">'
+                )
+            except Exception:
+                pass
         st.markdown(
-            "<div style='text-align: center; font-size: 0.93rem; "
-            "margin-top: 0.3rem; margin-bottom: 0.6rem;'>"
-            "<i>Social Inclusion Document Analyzer</i></div>",
+            f"<div style='text-align:center;margin-top:-3.5rem;padding-bottom:0.5rem;'>"
+            f"{logo_html}"
+            f"<p style='font-size:0.88rem;margin:0.4rem 0 0.6rem;'>"
+            f"<i>Social Inclusion Document Analyzer</i></p>"
+            f"</div>",
             unsafe_allow_html=True,
         )
 
