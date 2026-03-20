@@ -66,7 +66,7 @@ class Config:
     DEFAULT_MAP_ZOOM: int = 7
 
     # Semantic Analysis provider
-    SEMANTIC_LLM_PROVIDER: str = os.getenv("SEMANTIC_LLM_PROVIDER", "gemini").lower()
+    SEMANTIC_LLM_PROVIDER: str = os.getenv("SEMANTIC_LLM_PROVIDER", "ollama").lower()
 
     # Google Gemini
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
