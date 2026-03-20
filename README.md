@@ -73,6 +73,32 @@ Recommended flow:
 4. Run pre-deploy checks
 5. Merge `dev` into `main` when ready to showcase
 
+### PR Workflow Commands
+
+```bash
+# Start new work from dev
+git checkout dev
+git pull
+git checkout -b feature/<short-name>
+
+# Work, commit, push
+git add .
+git commit -m "<clear change summary>"
+git push -u origin feature/<short-name>
+
+# Open PR: feature/<short-name> -> dev
+# After merge to dev and final validation, open PR: dev -> main
+```
+
+### Required GitHub Settings
+
+Enable branch protection for `dev` and `main` in GitHub:
+
+1. Require a pull request before merging
+2. Require status checks to pass
+3. Select status check: `Pre-Deploy Check / pre-deploy-check`
+4. Restrict direct pushes (optional but recommended)
+
 ## Pre-Deploy Check
 
 Run this before every merge to `main`:
