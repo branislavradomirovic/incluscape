@@ -113,6 +113,16 @@ The check script validates:
 - Python syntax compilation for app modules
 - local environment sample consistency
 
+## Release to Streamlit
+
+Use this exact 5-step checklist:
+
+1. Make changes
+2. Run check: `bash scripts/pre_deploy_check.sh`
+3. Commit
+4. Get commit to deploy branch (`main` in your setup): either direct push to `main`, or PR merge `dev -> main`
+5. Streamlit Cloud auto-redeploys from `main`
+
 ## Demo Checklist
 
 Before pushing to `main`, confirm all items below:
