@@ -68,9 +68,18 @@ def render_sidebar() -> None:
             [data-testid="stSidebarNav"] { display: none; }
             .block-container { padding-top: 1.1rem; }
 
-            /* Push sidebar content to the very top */
+            /* Push sidebar content to the very top — covers Streamlit 1.32–1.55 */
             section[data-testid="stSidebar"] > div:first-child {
-                padding-top: 0.5rem !important;
+                padding-top: 0rem !important;
+            }
+            [data-testid="stSidebarContent"] {
+                padding-top: 0rem !important;
+            }
+            [data-testid="stSidebarContent"] > div:first-child {
+                padding-top: 0rem !important;
+            }
+            [data-testid="stSidebarUserContent"] {
+                padding-top: 0rem !important;
             }
 
             /* Nav links — button style */
