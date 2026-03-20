@@ -5,9 +5,6 @@ runOnSave = false
 port = 8501
 headless = true
 
-[client]
-maxMessageSize = 200   # MB — for handling large file uploads
-
 [theme]
 base = "light"
 
