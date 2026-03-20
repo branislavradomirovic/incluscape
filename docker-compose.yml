@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: incluscape-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_NUM_GPU=-1  # Use all GPU layers for acceleration
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  streamlit:
+    build: .
+    container_name: incluscape-streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:14b-instruct
+      - OLLAMA_TIMEOUT_SEC=600
+      - OLLAMA_KEEP_ALIVE=60m
+      - OLLAMA_NUM_CTX=4096
+      - OLLAMA_NUM_GPU=-1
+      - OLLAMA_NUM_BATCH=512
+      - ENABLE_SEMANTIC_ANALYSIS=true
+      - DATABASE_PATH=./data/incluscape.db
+      - UPLOAD_FOLDER=./uploads
+      - EXPORT_FOLDER=./exports
+      - TEMP_FOLDER=./temp
+      - LOG_LEVEL=INFO
+      - DEBUG=false
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./exports:/app/exports
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama-data:
