@@ -16,11 +16,19 @@ from __future__ import annotations
 import argparse
 import os
 import sqlite3
+import sys
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from typing import Dict, List, Sequence
 
 import psycopg2
 from psycopg2.extras import execute_values
+
+
+# Make project root importable when running this script directly.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 TABLE_ORDER: List[str] = [
@@ -77,6 +85,17 @@ def parse_args() -> argparse.Namespace:
         help="Truncate target PostgreSQL tables before import",
     )
     return parser.parse_args()
+
+
+def _ensure_sslmode(url: str) -> str:
+    """Add sslmode=require when not present (needed by Supabase)."""
+    parsed = urlparse(url)
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    if "sslmode" not in params:
+        params["sslmode"] = "require"
+        parsed = parsed._replace(query=urlencode(params))
+        return urlunparse(parsed)
+    return url
 
 
 def _sqlite_columns(conn: sqlite3.Connection, table: str) -> List[str]:
@@ -152,6 +171,7 @@ def main() -> int:
     postgres_url = (args.postgres_url or "").strip()
     if not postgres_url:
         raise ValueError("Missing PostgreSQL URL. Pass --postgres-url or set DATABASE_URL.")
+    postgres_url = _ensure_sslmode(postgres_url)
 
     # Ensure PostgreSQL schema exists by reusing app initialization.
     os.environ["DATABASE_URL"] = postgres_url

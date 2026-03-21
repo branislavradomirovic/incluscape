@@ -3,6 +3,7 @@ import logging
 import re
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from typing import Any, Dict, List, Optional
 
 try:
@@ -38,12 +39,24 @@ class DatabaseManager:
             self.database_url = str(getattr(Config, "DATABASE_URL", "") or "").strip()
             if self.database_url.startswith("postgresql://") or self.database_url.startswith("postgres://"):
                 self.backend = "postgres"
+                self.database_url = self._ensure_sslmode(self.database_url)
 
             db_path = Config.DATABASE_PATH
 
         self.db_path = str(db_path)
         if self.backend == "sqlite":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _ensure_sslmode(url: str) -> str:
+        """Add sslmode=require to postgres URLs if missing (Supabase compatibility)."""
+        parsed = urlparse(url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        if "sslmode" not in params:
+            params["sslmode"] = "require"
+            parsed = parsed._replace(query=urlencode(params))
+            return urlunparse(parsed)
+        return url
 
     def _normalise_sql(self, sql: str) -> str:
         """Convert SQLite-style placeholders to backend-specific placeholders."""
