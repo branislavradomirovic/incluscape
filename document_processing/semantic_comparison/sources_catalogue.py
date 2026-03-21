@@ -1,5 +1,5 @@
 """
-Sources catalogue manager for INCLUSCAPE reference templates.
+Sources catalogue manager for SIPMT reference templates.
 
 The catalogue (reference_templates/sources_catalogue.json) is the single
 source of truth for *which* official documents to track.  This module

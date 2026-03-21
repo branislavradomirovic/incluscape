@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "description": "INCLUSCAPE reference template catalogue for semantic compliance analysis",
+  "description": "SIPMT reference template catalogue for semantic compliance analysis",
   "bodies": ["UN", "UNESCO", "EU", "World Bank", "OECD", "National", "Other"],
   "templates": [
     {

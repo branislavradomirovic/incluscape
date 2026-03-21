@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""One-time data migration from SQLite to PostgreSQL for INCLUSCAPE.
+"""One-time data migration from SQLite to PostgreSQL for SIPMT.
 
 Usage:
   python scripts/migrate_sqlite_to_postgres.py \
-    --sqlite-path ./data/incluscape.db \
+    --sqlite-path ./data/sipmt.db \
     --postgres-url postgresql://user:pass@host:5432/dbname
 
 Safety:
@@ -69,11 +69,11 @@ ID_TABLES: List[str] = [
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Migrate INCLUSCAPE data from SQLite to PostgreSQL")
+    parser = argparse.ArgumentParser(description="Migrate SIPMT data from SQLite to PostgreSQL")
     parser.add_argument(
         "--sqlite-path",
-        default="./data/incluscape.db",
-        help="Path to SQLite database file (default: ./data/incluscape.db)",
+        default="./data/sipmt.db",
+        help="Path to SQLite database file (default: ./data/sipmt.db)",
     )
     parser.add_argument(
         "--postgres-url",

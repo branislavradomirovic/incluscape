@@ -59,7 +59,7 @@ def _optional_csv(name: str):
 
 
 class Config:
-    APP_NAME: str = "INCLUSCAPE"
+    APP_NAME: str = "SIPMT"
     APP_VERSION: str = "1.0.0"
     DOCUMENT_CATEGORIES: list = [
         "Questionnaire",
@@ -73,11 +73,11 @@ class Config:
     # Paths
     BASE_DIR: Path = BASE_DIR
     DATABASE_URL: str = str(_get_setting("DATABASE_URL", ""))
-    DATABASE_PATH: str = str(_get_setting("DATABASE_PATH", str(BASE_DIR / "data" / "incluscape.db")))
+    DATABASE_PATH: str = str(_get_setting("DATABASE_PATH", str(BASE_DIR / "data" / "sipmt.db")))
     UPLOAD_FOLDER: str = str(_get_setting("UPLOAD_FOLDER", str(BASE_DIR / "uploads")))
     EXPORT_FOLDER: str = str(_get_setting("EXPORT_FOLDER", str(BASE_DIR / "exports")))
     TEMP_FOLDER: str = str(_get_setting("TEMP_FOLDER", str(BASE_DIR / "temp")))
-    LOG_FILE: str = str(_get_setting("LOG_FILE", str(BASE_DIR / "logs" / "incluscape.log")))
+    LOG_FILE: str = str(_get_setting("LOG_FILE", str(BASE_DIR / "logs" / "sipmt.log")))
 
     # Application
     DEBUG: bool = _as_bool(_get_setting("DEBUG", "False"), default=False)

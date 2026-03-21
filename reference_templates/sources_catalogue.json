@@ -1,5 +1,5 @@
 {
-  "_comment": "Master source catalogue for INCLUSCAPE reference templates. Add new bodies or source entries here; the refresh pipeline will automatically fetch, enrich, and seed them into the database.",
+  "_comment": "Master source catalogue for SIPMT reference templates. Add new bodies or source entries here; the refresh pipeline will automatically fetch, enrich, and seed them into the database.",
   "_version": "2.0",
   "_updated": "2026-03-18",
   "sources": [

@@ -6,11 +6,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import streamlit as st
 from streamlit_app.components.sidebar import render_sidebar
 
-st.set_page_config(page_title="Help — INCLUSCAPE", page_icon="❓", layout="wide")
+st.set_page_config(page_title="Help — SIPMT", page_icon="❓", layout="wide")
 render_sidebar()
 
 st.title("❓ Help & Documentation")
-st.markdown("Comprehensive guide to all features in INCLUSCAPE")
+st.markdown("Comprehensive guide to all features in SIPMT")
 st.markdown("---")
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ with st.expander("🏠 **Home** — Overview Dashboard", expanded=True):
     - Locations are geocoded (if `ENABLE_GEOCODING=True` in `.env`) and marked on an OpenStreetMap layer
 
     #### When to Use:
-    - When you first open INCLUSCAPE to see workspace statistics
+    - When you first open SIPMT to see workspace statistics
     - To understand the geographic reach of your policies
     - As a quick health check that documents are being processed
     """)
@@ -96,7 +96,7 @@ with st.expander("📋 **Templates** — Define Data Extraction Fields"):
     - A **name** that describes what the template captures (e.g., "Social Inclusion Indicators", "Health Policy Compliance Check")
     - A **set of fields**, each with:
       - **Field name** — A descriptive label (e.g., "Target Population", "Implementation Date")
-      - **Field type** — The data type INCLUSCAPE will look for:
+      - **Field type** — The data type SIPMT will look for:
         - **Text** — Free-form text fields (e.g., description, summary)
         - **Number** — Numeric values (e.g., budget amount, percentage)
         - **Date** — Calendar dates (e.g., effective date, review date)
@@ -107,7 +107,7 @@ with st.expander("📋 **Templates** — Define Data Extraction Fields"):
       - **Priority** — Whether field is Required or Optional
 
     #### Template Matching Process:
-    Once you create a template, INCLUSCAPE uses **fuzzy matching** to automatically find corresponding values in documents:
+    Once you create a template, SIPMT uses **fuzzy matching** to automatically find corresponding values in documents:
     1. Field name is compared against extracted document text
     2. Semantic analyzer (Gemini or Ollama) helps interpret intent
     3. Matched values are auto-filled in generated reports
@@ -175,7 +175,7 @@ with st.expander("🔍 **Changes** — Track Document Versions"):
     
     #### Change Tracking Workflow:
     1. **Automatic Detection** — When you upload a revised version of an existing document,
-       INCLUSCAPE detects it has the same name but different content
+       SIPMT detects it has the same name but different content
     2. **Diff Generation** — The system runs a comparison to identify:
        - **Added** — New sections, paragraphs, or content
        - **Removed** — Sections deleted in the new version
@@ -400,5 +400,5 @@ st.markdown("""
 - **Report issues** — Contact your system administrator with error messages
 
 ---
-*Last updated: March 2026 | INCLUSCAPE v1.0*
+*Last updated: March 2026 | SIPMT v1.0*
 """)

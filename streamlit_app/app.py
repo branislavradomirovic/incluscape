@@ -43,13 +43,13 @@ if "user_id" not in st.session_state:
 # ── Home page ──────────────────────────────────────────────────────────────
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("🌍 INCLUSCAPE")
+    st.title("🌍 SIPMT")
 with col2:
     render_help_button("🏠 Home")
 st.subheader("Social Inclusion Document Analyzer")
 
 st.markdown("""
-Welcome to **INCLUSCAPE** — upload questionnaires, policies, instructions, forms,
+Welcome to **SIPMT** — upload questionnaires, policies, instructions, forms,
 reports, and monitoring documents, then let the system extract structured information, fill your report
 templates automatically, and visualise locations on an interactive map.
 

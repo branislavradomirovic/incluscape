@@ -9,7 +9,7 @@ from template_matching.template_manager import TemplateManager
 from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Templates — INCLUSCAPE", page_icon="📋", layout="wide")
+st.set_page_config(page_title="Templates — SIPMT", page_icon="📋", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])

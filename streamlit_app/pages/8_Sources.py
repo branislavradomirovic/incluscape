@@ -18,7 +18,7 @@ from document_processing.semantic_comparison.reference_updater import ReferenceT
 from document_processing.semantic_comparison.sources_catalogue import SourcesCatalogue
 from streamlit_app.components.sidebar import render_sidebar
 
-st.set_page_config(page_title="Sources – INCLUSCAPE", page_icon="🌐", layout="wide")
+st.set_page_config(page_title="Sources – SIPMT", page_icon="🌐", layout="wide")
 render_sidebar()
 
 st.title("🌐 Reference Sources Catalogue")
@@ -45,7 +45,7 @@ def _probe(url: str, timeout: int = 12) -> dict:
     try:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "INCLUSCAPE/1.0 (+source-check)"},
+            headers={"User-Agent": "SIPMT/1.0 (+source-check)"},
             method="HEAD",
         )
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -55,7 +55,7 @@ def _probe(url: str, timeout: int = 12) -> dict:
             try:
                 req2 = urllib.request.Request(
                     url,
-                    headers={"User-Agent": "INCLUSCAPE/1.0 (+source-check)"},
+                    headers={"User-Agent": "SIPMT/1.0 (+source-check)"},
                     method="GET",
                 )
                 with urllib.request.urlopen(req2, timeout=timeout) as r:

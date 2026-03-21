@@ -1,7 +1,4 @@
--- ============================================================
--- INCLUSCAPE — PostgreSQL Database Schema
--- ============================================================
-
+-- SIPMT — PostgreSQL Database Schema
 CREATE TABLE IF NOT EXISTS organisations (
     id          BIGSERIAL PRIMARY KEY,
     name        TEXT    NOT NULL UNIQUE,

@@ -16,7 +16,7 @@ _NAV = [
     ("❓", "Help",       "pages/7_Help.py"),
 ]
 
-_LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "INCLUSCAPE Logo.png"
+_LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "SIPMT_LOGO.png"
 
 # ── Help descriptions ──────────────────────────────────────────────────────
 _HELP = {
@@ -118,8 +118,6 @@ def render_sidebar() -> None:
         st.markdown(
             f"<div style='text-align:center;margin-top:-3.5rem;padding-bottom:0.5rem;'>"
             f"{logo_html}"
-            f"<p style='font-size:0.88rem;margin:0.4rem 0 0.6rem;'>"
-            f"<i>Social Inclusion Document Analyzer</i></p>"
             f"</div>",
             unsafe_allow_html=True,
         )

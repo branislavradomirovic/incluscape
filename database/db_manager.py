@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
-    """Database access layer for INCLUSCAPE (PostgreSQL or SQLite)."""
+    """Database access layer for SIPMT (PostgreSQL or SQLite)."""
 
     DOCUMENT_TYPE_MIGRATION_MAP = {
         "policy": "Policies",

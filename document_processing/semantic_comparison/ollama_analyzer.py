@@ -1,5 +1,5 @@
 """
-Ollama-powered semantic analysis for INCLUSCAPE.
+Ollama-powered semantic analysis for SIPMT.
 
 Uses local Ollama HTTP API to provide:
   - classify_document()

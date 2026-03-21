@@ -1,7 +1,4 @@
--- ============================================================
--- INCLUSCAPE — SQLite Database Schema
--- ============================================================
-
+-- SIPMT — SQLite Database Schema
 PRAGMA foreign_keys = ON;
 PRAGMA journal_mode = WAL;
 

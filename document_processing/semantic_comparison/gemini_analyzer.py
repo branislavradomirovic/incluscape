@@ -1,5 +1,5 @@
 """
-Gemini-powered semantic analysis for INCLUSCAPE.
+Gemini-powered semantic analysis for SIPMT.
 
 Wraps google-generativeai to provide:
   - classify_document()   — detect governing body + category from text

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-INCLUSCAPE — One-time project initialization script.
+SIPMT — One-time project initialization script.
 Run after cloning: python setup.py
 """
 
@@ -37,7 +37,7 @@ def create_env_file():
         print("  ✓ .env created from .env.example")
     else:
         env_file.write_text(
-            "DATABASE_PATH=./data/incluscape.db\n"
+            "DATABASE_PATH=./data/sipmt.db\n"
             "UPLOAD_FOLDER=./uploads\n"
             "DEBUG=False\n"
             "SECRET_KEY=change-me\n"
@@ -58,7 +58,7 @@ def initialize_database():
 
 def main():
     print("=" * 52)
-    print("  INCLUSCAPE — Project Setup")
+    print("  SIPMT — Project Setup")
     print("=" * 52)
     create_directories()
     print("\nConfiguration...")

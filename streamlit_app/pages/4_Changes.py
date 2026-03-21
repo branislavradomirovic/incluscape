@@ -11,7 +11,7 @@ from change_tracking.version_manager import VersionManager
 from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Change Monitor — INCLUSCAPE", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Change Monitor — SIPMT", page_icon="🔍", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])

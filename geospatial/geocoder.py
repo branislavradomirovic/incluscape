@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class Geocoder:
     """Geocode place names to lat/lon using free geocoding providers."""
 
-    def __init__(self, user_agent: str = "incluscape-geocoder"):
+    def __init__(self, user_agent: str = "sipmt-geocoder"):
         self._providers = None
         self.user_agent = user_agent
 

@@ -23,7 +23,7 @@ from streamlit_app.components.help_button import render_help_button
 from streamlit_app.components.sidebar import render_sidebar
 
 
-st.set_page_config(page_title="Compliance - INCLUSCAPE", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="Compliance - SIPMT", page_icon="🔎", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -379,7 +379,7 @@ def _build_executive_pdf(
     pdf.add_page()
 
     pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, _to_pdf_safe("INCLUSCAPE - Executive Compliance Brief"), ln=True)
+    pdf.cell(0, 10, _to_pdf_safe("SIPMT - Executive Compliance Brief"), ln=True)
     pdf.set_font("Helvetica", size=10)
     pdf.cell(0, 6, _to_pdf_safe(f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"), ln=True)
     pdf.cell(0, 6, _to_pdf_safe(f"Document: {document_label}"), ln=True)

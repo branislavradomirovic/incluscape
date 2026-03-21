@@ -1,11 +1,11 @@
-# INCLUSCAPE
+# SIPMT
 
-**INCLUSCAPE** is a Python/Streamlit SaaS application for **social inclusion document analysis**. Upload questionnaires, policies, instructions, forms, reports, and monitoring documents — INCLUSCAPE extracts structured data, fills predefined report templates, monitors document changes over time, and visualizes information on an interactive map.
+**SIPMT** is a Python/Streamlit SaaS application for **social inclusion document analysis**. Upload questionnaires, policies, instructions, forms, reports, and monitoring documents — SIPMT extracts structured data, fills predefined report templates, monitors document changes over time, and visualizes information on an interactive map.
 
 ## Features
 
 - 📄 **Multi-format document ingestion** — PDF, DOCX, XLSX with optional OCR
-- 📋 **Template-driven extraction** — upload a report template; INCLUSCAPE fills it from your documents automatically
+- 📋 **Template-driven extraction** — upload a report template; SIPMT fills it from your documents automatically
 - 🔍 **Change monitoring** — detect and track changes across document versions over time
 - 🗺️ **Geospatial visualization** — extract locations from documents and plot them on an interactive map
 - 🏢 **Multi-organization support** — manage multiple organisations and user roles
@@ -26,8 +26,8 @@
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/branislavradomirovic/incluscape.git
-cd incluscape
+git clone https://github.com/branislavradomirovic/sipmt.git
+cd sipmt
 
 # 2. Create and activate a virtual environment
 python -m venv .venv
@@ -50,7 +50,7 @@ The app will be available at **http://localhost:8501**
 
 ## Database Configuration
 
-INCLUSCAPE supports two database modes:
+SIPMT supports two database modes:
 
 1. PostgreSQL (recommended for Streamlit Cloud and production)
 2. SQLite (local fallback for quick development)
@@ -62,32 +62,28 @@ Set one of the following:
 DATABASE_URL=postgresql://user:password@host:5432/dbname
 
 # Fallback local file database
-DATABASE_PATH=./data/incluscape.db
+DATABASE_PATH=./data/sipmt.db
 ```
 
 When `DATABASE_URL` is present, PostgreSQL is used automatically.
 
-## Supabase + Streamlit Cloud (Persistent Storage)
+## Shipping Local Postgres + Ollama
 
-For Streamlit Community Cloud, filesystem is ephemeral. To persist both metadata and uploaded files:
+For demo deployments you can keep Streamlit on SQLite, but production/back-office installs should include a bundled PostgreSQL server plus Ollama for semantic analysis:
 
-1. Create a Supabase PostgreSQL project and copy the connection string.
-2. In Streamlit app secrets, set:
+1. Install PostgreSQL locally (Windows installer or bundled service). During installation note the service port (default 5432) and create `sipmt` user/database.
+2. Start Ollama locally (it can be shipped as part of the appliance or run from the same host) and point `OLLAMA_BASE_URL`/`OLLAMA_MODEL` in `.env`.
+3. In `.env`, set:
 
-```toml
-DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres"
-STORE_FILES_IN_DB=true
+```text
+DATABASE_URL=postgresql://sipmt:<password>@127.0.0.1:5432/sipmt
 ENABLE_SEMANTIC_ANALYSIS=true
-SEMANTIC_LLM_PROVIDER="gemini"
-GEMINI_API_KEY="..."
+SEMANTIC_LLM_PROVIDER=ollama
 ```
 
-3. Keep `DATABASE_PATH` unset (or ignored) in cloud mode.
+4. Initialize the database by running `python setup.py`, then run the Postgres migration script if you have existing SQLite data.
 
-Notes:
-
-1. INCLUSCAPE auto-adds `sslmode=require` when missing for PostgreSQL URLs (Supabase-safe default).
-2. `STORE_FILES_IN_DB=true` stores uploaded binary files in table `document_blobs`, enabling reliable re-processing even after container/app restarts.
+The bundled installer should include PostgreSQL binaries, your `sipmt` database, and the required Ollama model/configuration so the customer only needs to configure service credentials and secrets.
 
 ### Migrate Existing SQLite Demo Data to PostgreSQL
 
@@ -95,7 +91,7 @@ Use the one-time migration script:
 
 ```bash
 python scripts/migrate_sqlite_to_postgres.py \
-    --sqlite-path ./data/incluscape.db \
+    --sqlite-path ./data/sipmt.db \
     --postgres-url postgresql://user:password@host:5432/dbname
 ```
 
@@ -103,7 +99,7 @@ If your target PostgreSQL already contains old data and you want to replace it:
 
 ```bash
 python scripts/migrate_sqlite_to_postgres.py \
-    --sqlite-path ./data/incluscape.db \
+    --sqlite-path ./data/sipmt.db \
     --postgres-url postgresql://user:password@host:5432/dbname \
     --truncate-target
 ```
@@ -219,15 +215,14 @@ Before pushing to `main`, confirm all items below:
 ### Docker (single container)
 
 ```bash
-docker build -t incluscape:latest .
+docker build -t sipmt:latest .
 docker run --rm -p 8501:8501 \
   --env-file .env \
-  -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
-  -e STORE_FILES_IN_DB=true \
-  incluscape:latest
+    -e DATABASE_URL="postgresql://sipmt:<password>@localhost:5432/sipmt" \
+    sipmt:latest
 ```
 
-### Docker Compose (app + local PostgreSQL)
+### Docker Compose (app + bundled PostgreSQL)
 
 ```bash
 docker compose up --build
@@ -235,12 +230,12 @@ docker compose up --build
 
 Then open: `http://localhost:8501`
 
-For cloud container services (Cloud Run, Render, Fly.io, Azure Container Apps), use the same image built from `Dockerfile` and inject environment variables/secrets exactly as in `.env.example`.
+For shipping to customers, replace the containerized Postgres service with the packaged Windows service you include in the installer while keeping the Streamlit container/image unchanged.
 
 ## Project Structure
 
 ```
-incluscape/
+sipmt/
 ├── config.py                        # Central configuration
 ├── setup.py                         # One-time initialization script
 ├── requirements.txt

@@ -55,7 +55,7 @@ class ReferenceTemplateUpdater:
     def _fetch_source_payload(self, url: str) -> Dict[str, str]:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "INCLUSCAPE/1.0 (+reference-refresh)"},
+            headers={"User-Agent": "SIPMT/1.0 (+reference-refresh)"},
         )
         with urllib.request.urlopen(req, timeout=45) as resp:
             raw = resp.read().decode("utf-8", errors="ignore")

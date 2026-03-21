@@ -23,7 +23,7 @@ from document_processing.semantic_comparison.sources_catalogue import SourcesCat
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh INCLUSCAPE reference templates.")
+    parser = argparse.ArgumentParser(description="Refresh SIPMT reference templates.")
     parser.add_argument(
         "--no-enrich",
         action="store_true",
