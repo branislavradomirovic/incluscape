@@ -1,44 +1,133 @@
+import json
 import streamlit as st
-from document_processing.processors.hrba_matcher import HRBAMatcher
 from config import Config
+from database.db_manager import DatabaseManager
+from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
+from template_matching.hrba_matcher import HRBAMatcherLLM
 
 st.title("⚖️ HRBA — AAAQ Matcher")
 
 st.markdown(
     """
     Use the HRBA matcher to scan text for AAAQ indicators (Availability, Accessibility,
-    Acceptability, Quality). Paste text below or upload/choose a processed document.
+    Acceptability, Quality). Paste text below or select documents from the database for batch analysis.
     """
 )
 
-matcher = HRBAMatcher()
+db = DatabaseManager()
 
-text_input = st.text_area("Document text or excerpt", height=300)
+# Choose matcher
+mode = st.radio("Matcher", ("spaCy (fast)", "Ollama LLM (JSON)"), index=0)
+use_llm = mode.startswith("Ollama")
 
-if st.button("Analyze text"):
+spaCy_matcher = SpaCyHRBAMatcher()
+llm_matcher = HRBAMatcherLLM()
+
+st.markdown("### Analyze pasted text")
+text_input = st.text_area("Document text or excerpt", height=220)
+
+if st.button("Analyze pasted text"):
     if not text_input or not text_input.strip():
         st.warning("Please paste or enter some text to analyze.")
     else:
         with st.spinner("Analyzing text for HRBA indicators..."):
-            insights = matcher.extract_hrba_insights(text_input)
+            if use_llm:
+                processed = llm_matcher.get_hrba_summary([text_input])
+            else:
+                insights = spaCy_matcher.extract_hrba_insights(text_input)
+                processed = [{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights]
 
-        if not insights:
-            st.info("No high-confidence HRBA matches found. Try a longer excerpt or adjust keywords.")
+        if not processed:
+            st.info("No high-confidence HRBA matches found.")
         else:
-            st.subheader("Detected HRBA passages")
-            for i, ins in enumerate(insights, start=1):
-                st.markdown(f"**{i}. {ins['category']}** — score: {ins['score']}")
-                st.write(ins["text"]) 
-
-            # Simple summary counts
-            counts = {}
-            for ins in insights:
-                counts[ins["category"]] = counts.get(ins["category"], 0) + 1
-
-            st.markdown("---")
-            st.subheader("Summary")
-            for cat, cnt in counts.items():
-                st.write(f"- {cat}: {cnt} passages")
+            st.subheader("Results")
+            st.write(processed)
 
 st.markdown("---")
-st.caption(f"spaCy model: {Config.SPACY_MODEL}")
+
+# ------------------------------------------------------------------
+# Document selector + batch analysis
+# ------------------------------------------------------------------
+st.markdown("### Analyze documents from database")
+org_id = st.session_state.get("org_id") if "org_id" in st.session_state else db.get_or_create_organisation("Default Organisation")
+docs = db.fetchall(
+    "SELECT id, title, created_at FROM documents WHERE organisation_id = ? AND status = 'active' ORDER BY created_at DESC",
+    (org_id,),
+)
+
+doc_options = [f"{d['id']}: {d['title']}" for d in docs]
+selected = st.multiselect("Select documents to analyze", options=doc_options, default=[])
+
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Analyze selected"):
+        if not selected:
+            st.warning("Select one or more documents to analyze.")
+        else:
+            results = {}
+            for sel in selected:
+                doc_id = int(sel.split(":", 1)[0])
+                pages = db.fetchall("SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number", (doc_id,))
+                texts = [p.get("content") or "" for p in pages]
+                with st.spinner(f"Analyzing document {doc_id}..."):
+                    if use_llm:
+                        analysis = llm_matcher.get_hrba_summary(texts)
+                    else:
+                        analysis = []
+                        for t in texts:
+                            insights = spaCy_matcher.extract_hrba_insights(t)
+                            analysis.extend([{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights])
+                results[doc_id] = analysis
+
+            for doc_id, analysis in results.items():
+                st.subheader(f"Document {doc_id} — {len(analysis)} matches")
+                st.write(analysis)
+
+with col2:
+    if st.button("Analyze all documents"):
+        if not docs:
+            st.info("No documents available for this organisation.")
+        else:
+            aggregate = {}
+            for d in docs:
+                doc_id = d["id"] if isinstance(d, (list, tuple)) else d["id"]
+                pages = db.fetchall("SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number", (doc_id,))
+                texts = [p.get("content") or "" for p in pages]
+                with st.spinner(f"Analyzing document {doc_id}..."):
+                    if use_llm:
+                        analysis = llm_matcher.get_hrba_summary(texts)
+                    else:
+                        analysis = []
+                        for t in texts:
+                            insights = spaCy_matcher.extract_hrba_insights(t)
+                            analysis.extend([{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights])
+                aggregate[doc_id] = analysis
+
+            st.write("Batch analysis complete")
+            st.write(aggregate)
+
+# Option to save results to DB
+st.markdown("---")
+if st.button("Save last analysis to DB"):
+    try:
+        # Attempt to find last results in page state by checking `results` or `aggregate` variables
+        to_save = locals().get("results") or locals().get("aggregate")
+        if not to_save:
+            st.warning("No analysis results found to save. Run an analysis first.")
+        else:
+            saved_count = 0
+            for doc_id, analysis in to_save.items():
+                payload = {
+                    "document_id": int(doc_id),
+                    "model_used": llm_matcher.model if use_llm else Config.SPACY_MODEL,
+                    "summary": json.dumps(analysis, ensure_ascii=False),
+                    "full_response_json": json.dumps(analysis, ensure_ascii=False),
+                }
+                db.insert("semantic_analyses", payload)
+                saved_count += 1
+            st.success(f"Saved HRBA analyses for {saved_count} documents into semantic_analyses table.")
+    except Exception as e:
+        st.error(f"Saving to DB failed: {e}")
+
+st.markdown("---")
+st.caption(f"spaCy model: {Config.SPACY_MODEL} — Ollama base: {Config.OLLAMA_BASE_URL}")
