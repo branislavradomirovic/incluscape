@@ -59,13 +59,20 @@ Set one of the following:
 
 ```bash
 # Preferred: persistent cloud database
-DATABASE_URL=postgresql://user:password@host:5432/dbname
+DATABASE_URL=postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape
 
 # Fallback local file database
 DATABASE_PATH=./data/sipmt.db
 ```
 
 When `DATABASE_URL` is present, PostgreSQL is used automatically.
+
+Note about deployments
+----------------------
+
+For Streamlit Community Cloud demos we intentionally prefer the bundled SQLite file to avoid the app attempting to connect to a developer's local Postgres instance. If `DATABASE_URL` points to `localhost` or `127.0.0.1`, the application will fall back to `DATABASE_PATH` (SQLite) unless you explicitly set `FORCE_POSTGRES=1` in your environment or secrets to force using Postgres.
+
+This lets you keep `DATABASE_URL` set for local development while ensuring public Cloud deploys remain self-contained and use SQLite.
 
 ## Shipping Local Postgres + Ollama
 
@@ -76,7 +83,7 @@ For demo deployments you can keep Streamlit on SQLite, but production/back-offic
 3. In `.env`, set:
 
 ```text
-DATABASE_URL=postgresql://sipmt:<password>@127.0.0.1:5432/sipmt
+DATABASE_URL=postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape
 ENABLE_SEMANTIC_ANALYSIS=true
 SEMANTIC_LLM_PROVIDER=ollama
 ```
@@ -218,7 +225,7 @@ Before pushing to `main`, confirm all items below:
 docker build -t sipmt:latest .
 docker run --rm -p 8501:8501 \
   --env-file .env \
-    -e DATABASE_URL="postgresql://sipmt:<password>@localhost:5432/sipmt" \
+    -e DATABASE_URL="postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape" \
     sipmt:latest
 ```
 

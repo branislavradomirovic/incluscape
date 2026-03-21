@@ -1,4 +1,5 @@
 import sqlite3
+import os
 import logging
 import re
 import tempfile
@@ -37,10 +38,26 @@ class DatabaseManager:
             from config import Config
 
             # Prefer PostgreSQL when DATABASE_URL is provided.
+            # If DATABASE_URL points to a local host (127.0.0.1 or localhost),
+            # prefer SQLite in deployed/demo environments unless explicitly forced
+            # by setting FORCE_POSTGRES=1 (either in Config or environment).
             self.database_url = str(getattr(Config, "DATABASE_URL", "") or "").strip()
+            force_pg = str(getattr(Config, "FORCE_POSTGRES", "") or os.getenv("FORCE_POSTGRES", "")).lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+
             if self.database_url.startswith("postgresql://") or self.database_url.startswith("postgres://"):
-                self.backend = "postgres"
-                self.database_url = self._ensure_sslmode(self.database_url)
+                # If URL targets localhost and user did not force Postgres, ignore it
+                if ("localhost" in self.database_url or "127.0.0.1" in self.database_url) and not force_pg:
+                    logger.info(
+                        "Local DATABASE_URL detected but FORCE_POSTGRES not set — falling back to SQLite (ignoring DATABASE_URL)."
+                    )
+                    self.database_url = ""
+                else:
+                    self.backend = "postgres"
+                    self.database_url = self._ensure_sslmode(self.database_url)
 
             db_path = Config.DATABASE_PATH
 
