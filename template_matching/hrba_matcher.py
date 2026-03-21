@@ -1,6 +1,8 @@
 import os
 import json
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import Dict, List, Optional
 
 class HRBAMatcherLLM:
@@ -20,42 +22,49 @@ class HRBAMatcherLLM:
             "format": "json",
         }
 
+        # session with retries/backoff to handle transient timeouts
+        session = requests.Session()
+        retries = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
+        session.mount("http://", HTTPAdapter(max_retries=retries))
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+
         try:
-            resp = requests.post(self.api_endpoint, json=payload, timeout=30)
+            resp = session.post(self.api_endpoint, json=payload, timeout=60)
             resp.raise_for_status()
             data = resp.json()
 
             # Ollama responses vary by version; try common fields that may contain text
             candidate = None
             if isinstance(data, dict):
-                # Newer versions may return {'response': '...'} or {'content': '...'}
                 for key in ("response", "content", "text", "generated_text", "output"):
                     if key in data and isinstance(data[key], (str, dict)):
                         candidate = data[key]
                         break
 
             if candidate is None:
-                # fallback to raw text
                 candidate = resp.text
 
             if isinstance(candidate, dict):
                 return candidate
 
-            # Try to parse candidate string as JSON
             try:
                 return json.loads(candidate)
             except Exception:
-                # Some responses may include surrounding markup; attempt to extract JSON block
                 start = candidate.find("{")
                 end = candidate.rfind("}")
                 if start != -1 and end != -1 and end > start:
                     try:
                         return json.loads(candidate[start : end + 1])
                     except Exception:
+                        print("Ollama: failed to parse JSON from response text")
                         return None
+                print("Ollama: no JSON found in response")
                 return None
 
-        except Exception as e:
+        except requests.exceptions.Timeout:
+            print(f"Ollama Error: request to {self.api_endpoint} timed out")
+            return None
+        except requests.exceptions.RequestException as e:
             print(f"Ollama Error: {e}")
             return None
 
