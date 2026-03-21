@@ -72,6 +72,7 @@ class Config:
 
     # Paths
     BASE_DIR: Path = BASE_DIR
+    DATABASE_URL: str = str(_get_setting("DATABASE_URL", ""))
     DATABASE_PATH: str = str(_get_setting("DATABASE_PATH", str(BASE_DIR / "data" / "incluscape.db")))
     UPLOAD_FOLDER: str = str(_get_setting("UPLOAD_FOLDER", str(BASE_DIR / "uploads")))
     EXPORT_FOLDER: str = str(_get_setting("EXPORT_FOLDER", str(BASE_DIR / "exports")))

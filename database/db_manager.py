@@ -1,16 +1,22 @@
 import sqlite3
-import json
 import logging
 import re
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except Exception:  # pragma: no cover - optional dependency at import time
+    psycopg2 = None
+    RealDictCursor = None
+
 logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:
-    """Thin SQLite access layer for INCLUSCAPE."""
+    """Database access layer for INCLUSCAPE (PostgreSQL or SQLite)."""
 
     DOCUMENT_TYPE_MIGRATION_MAP = {
         "policy": "Policies",
@@ -22,21 +28,54 @@ class DatabaseManager:
     }
 
     def __init__(self, db_path: Optional[str] = None):
+        self.backend = "sqlite"
+        self.database_url = ""
+
         if db_path is None:
             from config import Config
+
+            # Prefer PostgreSQL when DATABASE_URL is provided.
+            self.database_url = str(getattr(Config, "DATABASE_URL", "") or "").strip()
+            if self.database_url.startswith("postgresql://") or self.database_url.startswith("postgres://"):
+                self.backend = "postgres"
+
             db_path = Config.DATABASE_PATH
+
         self.db_path = str(db_path)
-        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        if self.backend == "sqlite":
+            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+
+    def _normalise_sql(self, sql: str) -> str:
+        """Convert SQLite-style placeholders to backend-specific placeholders."""
+        if self.backend == "postgres":
+            return sql.replace("?", "%s")
+        return sql
+
+    @staticmethod
+    def _execute_script(conn, script: str) -> None:
+        """Execute multi-statement SQL script for DB-API drivers without executescript."""
+        statements = [chunk.strip() for chunk in script.split(";") if chunk.strip()]
+        with conn.cursor() as cur:
+            for stmt in statements:
+                cur.execute(stmt)
 
     # ------------------------------------------------------------------
     # Connection helpers
     # ------------------------------------------------------------------
     @contextmanager
     def get_connection(self):
-        conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        conn.execute("PRAGMA journal_mode = WAL")
+        if self.backend == "postgres":
+            if psycopg2 is None:
+                raise RuntimeError(
+                    "PostgreSQL backend requested but psycopg2 is not installed. "
+                    "Add psycopg2-binary to requirements.txt"
+                )
+            conn = psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
+        else:
+            conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON")
+            conn.execute("PRAGMA journal_mode = WAL")
         try:
             yield conn
             conn.commit()
@@ -48,16 +87,44 @@ class DatabaseManager:
 
     def initialize(self) -> None:
         """Create all tables from schema.sql."""
-        schema_path = Path(__file__).parent / "schema.sql"
+        schema_file = "schema_postgres.sql" if self.backend == "postgres" else "schema.sql"
+        schema_path = Path(__file__).parent / schema_file
+        schema_sql = schema_path.read_text()
         with self.get_connection() as conn:
-            conn.executescript(schema_path.read_text())
-            self._migrate_document_categories(conn)
-            self._repair_legacy_document_foreign_keys(conn)
+            if self.backend == "postgres":
+                self._execute_script(conn, schema_sql)
+            else:
+                conn.executescript(schema_sql)
+                self._migrate_document_categories(conn)
+                self._repair_legacy_document_foreign_keys(conn)
             self._ensure_reference_template_columns(conn)
-        logger.info("Database initialised at %s", self.db_path)
+        target = self.database_url if self.backend == "postgres" else self.db_path
+        logger.info("Database initialised (%s): %s", self.backend, target)
 
-    def _ensure_reference_template_columns(self, conn: sqlite3.Connection) -> None:
+    def _ensure_reference_template_columns(self, conn) -> None:
         """Add newly introduced columns to reference_templates for existing DBs."""
+        if self.backend == "postgres":
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public' AND table_name = 'reference_templates'
+                    """
+                )
+                existing_cols = {r["column_name"] for r in cur.fetchall()}
+                for col, ddl in (
+                    ("source_url", "ALTER TABLE reference_templates ADD COLUMN source_url TEXT"),
+                    ("source_hash", "ALTER TABLE reference_templates ADD COLUMN source_hash TEXT"),
+                    ("source_last_checked", "ALTER TABLE reference_templates ADD COLUMN source_last_checked TIMESTAMP"),
+                    ("effective_date", "ALTER TABLE reference_templates ADD COLUMN effective_date TIMESTAMP"),
+                    ("supersedes_template_id", "ALTER TABLE reference_templates ADD COLUMN supersedes_template_id BIGINT REFERENCES reference_templates(id)"),
+                    ("change_summary", "ALTER TABLE reference_templates ADD COLUMN change_summary TEXT"),
+                ):
+                    if col not in existing_cols:
+                        cur.execute(ddl)
+            return
+
         row = conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'reference_templates'"
         ).fetchone()
@@ -233,32 +300,64 @@ class DatabaseManager:
     # Generic helpers
     # ------------------------------------------------------------------
     def execute(self, sql: str, params: tuple = ()) -> None:
+        sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
-            conn.execute(sql, params)
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+            else:
+                conn.execute(sql, params)
 
     def fetchone(self, sql: str, params: tuple = ()) -> Optional[Dict]:
+        sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
-            row = conn.execute(sql, params).fetchone()
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    row = cur.fetchone()
+            else:
+                row = conn.execute(sql, params).fetchone()
             return dict(row) if row else None
 
     def fetchall(self, sql: str, params: tuple = ()) -> List[Dict]:
+        sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
-            rows = conn.execute(sql, params).fetchall()
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    rows = cur.fetchall()
+            else:
+                rows = conn.execute(sql, params).fetchall()
             return [dict(r) for r in rows]
 
     def insert(self, table: str, data: Dict[str, Any]) -> int:
         cols = ", ".join(data.keys())
-        placeholders = ", ".join("?" * len(data))
-        sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
+        if self.backend == "postgres":
+            placeholders = ", ".join(["%s"] * len(data))
+            sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders}) RETURNING id"
+        else:
+            placeholders = ", ".join("?" * len(data))
+            sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders})"
         with self.get_connection() as conn:
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.execute(sql, tuple(data.values()))
+                    row = cur.fetchone()
+                    return int(row["id"] if isinstance(row, dict) else row[0])
             cur = conn.execute(sql, tuple(data.values()))
             return cur.lastrowid
 
     def update(self, table: str, data: Dict[str, Any], where: str, params: tuple = ()) -> None:
-        set_clause = ", ".join(f"{k} = ?" for k in data.keys())
+        placeholder = "%s" if self.backend == "postgres" else "?"
+        set_clause = ", ".join(f"{k} = {placeholder}" for k in data.keys())
         sql = f"UPDATE {table} SET {set_clause} WHERE {where}"
+        sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
-            conn.execute(sql, tuple(data.values()) + params)
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.execute(sql, tuple(data.values()) + params)
+            else:
+                conn.execute(sql, tuple(data.values()) + params)
 
     # ------------------------------------------------------------------
     # Domain helpers
@@ -288,12 +387,27 @@ class DatabaseManager:
         if not entities:
             return
         with self.get_connection() as conn:
-            conn.executemany(
+            sql = (
                 "INSERT INTO extracted_entities "
                 "(document_id, entity_type, entity_text, context, confidence, page_number) "
-                "VALUES (:document_id, :entity_type, :entity_text, :context, :confidence, :page_number)",
-                entities,
+                "VALUES (?, ?, ?, ?, ?, ?)"
             )
+            rows = [
+                (
+                    e.get("document_id"),
+                    e.get("entity_type"),
+                    e.get("entity_text"),
+                    e.get("context"),
+                    e.get("confidence"),
+                    e.get("page_number"),
+                )
+                for e in entities
+            ]
+            if self.backend == "postgres":
+                with conn.cursor() as cur:
+                    cur.executemany(self._normalise_sql(sql), rows)
+            else:
+                conn.executemany(sql, rows)
 
     def get_document_history(self, document_id: int) -> List[Dict]:
         return self.fetchall(

@@ -32,6 +32,7 @@ fpdf2==2.7.9
 # Configuration & Utilities
 python-dotenv==1.0.1
 pydantic==2.6.3
+psycopg2-binary==2.9.9
 protobuf>=4.25.3,<5
 
 # Semantic Analysis

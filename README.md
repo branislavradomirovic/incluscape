@@ -16,7 +16,7 @@
 |---|---|
 | Frontend | Streamlit |
 | Backend | Python 3.11+ |
-| Database | SQLite |
+| Database | PostgreSQL (recommended) / SQLite (local fallback) |
 | Document parsing | pypdf, python-docx, openpyxl, pytesseract |
 | NLP | spaCy, NLTK |
 | Mapping | Folium, geopy |
@@ -47,6 +47,25 @@ streamlit run streamlit_app/app.py
 ```
 
 The app will be available at **http://localhost:8501**
+
+## Database Configuration
+
+INCLUSCAPE supports two database modes:
+
+1. PostgreSQL (recommended for Streamlit Cloud and production)
+2. SQLite (local fallback for quick development)
+
+Set one of the following:
+
+```bash
+# Preferred: persistent cloud database
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# Fallback local file database
+DATABASE_PATH=./data/incluscape.db
+```
+
+When `DATABASE_URL` is present, PostgreSQL is used automatically.
 
 ## Environment Profiles
 
