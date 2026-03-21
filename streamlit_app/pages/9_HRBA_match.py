@@ -4,13 +4,22 @@ from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
 from template_matching.hrba_matcher import HRBAMatcherLLM
+from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.help_button import render_help_button
 
-st.title("⚖️ HRBA — AAAQ Matcher")
+st.set_page_config(page_title="HRBA — SIPMT", page_icon="⚖️", layout="wide")
+render_sidebar()
+
+col1, col2 = st.columns([14, 4])
+with col1:
+    st.title("⚖️ HRBA — AAAQ Matcher")
+with col2:
+    render_help_button("⚖️ HRBA")
 
 st.markdown(
     """
     Use the HRBA matcher to scan text for AAAQ indicators (Availability, Accessibility,
-    Acceptability, Quality). Paste text below or select documents from the database for batch analysis.
+    Acceptability, Quality). Select documents from the database for batch analysis or paste text below.
     """
 )
 
@@ -23,30 +32,8 @@ use_llm = mode.startswith("Ollama")
 spaCy_matcher = SpaCyHRBAMatcher()
 llm_matcher = HRBAMatcherLLM()
 
-st.markdown("### Analyze pasted text")
-text_input = st.text_area("Document text or excerpt", height=220)
-
-if st.button("Analyze pasted text"):
-    if not text_input or not text_input.strip():
-        st.warning("Please paste or enter some text to analyze.")
-    else:
-        with st.spinner("Analyzing text for HRBA indicators..."):
-            if use_llm:
-                processed = llm_matcher.get_hrba_summary([text_input])
-            else:
-                insights = spaCy_matcher.extract_hrba_insights(text_input)
-                processed = [{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights]
-
-        if not processed:
-            st.info("No high-confidence HRBA matches found.")
-        else:
-            st.subheader("Results")
-            st.write(processed)
-
-st.markdown("---")
-
 # ------------------------------------------------------------------
-# Document selector + batch analysis
+# Document selector + batch analysis (moved before pasted-text per request)
 # ------------------------------------------------------------------
 st.markdown("### Analyze documents from database")
 org_id = st.session_state.get("org_id") if "org_id" in st.session_state else db.get_or_create_organisation("Default Organisation")
