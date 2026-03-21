@@ -9,11 +9,11 @@ services:
     env_file:
           container_name: sipmt-app
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Daliborka1975@postgres:5432/incluscape}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Natalija2006@postgres:5432/incluscape}
       DATABASE_PATH: ${DATABASE_PATH:-/app/data/sipmt.db}
       STORE_FILES_IN_DB: ${STORE_FILES_IN_DB:-false}
     volumes:
-            DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Daliborka1975@postgres:5432/incluscape}
+            DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Natalija2006@postgres:5432/incluscape}
             DATABASE_PATH: ${DATABASE_PATH:-/app/data/sipmt.db}
       - sipmt_logs:/app/logs
             - sipmt_uploads:/app/uploads
@@ -28,10 +28,10 @@ services:
     environment:
       POSTGRES_DB: sipmt
           container_name: sipmt-postgres
-      POSTGRES_PASSWORD: Daliborka1975
+      POSTGRES_PASSWORD: Natalija2006
             POSTGRES_DB: sipmt
             POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: Daliborka1975
+            POSTGRES_PASSWORD: Natalija2006
       - sipmt_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 

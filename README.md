@@ -59,7 +59,7 @@ Set one of the following:
 
 ```bash
 # Preferred: persistent cloud database
-DATABASE_URL=postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape
+DATABASE_URL=postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable
 
 # Fallback local file database
 DATABASE_PATH=./data/sipmt.db
@@ -83,7 +83,7 @@ For demo deployments you can keep Streamlit on SQLite, but production/back-offic
 3. In `.env`, set:
 
 ```text
-DATABASE_URL=postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape
+DATABASE_URL=postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable
 ENABLE_SEMANTIC_ANALYSIS=true
 SEMANTIC_LLM_PROVIDER=ollama
 ```
@@ -225,7 +225,7 @@ Before pushing to `main`, confirm all items below:
 docker build -t sipmt:latest .
 docker run --rm -p 8501:8501 \
   --env-file .env \
-    -e DATABASE_URL="postgresql://postgres:Daliborka1975@127.0.0.1:5432/incluscape" \
+    -e DATABASE_URL="postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable" \
     sipmt:latest
 ```
 

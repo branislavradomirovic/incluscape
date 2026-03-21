@@ -32,7 +32,31 @@ def init_db():
     db.initialize()
     return db
 
-db = init_db()
+try:
+    db = init_db()
+except Exception as exc:  # keep the app alive even if DB init fails (Cloud should still serve)
+    import traceback
+
+    tb = traceback.format_exc()
+    setup_logging(Config.LOG_FILE, Config.LOG_LEVEL)
+    logger = None
+    try:
+        import logging
+
+        logger = logging.getLogger("streamlit_app")
+        logger.error("Database initialization failed:\n%s", tb)
+    except Exception:
+        pass
+
+    st.error("Database initialization failed — falling back to local SQLite. Check logs for details.")
+    # Fallback: use local SQLite file to keep the app responsive in Cloud demos
+    db = DatabaseManager(db_path=Config.DATABASE_PATH)
+    try:
+        db.initialize()
+    except Exception:
+        # If even fallback initialization fails, create a minimal in-memory manager
+        st.warning("Fallback DB initialization also failed — using in-memory DB for now.")
+        db = DatabaseManager(db_path=":memory:")
 
 # ── Session state defaults ─────────────────────────────────────────────────
 if "org_id" not in st.session_state:
