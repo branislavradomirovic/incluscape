@@ -1,6 +1,7 @@
 import sqlite3
 import logging
 import re
+import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -110,9 +111,39 @@ class DatabaseManager:
                 conn.executescript(schema_sql)
                 self._migrate_document_categories(conn)
                 self._repair_legacy_document_foreign_keys(conn)
+                self._ensure_document_blobs_table(conn)
             self._ensure_reference_template_columns(conn)
+            if self.backend == "postgres":
+                self._ensure_document_blobs_table(conn)
         target = self.database_url if self.backend == "postgres" else self.db_path
         logger.info("Database initialised (%s): %s", self.backend, target)
+
+    def _ensure_document_blobs_table(self, conn) -> None:
+        """Ensure optional binary storage table exists for cloud-persistent uploads."""
+        if self.backend == "postgres":
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS document_blobs (
+                        document_id BIGINT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+                        content BYTEA NOT NULL,
+                        mime_type TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                )
+            return
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS document_blobs (
+                document_id INTEGER PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+                content BLOB NOT NULL,
+                mime_type TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
 
     def _ensure_reference_template_columns(self, conn) -> None:
         """Add newly introduced columns to reference_templates for existing DBs."""
@@ -391,10 +422,48 @@ class DatabaseManager:
         row = self.fetchone("SELECT file_path FROM documents WHERE id = ?", (document_id,))
         if row and row.get("file_path"):
             try:
-                Path(row["file_path"]).unlink(missing_ok=True)
+                path_str = str(row["file_path"])
+                if not path_str.startswith("db://"):
+                    Path(path_str).unlink(missing_ok=True)
             except OSError:
                 pass
         self.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+
+    def save_document_blob(self, document_id: int, content: bytes, mime_type: Optional[str] = None) -> None:
+        if self.backend == "postgres":
+            sql = (
+                "INSERT INTO document_blobs (document_id, content, mime_type) "
+                "VALUES (%s, %s, %s) "
+                "ON CONFLICT (document_id) DO UPDATE SET content = EXCLUDED.content, mime_type = EXCLUDED.mime_type"
+            )
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(sql, (document_id, psycopg2.Binary(content), mime_type))
+            return
+
+        sql = (
+            "INSERT INTO document_blobs (document_id, content, mime_type) VALUES (?, ?, ?) "
+            "ON CONFLICT(document_id) DO UPDATE SET content = excluded.content, mime_type = excluded.mime_type"
+        )
+        with self.get_connection() as conn:
+            conn.execute(sql, (document_id, sqlite3.Binary(content), mime_type))
+
+    def get_document_blob(self, document_id: int) -> Optional[Dict[str, Any]]:
+        return self.fetchone(
+            "SELECT content, mime_type FROM document_blobs WHERE document_id = ?",
+            (document_id,),
+        )
+
+    def materialize_document_for_processing(self, document_id: int, file_name: str, temp_dir: str) -> Optional[str]:
+        """Write a stored blob to a temp file and return path, or None when absent."""
+        row = self.get_document_blob(document_id)
+        if not row or row.get("content") is None:
+            return None
+
+        suffix = Path(file_name or "").suffix or ".bin"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=temp_dir) as tmp:
+            tmp.write(bytes(row["content"]))
+            return tmp.name
 
     def save_entities(self, entities: List[Dict[str, Any]]) -> None:
         if not entities:

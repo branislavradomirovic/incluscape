@@ -86,6 +86,7 @@ class Config:
     # File handling
     MAX_FILE_SIZE: int = _as_int(_get_setting("MAX_FILE_SIZE", str(10 * 1024 * 1024)), 10 * 1024 * 1024)
     ALLOWED_EXTENSIONS: list = ["pdf", "docx", "doc", "xlsx", "xls"]
+    STORE_FILES_IN_DB: bool = _as_bool(_get_setting("STORE_FILES_IN_DB", "False"), default=False)
 
     # OCR
     ENABLE_OCR: bool = _as_bool(_get_setting("ENABLE_OCR", "False"), default=False)

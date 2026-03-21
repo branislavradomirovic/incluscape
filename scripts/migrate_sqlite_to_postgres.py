@@ -35,6 +35,7 @@ TABLE_ORDER: List[str] = [
     "organisations",
     "users",
     "documents",
+    "document_blobs",
     "document_pages",
     "extracted_entities",
     "report_templates",

@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  incluscape:
+    build: .
+    container_name: incluscape-app
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://incluscape:incluscape@postgres:5432/incluscape}
+      DATABASE_PATH: ${DATABASE_PATH:-/app/data/incluscape.db}
+      STORE_FILES_IN_DB: ${STORE_FILES_IN_DB:-false}
+    volumes:
+      - incluscape_uploads:/app/uploads
+      - incluscape_exports:/app/exports
+      - incluscape_logs:/app/logs
+      - incluscape_temp:/app/temp
+      - incluscape_data:/app/data
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: incluscape-postgres
+    environment:
+      POSTGRES_DB: incluscape
+      POSTGRES_USER: incluscape
+      POSTGRES_PASSWORD: incluscape
+    ports:
+      - "5432:5432"
+    volumes:
+      - incluscape_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  incluscape_uploads:
+  incluscape_exports:
+  incluscape_logs:
+  incluscape_temp:
+  incluscape_data:
+  incluscape_pgdata:

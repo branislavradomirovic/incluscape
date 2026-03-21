@@ -3,6 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import tempfile
+from datetime import datetime
 import streamlit as st
 import pandas as pd
 from config import Config
@@ -58,7 +59,8 @@ with st.expander("📤 Upload New Documents", expanded=True):
         for i, uf in enumerate(uploaded_files):
 
             # ── Size guard (before writing anything to disk) ──
-            size = len(uf.getbuffer())
+            file_bytes = bytes(uf.getbuffer())
+            size = len(file_bytes)
             if size > _MAX_BYTES:
                 st.warning(
                     f"⚠️ **{uf.name}** is {size / 1024 / 1024:.1f} MB — "
@@ -72,52 +74,61 @@ with st.expander("📤 Upload New Documents", expanded=True):
                     delete=False, suffix=Path(uf.name).suffix,
                     dir=Config.TEMP_FOLDER,
                 ) as tmp:
-                    tmp.write(uf.getbuffer())
+                    tmp.write(file_bytes)
                     tmp_path = tmp.name
 
-                # ── Duplicate guard ──
-                file_hash = file_handler.hash_file(tmp_path)
-                from change_tracking.version_manager import VersionManager
-                if VersionManager(db).is_duplicate(file_hash, org_id):
-                    st.warning(f"⚠️ **{uf.name}** already exists (same content). Skipped.")
-                    Path(tmp_path).unlink(missing_ok=True)
-                else:
-                    stored_path = file_handler.save(tmp_path, subfolder=str(org_id))
-                    Path(tmp_path).unlink(missing_ok=True)
-
-                    proc = pipeline.process(stored_path)
-                    result = proc["result"]
-
-                    doc_id = db.save_document({
-                        "organisation_id": org_id,
-                        "title": Path(uf.name).stem,
-                        "document_type": doc_type,
-                        "file_name": uf.name,
-                        "file_path": stored_path,
-                        "file_size": Path(stored_path).stat().st_size,
-                        "file_hash": proc["file_hash"],
-                        "status": "active" if not proc["error"] else "error",
-                        "processed_at": "CURRENT_TIMESTAMP",
-                    })
-
-                    if result:
-                        for page in result.pages:
-                            db.insert("document_pages", {
-                                "document_id": doc_id,
-                                "page_number": page.page_number,
-                                "content": page.content,
-                                "page_type": page.page_type,
-                                "word_count": page.word_count,
-                            })
-                        for ent in proc["entities"]:
-                            ent["document_id"] = doc_id
-                        db.save_entities(proc["entities"])
-                        st.success(
-                            f"✅ **{uf.name}** — {result.page_count} page(s), "
-                            f"{len(proc['entities'])} entities extracted."
-                        )
+                try:
+                    # ── Duplicate guard ──
+                    file_hash = file_handler.hash_file(tmp_path)
+                    from change_tracking.version_manager import VersionManager
+                    if VersionManager(db).is_duplicate(file_hash, org_id):
+                        st.warning(f"⚠️ **{uf.name}** already exists (same content). Skipped.")
                     else:
-                        st.error(f"❌ {uf.name}: {proc['error']}")
+                        proc = pipeline.process(tmp_path)
+                        result = proc["result"]
+
+                        if Config.STORE_FILES_IN_DB:
+                            stored_path = f"db://documents/{file_hash}/{Path(uf.name).name}"
+                            file_size_value = size
+                        else:
+                            stored_path = file_handler.save(tmp_path, subfolder=str(org_id))
+                            file_size_value = Path(stored_path).stat().st_size
+
+                        doc_id = db.save_document({
+                            "organisation_id": org_id,
+                            "title": Path(uf.name).stem,
+                            "document_type": doc_type,
+                            "file_name": uf.name,
+                            "file_path": stored_path,
+                            "file_size": file_size_value,
+                            "mime_type": uf.type or None,
+                            "file_hash": proc["file_hash"],
+                            "status": "active" if not proc["error"] else "error",
+                            "processed_at": datetime.utcnow().isoformat(timespec="seconds"),
+                        })
+                        if Config.STORE_FILES_IN_DB:
+                            db.save_document_blob(doc_id, file_bytes, uf.type or None)
+
+                        if result:
+                            for page in result.pages:
+                                db.insert("document_pages", {
+                                    "document_id": doc_id,
+                                    "page_number": page.page_number,
+                                    "content": page.content,
+                                    "page_type": page.page_type,
+                                    "word_count": page.word_count,
+                                })
+                            for ent in proc["entities"]:
+                                ent["document_id"] = doc_id
+                            db.save_entities(proc["entities"])
+                            st.success(
+                                f"✅ **{uf.name}** — {result.page_count} page(s), "
+                                f"{len(proc['entities'])} entities extracted."
+                            )
+                        else:
+                            st.error(f"❌ {uf.name}: {proc['error']}")
+                finally:
+                    Path(tmp_path).unlink(missing_ok=True)
 
             progress.progress((i + 1) / len(uploaded_files))
         st.rerun()
@@ -183,10 +194,29 @@ with col_btn:
 if st.session_state.get("_reprocess") == selected_id:
     import os
     file_path = sel["file_path"]
-    if not os.path.exists(file_path):
-        st.error(f"File not found on disk: `{file_path}`")
-        st.session_state.pop("_reprocess", None)
-    else:
+    temp_materialized_path = None
+    if str(file_path).startswith("db://"):
+        temp_materialized_path = db.materialize_document_for_processing(
+            selected_id, sel["file_name"], Config.TEMP_FOLDER
+        )
+        if not temp_materialized_path:
+            st.error("Stored file content is missing in database for this document.")
+            st.session_state.pop("_reprocess", None)
+            st.stop()
+        file_path = temp_materialized_path
+    elif not os.path.exists(file_path):
+        # Fallback: try DB blob in case file path points to an old ephemeral location.
+        temp_materialized_path = db.materialize_document_for_processing(
+            selected_id, sel["file_name"], Config.TEMP_FOLDER
+        )
+        if temp_materialized_path:
+            file_path = temp_materialized_path
+        else:
+            st.error(f"File not found on disk: `{file_path}`")
+            st.session_state.pop("_reprocess", None)
+            st.stop()
+
+    try:
         with st.spinner(f"Re-processing {sel['file_name']}…"):
             proc = pipeline.process(file_path)
             result = proc["result"]
@@ -211,8 +241,11 @@ if st.session_state.get("_reprocess") == selected_id:
                     f"✅ Re-processed: {result.page_count} page(s), "
                     f"{len(entities)} entities extracted."
                 )
-        st.session_state.pop("_reprocess", None)
-        st.rerun()
+    finally:
+        if temp_materialized_path:
+            Path(temp_materialized_path).unlink(missing_ok=True)
+    st.session_state.pop("_reprocess", None)
+    st.rerun()
 
 # ── Delete confirmation ───────────────────────────────────────────────────────
 if st.session_state.get("_confirm_delete") == selected_id:

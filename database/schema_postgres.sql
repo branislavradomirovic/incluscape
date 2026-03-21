@@ -43,6 +43,13 @@ CREATE INDEX IF NOT EXISTS idx_documents_org     ON documents(organisation_id);
 CREATE INDEX IF NOT EXISTS idx_documents_hash    ON documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_documents_parent  ON documents(parent_id);
 
+CREATE TABLE IF NOT EXISTS document_blobs (
+    document_id BIGINT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+    content     BYTEA NOT NULL,
+    mime_type   TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS document_pages (
     id          BIGSERIAL PRIMARY KEY,
     document_id BIGINT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,

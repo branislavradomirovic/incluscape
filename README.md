@@ -33,11 +33,11 @@ cd incluscape
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-# 3. Initialize the project (creates dirs, .env, database)
-python setup.py
-
-# 4. Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Initialize the project (creates dirs, .env, database)
+python setup.py
 
 # 5. (Optional) Download the spaCy model
 python -m spacy download en_core_web_sm
@@ -66,6 +66,28 @@ DATABASE_PATH=./data/incluscape.db
 ```
 
 When `DATABASE_URL` is present, PostgreSQL is used automatically.
+
+## Supabase + Streamlit Cloud (Persistent Storage)
+
+For Streamlit Community Cloud, filesystem is ephemeral. To persist both metadata and uploaded files:
+
+1. Create a Supabase PostgreSQL project and copy the connection string.
+2. In Streamlit app secrets, set:
+
+```toml
+DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres"
+STORE_FILES_IN_DB=true
+ENABLE_SEMANTIC_ANALYSIS=true
+SEMANTIC_LLM_PROVIDER="gemini"
+GEMINI_API_KEY="..."
+```
+
+3. Keep `DATABASE_PATH` unset (or ignored) in cloud mode.
+
+Notes:
+
+1. INCLUSCAPE auto-adds `sslmode=require` when missing for PostgreSQL URLs (Supabase-safe default).
+2. `STORE_FILES_IN_DB=true` stores uploaded binary files in table `document_blobs`, enabling reliable re-processing even after container/app restarts.
 
 ### Migrate Existing SQLite Demo Data to PostgreSQL
 
@@ -191,6 +213,29 @@ Before pushing to `main`, confirm all items below:
 6. Demo dataset is present and recent outputs are clean
 7. Commit message clearly describes customer-visible change
 8. Push to `main` completed and cloud deployment is green
+
+## Container Deployment
+
+### Docker (single container)
+
+```bash
+docker build -t incluscape:latest .
+docker run --rm -p 8501:8501 \
+  --env-file .env \
+  -e DATABASE_URL="postgresql://user:password@host:5432/dbname" \
+  -e STORE_FILES_IN_DB=true \
+  incluscape:latest
+```
+
+### Docker Compose (app + local PostgreSQL)
+
+```bash
+docker compose up --build
+```
+
+Then open: `http://localhost:8501`
+
+For cloud container services (Cloud Run, Render, Fly.io, Azure Container Apps), use the same image built from `Dockerfile` and inject environment variables/secrets exactly as in `.env.example`.
 
 ## Project Structure
 
