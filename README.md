@@ -67,6 +67,31 @@ DATABASE_PATH=./data/incluscape.db
 
 When `DATABASE_URL` is present, PostgreSQL is used automatically.
 
+### Migrate Existing SQLite Demo Data to PostgreSQL
+
+Use the one-time migration script:
+
+```bash
+python scripts/migrate_sqlite_to_postgres.py \
+    --sqlite-path ./data/incluscape.db \
+    --postgres-url postgresql://user:password@host:5432/dbname
+```
+
+If your target PostgreSQL already contains old data and you want to replace it:
+
+```bash
+python scripts/migrate_sqlite_to_postgres.py \
+    --sqlite-path ./data/incluscape.db \
+    --postgres-url postgresql://user:password@host:5432/dbname \
+    --truncate-target
+```
+
+Notes:
+
+1. The script copies all application tables in foreign-key-safe order.
+2. The migration runs in one PostgreSQL transaction; on error, writes are rolled back.
+3. Document metadata is migrated, but binary files should be kept in persistent storage for production.
+
 ## Environment Profiles
 
 Use one codebase with different providers per environment.
