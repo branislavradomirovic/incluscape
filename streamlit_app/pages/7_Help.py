@@ -351,6 +351,84 @@ with st.expander("⚙️ **Configuration** — Environment Setup"):
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
+# HRBA
+# ──────────────────────────────────────────────────────────────────────────
+with st.expander("⚖️ **HRBA — AAAQ Matching & Insights"):
+      st.markdown("""
+      The **HRBA** page scans documents for AAAQ indicators (Availability, Accessibility,
+      Acceptability, Quality) using either a fast `spaCy` matcher or the local Ollama LLM.
+
+      Key features:
+      - **Live streaming generation**: When using Ollama the app displays a live text preview
+         of the model's output in a right-side pane while the model is generating.
+      - **Per-segment timeline (Gantt)**: The page records per-segment start/end times during
+         streaming and renders a Gantt-style timeline showing when each segment was generated.
+         Bars are sized by score and colored by the highest-scoring AAAQ category.
+      - **Save analyses**: Store full JSON justifications into `semantic_analyses` for later review
+         on the **HRBA Insights** page.
+
+      How to interpret the UI:
+      - The **live preview** shows incremental text as the model streams. If the model returns
+         only a final JSON object, the preview will update when the final content arrives.
+      - The **timeline** visualises per-document generation events. Longer bars indicate
+         higher scoring results (length is proportional to score). Use the timeline to spot
+         slow segments or clustering of analyses by document.
+
+      Troubleshooting:
+      - If you see no streaming chunks, ensure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are correct
+         and the Ollama service is running. Some models may not stream intermediate fragments.
+      - For long-running generations, increase `OLLAMA_TIMEOUT` in your environment (seconds).
+      - If generation appears slow, warm the model or restart the Ollama process.
+      """)
+
+# ──────────────────────────────────────────────────────────────────────────
+# Developer & Admin
+# ──────────────────────────────────────────────────────────────────────────
+with st.expander("🛠️ Developer & Admin — Setup, Env vars, Troubleshooting", expanded=False):
+      st.markdown("""
+      This section covers environment variables, common admin tasks, and troubleshooting steps.
+
+      Environment variables (important):
+      - `DATABASE_URL`: full PostgreSQL connection string. If not present, `DATABASE_PATH` (SQLite) is used.
+      - `DATABASE_PATH`: path to fallback SQLite database (default `./data/sipmt.db`).
+      - `FORCE_POSTGRES`: if set to `1`, force use of `DATABASE_URL` even when it points to localhost.
+      - `SEMANTIC_LLM_PROVIDER`: `gemini` or `ollama`.
+      - `GEMINI_API_KEY`: required when `SEMANTIC_LLM_PROVIDER=gemini`.
+      - `OLLAMA_BASE_URL`: local Ollama endpoint (default `http://localhost:11434`).
+      - `OLLAMA_MODEL`: Ollama model name (e.g., `qwen2.5:14b-instruct`).
+      - `OLLAMA_TIMEOUT`: HTTP timeout for Ollama requests (seconds). Default 120.
+      - `ENABLE_GEOCODING`: `true`/`false` to enable geocoding of extracted locations.
+
+      Common admin tasks:
+      - Initialize DB and directories:
+         ```bash
+         python setup.py
+         ```
+      - Migrate existing SQLite demo data to Postgres:
+         ```bash
+         python scripts/migrate_sqlite_to_postgres.py --sqlite-path ./data/sipmt.db --postgres-url <YOUR_URL>
+         ```
+      - Pull Ollama model (local machine):
+         ```bash
+         ollama pull qwen2.5:14b-instruct
+         ```
+
+      Troubleshooting tips:
+      - App fails to start: run `bash scripts/pre_deploy_check.sh` to locate syntax or config issues.
+      - Ollama unreachable: confirm `OLLAMA_BASE_URL`, try `curl http://localhost:11434/`.
+      - Slow semantic analysis: increase `OLLAMA_TIMEOUT`, warm the model by making a small request, or choose a smaller model.
+      - Missing extracted text: verify OCR settings and re-run the document extractor pipeline.
+
+      Logs and diagnostics:
+      - Check `logs/` for recent app logs.
+      - Streamlit console shows startup errors; consult server logs for stack traces.
+
+      Security & secrets:
+      - Never commit secrets (API keys, DB passwords) to git. Use platform secrets or an `.env` file excluded from VCS.
+      - Rotate API keys if they are accidentally exposed.
+      """)
+
+# ──────────────────────────────────────────────────────────────────────────
 # TIPS & BEST PRACTICES
 # ──────────────────────────────────────────────────────────────────────────
 st.markdown("---")

@@ -10,10 +10,23 @@ import json
 import logging
 import re
 import socket
+import time
 import urllib.request
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _strip_code_fences(raw: str) -> str:
+    raw = (raw or "").strip()
+    if raw.startswith("```"):
+        fence_parts = raw.split("```")
+        if len(fence_parts) > 1:
+            raw = fence_parts[1]
+        if raw.lstrip().startswith("json"):
+            raw = raw.lstrip()[4:]
+        raw = raw.strip()
+    return raw
 
 
 def _extract_first_json_object(text: str) -> str:
@@ -127,47 +140,8 @@ class OllamaSemanticAnalyzer:
     def provider(self) -> str:
         return "ollama"
 
-    def _call(self, prompt: str, num_predict: int = 1024) -> Dict[str, Any]:
-        endpoint = f"{self._base_url}/api/generate"
-        options = {
-            "temperature": 0.1,
-            "num_ctx": self._num_ctx,
-            "num_predict": num_predict,
-        }
-        if self._num_thread is not None:
-            options["num_thread"] = self._num_thread
-        if self._num_gpu is not None:
-            options["num_gpu"] = self._num_gpu
-        if self._num_batch is not None:
-            options["num_batch"] = self._num_batch
-
-        payload = json.dumps({
-            "model": self._model_name,
-            "prompt": prompt,
-            "stream": False,
-            "keep_alive": self._keep_alive,
-            "options": options,
-        }).encode("utf-8")
-
-        req = urllib.request.Request(
-            endpoint,
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-
-        with urllib.request.urlopen(req, timeout=self._timeout_sec) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-
-        raw = (data.get("response") or "").strip()
-        if raw.startswith("```"):
-            fence_parts = raw.split("```")
-            if len(fence_parts) > 1:
-                raw = fence_parts[1]
-            if raw.lstrip().startswith("json"):
-                raw = raw.lstrip()[4:]
-            raw = raw.strip()
-
+    def _parse_response_text(self, raw: str) -> Dict[str, Any]:
+        raw = _strip_code_fences(raw)
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError:
@@ -185,9 +159,103 @@ class OllamaSemanticAnalyzer:
             raise ValueError("Model JSON output must be an object")
         return parsed
 
-    def classify_document(self, text: str) -> Dict[str, Any]:
+    def _call(self, prompt: str, num_predict: int = 1024, stream: bool = False, on_progress=None) -> Dict[str, Any]:
+        endpoint = f"{self._base_url}/api/generate"
+        options = {
+            "temperature": 0.1,
+            "num_ctx": self._num_ctx,
+            "num_predict": num_predict,
+        }
+        if self._num_thread is not None:
+            options["num_thread"] = self._num_thread
+        if self._num_gpu is not None:
+            options["num_gpu"] = self._num_gpu
+        if self._num_batch is not None:
+            options["num_batch"] = self._num_batch
+
+        payload = json.dumps({
+            "model": self._model_name,
+            "prompt": prompt,
+            "stream": bool(stream),
+            "format": "json",
+            "keep_alive": self._keep_alive,
+            "options": options,
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            endpoint,
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        start_ts = time.time()
+        raw = ""
+
+        with urllib.request.urlopen(req, timeout=self._timeout_sec) as resp:
+            if stream:
+                response_text = ""
+                while True:
+                    raw_line = resp.readline()
+                    if not raw_line:
+                        break
+                    line = raw_line.decode("utf-8", errors="ignore").strip()
+                    if not line:
+                        continue
+
+                    chunk_obj = None
+                    try:
+                        chunk_obj = json.loads(line)
+                    except json.JSONDecodeError:
+                        response_text += line
+
+                    part = None
+                    if isinstance(chunk_obj, dict):
+                        for key in ("response", "content", "text", "generated_text", "output"):
+                            if isinstance(chunk_obj.get(key), str):
+                                part = chunk_obj.get(key)
+                                break
+
+                    if part:
+                        response_text += part
+
+                    if callable(on_progress) and part:
+                        partial_obj = None
+                        try:
+                            recovered = _extract_first_json_object(response_text)
+                            if recovered:
+                                partial_obj = json.loads(recovered)
+                        except Exception:
+                            partial_obj = None
+                        try:
+                            on_progress(part, partial_obj or chunk_obj, time.time() - start_ts, False)
+                        except Exception:
+                            pass
+
+                    if isinstance(chunk_obj, dict) and chunk_obj.get("done"):
+                        break
+
+                raw = response_text
+            else:
+                data = json.loads(resp.read().decode("utf-8"))
+                raw = (data.get("response") or "").strip()
+
+        parsed = self._parse_response_text(raw)
+        if callable(on_progress):
+            try:
+                on_progress(None, parsed, time.time() - start_ts, True)
+            except Exception:
+                pass
+        return parsed
+
+    def classify_document(self, text: str, on_progress=None) -> Dict[str, Any]:
         try:
-            result = self._call(_CLASSIFY_PROMPT.format(text=text[:3000]), num_predict=128)
+            result = self._call(
+                _CLASSIFY_PROMPT.format(text=text[:3000]),
+                num_predict=128,
+                stream=callable(on_progress),
+                on_progress=on_progress,
+            )
             return result
         except socket.timeout:
             logger.error("ollama classify_document timed out after %ss", self._timeout_sec)
@@ -209,7 +277,7 @@ class OllamaSemanticAnalyzer:
                 "confidence": 0.0,
             }
 
-    def compare_with_template(self, document_text: str, template: Dict[str, Any]) -> Dict[str, Any]:
+    def compare_with_template(self, document_text: str, template: Dict[str, Any], on_progress=None) -> Dict[str, Any]:
         try:
             key_sections = "\n".join(f"  - {s}" for s in template.get("key_sections", [])[:8])
             key_requirements = "\n".join(
@@ -224,7 +292,12 @@ class OllamaSemanticAnalyzer:
                 key_requirements=key_requirements,
                 document_text=document_text[:2500],
             )
-            return self._call(prompt, num_predict=1024)
+            return self._call(
+                prompt,
+                num_predict=1024,
+                stream=callable(on_progress),
+                on_progress=on_progress,
+            )
         except socket.timeout:
             logger.error("ollama compare_with_template timed out after %ss", self._timeout_sec)
             return {

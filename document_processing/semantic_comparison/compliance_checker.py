@@ -35,6 +35,7 @@ class ComplianceChecker:
         document_text: str,
         reference_template: Optional[Dict[str, Any]] = None,
         save: bool = True,
+        on_progress=None,
     ) -> Dict[str, Any]:
         """
         Run full semantic compliance analysis for a document.
@@ -50,14 +51,20 @@ class ComplianceChecker:
                 "compliance_score": None,
             }
 
+        def emit(stage: str, status: str, payload: Optional[Dict[str, Any]] = None):
+            if callable(on_progress):
+                on_progress(stage, status, payload or {})
+
         # ── Step 1: classify + match ───────────────────────────────────
         if reference_template is None:
-            match_result = self.matcher.classify_and_match(document_text)
+            match_result = self.matcher.classify_and_match(document_text, on_progress=on_progress)
             classification = match_result["classification"]
             templates = match_result["matched_templates"]
             # Pick best match (first one; user can re-run with explicit choice)
             reference_template = templates[0] if templates else None
         else:
+            emit("classify", "skipped", {"message": "Skipped auto-classification because a reference template was selected."})
+            emit("match", "skipped", {"message": "Skipped automatic template matching because a reference template was selected."})
             classification = {
                 "body": reference_template.get("body"),
                 "category": reference_template.get("category"),
@@ -66,8 +73,44 @@ class ComplianceChecker:
 
         # ── Step 2: compliance comparison ─────────────────────────────
         if reference_template:
+            emit(
+                "compare",
+                "running",
+                {
+                    "template": reference_template.get("name", "Unknown template"),
+                    "message": f"Comparing document against {reference_template.get('name', 'selected template')}.",
+                },
+            )
+
+            compare_stream = None
+            if callable(on_progress):
+                def compare_stream(part, obj, elapsed, done):
+                    payload = {
+                        "template": reference_template.get("name", "Unknown template"),
+                        "message": "Streaming compliance comparison response.",
+                        "part": part,
+                        "elapsed": elapsed,
+                    }
+                    if isinstance(obj, dict):
+                        if obj.get("compliance_score") is not None:
+                            payload["score"] = obj.get("compliance_score")
+                        if obj.get("summary"):
+                            payload["message"] = obj.get("summary")
+                    on_progress("compare", "running", payload)
+
             comparison = self.matcher.analyzer.compare_with_template(
-                document_text, reference_template
+                document_text,
+                reference_template,
+                on_progress=compare_stream,
+            )
+            emit(
+                "compare",
+                "completed" if "error" not in comparison else "failed",
+                {
+                    "template": reference_template.get("name", "Unknown template"),
+                    "score": comparison.get("compliance_score"),
+                    "message": comparison.get("summary") or comparison.get("error") or "Compliance comparison completed.",
+                },
             )
         else:
             comparison = {
@@ -76,6 +119,7 @@ class ComplianceChecker:
                 "missing_elements": ["No reference template available for this body/category"],
                 "recommendations": ["Add a reference template for this document type"],
             }
+            emit("compare", "failed", {"message": "No matching reference template found."})
 
         # ── Step 3: merge and persist ──────────────────────────────────
         ref_id = reference_template.get("id") if reference_template else None
@@ -104,12 +148,16 @@ class ComplianceChecker:
             row["error"] = comparison.get("error")
 
         if save and "error" not in comparison:
+            emit("persist", "running", {"message": "Saving semantic analysis result."})
             analysis_id = self.db.save_semantic_analysis(row)
             row["id"] = analysis_id
             logger.info(
                 "Semantic analysis saved (id=%d, doc=%d, score=%.2f)",
                 analysis_id, document_id, comparison.get("compliance_score", 0),
             )
+            emit("persist", "completed", {"analysis_id": analysis_id, "message": "Semantic analysis saved."})
+        elif save:
+            emit("persist", "skipped", {"message": "Result not saved because the comparison returned an error."})
 
         # Deserialise JSON arrays for convenience
         for key in ("present_elements", "missing_elements", "partial_elements",

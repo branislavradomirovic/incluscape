@@ -12,6 +12,7 @@ from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.express as px
 import streamlit as st
 
 from config import Config
@@ -238,7 +239,11 @@ def _compute_shap_proxy(result: dict, xai_metrics: Optional[dict] = None) -> dic
     return {k: max(-1.0, min(1.0, float(v))) for k, v in proxy.items()}
 
 
-def _render_shap_heatmap(shap_proxy: dict, chart_title: str = "SHAP-style heatmap (feature contribution proxy)") -> None:
+def _render_shap_heatmap(
+    shap_proxy: dict,
+    chart_title: str = "SHAP-style heatmap (feature contribution proxy)",
+    chart_key: Optional[str] = None,
+) -> None:
     if not shap_proxy:
         st.info("No SHAP proxy data available.")
         return
@@ -266,7 +271,7 @@ def _render_shap_heatmap(shap_proxy: dict, chart_title: str = "SHAP-style heatma
         )
     )
     fig.update_layout(title=chart_title, height=260, margin=dict(l=10, r=10, t=40, b=10))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=chart_key or "compliance-shap-heatmap")
     st.caption("Positive values support compliance score; negative values reduce it. This is a transparent SHAP-style proxy, not model-internal SHAP.")
 
 
@@ -357,6 +362,308 @@ def _probe_source_url_health(template: dict, timeout_sec: int = 20) -> dict:
         row["Status"] = "Warning"
     row["Suggested fix"] = _suggest_url_fix(status_code, row["Detail"])
     return row
+
+
+COMPLIANCE_MONITOR_STAGES = ["classify", "match", "compare", "persist"]
+COMPLIANCE_STAGE_LABELS = {
+    "classify": "Classify document",
+    "match": "Match references",
+    "compare": "Compare template",
+    "persist": "Persist result",
+}
+
+
+def _create_compliance_monitor_state(selected_label: str) -> dict:
+    now = time.time()
+    monitor_key = re.sub(r"[^a-z0-9]+", "-", (selected_label or "compliance-monitor").lower()).strip("-") or "compliance-monitor"
+    return {
+        "document_label": selected_label,
+        "started_at": now,
+        "monitor_key": f"{monitor_key}-{int(now * 1000)}",
+        "active_stage": None,
+        "latest_message": "Initializing compliance analysis.",
+        "stream_preview": "",
+        "chunks_processed": 0,
+        "tokens_processed": 0,
+        "chunk_history": [],
+        "last_chunk_elapsed": None,
+        "classification_confidence_history": [],
+        "classification_confidence_points": [],
+        "comparison_score_history": [],
+        "comparison_score_points": [],
+        "detected_body": None,
+        "detected_category": None,
+        "current_template": None,
+        "stages": {
+            stage: {
+                "stage": stage,
+                "label": COMPLIANCE_STAGE_LABELS[stage],
+                "status": "pending",
+                "started_at": None,
+                "ended_at": None,
+                "elapsed": None,
+                "detail": "",
+            }
+            for stage in COMPLIANCE_MONITOR_STAGES
+        },
+    }
+
+
+def _update_compliance_monitor_state(state: dict, stage: str, status: str, payload: Optional[dict] = None) -> None:
+    if stage not in state["stages"]:
+        return
+    payload = payload or {}
+    entry = state["stages"][stage]
+    now = time.time()
+    if status == "running":
+        entry["started_at"] = entry["started_at"] or now
+        entry["status"] = "running"
+        state["active_stage"] = stage
+    elif status in {"completed", "failed", "skipped"}:
+        entry["started_at"] = entry["started_at"] or now
+        entry["ended_at"] = now
+        entry["elapsed"] = round(now - entry["started_at"], 2)
+        entry["status"] = status
+        if state.get("active_stage") == stage:
+            state["active_stage"] = None
+    else:
+        entry["status"] = status
+
+    part = payload.get("part")
+    if part:
+        state["stream_preview"] = f"{state.get('stream_preview') or ''}{part}"[-2400:]
+        elapsed = float(payload.get("elapsed") or 0.0)
+        chunk_size = len(part)
+        last_elapsed = state.get("last_chunk_elapsed")
+        delta_elapsed = elapsed - float(last_elapsed) if last_elapsed is not None else elapsed
+        delta_elapsed = max(delta_elapsed, 0.001)
+        state["chunk_history"].append({
+            "elapsed": round(elapsed, 3),
+            "chunk_rate": round(chunk_size / delta_elapsed, 3),
+            "chunk_size": chunk_size,
+        })
+        state["chunk_history"] = state["chunk_history"][-120:]
+        state["last_chunk_elapsed"] = elapsed
+        state["chunks_processed"] = int(state.get("chunks_processed") or 0) + 1
+        state["tokens_processed"] = int(state.get("tokens_processed") or 0) + max(1, len(part.split()))
+
+    if payload.get("body"):
+        state["detected_body"] = payload.get("body")
+    if payload.get("category"):
+        state["detected_category"] = payload.get("category")
+    if payload.get("template"):
+        state["current_template"] = payload.get("template")
+    if payload.get("confidence") is not None:
+        try:
+            confidence_value = float(payload.get("confidence"))
+            state["classification_confidence_history"].append(confidence_value)
+            state["classification_confidence_history"] = state["classification_confidence_history"][-120:]
+            point_elapsed = float(payload.get("elapsed") or max(0.0, now - float(state.get("started_at") or now)))
+            state["classification_confidence_points"].append({
+                "elapsed": round(point_elapsed, 3),
+                "value": confidence_value,
+                "series": "Classification confidence",
+            })
+            state["classification_confidence_points"] = state["classification_confidence_points"][-120:]
+        except Exception:
+            pass
+    if payload.get("score") is not None:
+        try:
+            score_value = float(payload.get("score"))
+            state["comparison_score_history"].append(score_value)
+            state["comparison_score_history"] = state["comparison_score_history"][-120:]
+            point_elapsed = float(payload.get("elapsed") or max(0.0, now - float(state.get("started_at") or now)))
+            state["comparison_score_points"].append({
+                "elapsed": round(point_elapsed, 3),
+                "value": score_value,
+                "series": "Compliance score",
+            })
+            state["comparison_score_points"] = state["comparison_score_points"][-120:]
+        except Exception:
+            pass
+
+    detail = payload.get("message") or payload.get("template") or ""
+    if payload.get("matches") is not None:
+        detail = f"{detail} Matched templates: {payload.get('matches')}.".strip()
+    if payload.get("score") is not None:
+        try:
+            detail = f"{detail} Score: {float(payload.get('score')):.0%}.".strip()
+        except Exception:
+            pass
+    if payload.get("confidence") is not None and stage == "classify":
+        try:
+            detail = f"{detail} Confidence: {float(payload.get('confidence')):.0%}.".strip()
+        except Exception:
+            pass
+    entry["detail"] = detail.strip()
+    state["latest_message"] = entry["detail"] or payload.get("message") or state.get("latest_message")
+
+
+def _render_compliance_live_monitor(container, state: dict) -> None:
+    total_elapsed = max(0.0, time.time() - float(state.get("started_at") or time.time()))
+    chart_key_prefix = state.get("monitor_key") or "compliance-monitor"
+    stage_rows = []
+    completed_count = 0
+    for stage in COMPLIANCE_MONITOR_STAGES:
+        entry = state["stages"][stage]
+        if entry["status"] in {"completed", "skipped"}:
+            completed_count += 1
+        stage_rows.append({
+            "Stage": entry["label"],
+            "Status": entry["status"].capitalize(),
+            "Duration(s)": entry.get("elapsed"),
+            "Detail": entry.get("detail") or "-",
+        })
+
+    timeline_rows = []
+    now = time.time()
+    for stage in COMPLIANCE_MONITOR_STAGES:
+        entry = state["stages"][stage]
+        start = entry.get("started_at")
+        if start is None:
+            continue
+        end = entry.get("ended_at") or now
+        timeline_rows.append({
+            "Stage": entry["label"],
+            "start": pd.to_datetime(start, unit="s"),
+            "end": pd.to_datetime(end, unit="s"),
+            "status": entry["status"],
+        })
+
+    chunk_history = state.get("chunk_history") or []
+    confidence_points = state.get("classification_confidence_points") or []
+    score_points = state.get("comparison_score_points") or []
+    active_rate = 0.0
+    if chunk_history:
+        try:
+            active_rate = float(chunk_history[-1].get("chunk_rate") or 0.0)
+        except Exception:
+            active_rate = 0.0
+
+    with container.container():
+        st.markdown("**Compliance live monitor**")
+        st.caption("Full-width runtime view for Compliance analysis: stage progress, timing, and current execution state.")
+        with st.container(border=True):
+            k1, k2, k3, k4, k5, k6 = st.columns(6)
+            k1.metric("Document", state.get("document_label") or "-")
+            k2.metric("Completed stages", f"{completed_count}/{len(COMPLIANCE_MONITOR_STAGES)}")
+            k3.metric("Chunks", int(state.get("chunks_processed") or 0))
+            k4.metric("Approx. tokens", int(state.get("tokens_processed") or 0))
+            k5.metric("Elapsed", f"{total_elapsed:.1f}s")
+            active_stage = state.get("active_stage")
+            k6.metric("Active stage", COMPLIANCE_STAGE_LABELS.get(active_stage, "Waiting"))
+
+        left_col, right_col = st.columns([1.05, 0.95])
+        with left_col:
+            with st.container(border=True):
+                st.markdown("**Stage status**")
+                table_height = max(320, min(760, 52 * (len(stage_rows) + 2)))
+                st.dataframe(pd.DataFrame(stage_rows), use_container_width=True, hide_index=True, height=table_height)
+
+            with st.container(border=True):
+                st.markdown("**Score and confidence evolution**")
+                evolution_rows = confidence_points + score_points
+                if evolution_rows:
+                    evolution_df = pd.DataFrame(evolution_rows)
+                    evolution_fig = px.line(
+                        evolution_df,
+                        x="elapsed",
+                        y="value",
+                        color="series",
+                        markers=True,
+                        title="Live score and confidence trend",
+                        color_discrete_map={
+                            "Classification confidence": "#2E6F40",
+                            "Compliance score": "#144F47",
+                        },
+                    )
+                    evolution_fig.update_traces(line=dict(width=3), marker=dict(size=7))
+                    evolution_fig.update_layout(
+                        height=280,
+                        margin=dict(l=20, r=20, t=50, b=20),
+                        xaxis_title="Elapsed (s)",
+                        yaxis_title="Value",
+                        yaxis=dict(range=[0, 1], tickformat=".0%"),
+                        legend_title_text="Signal",
+                    )
+                    st.plotly_chart(
+                        evolution_fig,
+                        use_container_width=True,
+                        key=f"{chart_key_prefix}-evolution",
+                    )
+                else:
+                    st.info("Confidence and score evolution will appear once streamed values are available.")
+        with right_col:
+            with st.container(border=True):
+                st.markdown("**Live chunk rate**")
+                if chunk_history:
+                    rate_df = pd.DataFrame(chunk_history)
+                    rate_fig = px.line(
+                        rate_df,
+                        x="elapsed",
+                        y="chunk_rate",
+                        markers=True,
+                        title="Streaming throughput",
+                    )
+                    rate_fig.update_traces(line=dict(color="#F8931F", width=3), marker=dict(size=7, color="#555759"))
+                    rate_fig.update_layout(height=240, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
+                    st.plotly_chart(
+                        rate_fig,
+                        use_container_width=True,
+                        key=f"{chart_key_prefix}-rate",
+                    )
+                else:
+                    st.info("Chunk-rate chart will appear after Ollama starts streaming output.")
+                st.caption(f"Current active rate: {active_rate:.1f} chars/s")
+
+            with st.container(border=True):
+                st.markdown("**Execution timeline**")
+                if timeline_rows:
+                    timeline_df = pd.DataFrame(timeline_rows)
+                    fig = px.timeline(
+                        timeline_df,
+                        x_start="start",
+                        x_end="end",
+                        y="Stage",
+                        color="status",
+                        color_discrete_map={"pending": "#D9D9D9", "running": "#F8931F", "completed": "#2E6F40", "failed": "#B42318", "skipped": "#555759"},
+                        title="Compliance execution timeline",
+                    )
+                    fig.update_yaxes(autorange="reversed")
+                    fig.update_layout(height=320, margin=dict(l=20, r=20, t=50, b=20), showlegend=False)
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True,
+                        key=f"{chart_key_prefix}-timeline",
+                    )
+                else:
+                    st.info("Timeline will appear once the Compliance run begins.")
+
+            with st.container(border=True):
+                st.markdown("**Latest runtime detail**")
+                detail_lines = [state.get("latest_message") or "Waiting for Compliance analysis to begin."]
+                if state.get("detected_body") or state.get("detected_category"):
+                    detail_lines.append(
+                        f"Detected type: {(state.get('detected_body') or 'Unknown')} / {(state.get('detected_category') or 'Unknown')}"
+                    )
+                if state.get("current_template"):
+                    detail_lines.append(f"Reference template: {state.get('current_template')}")
+                if state.get("classification_confidence_history"):
+                    detail_lines.append(
+                        f"Latest classification confidence: {float(state['classification_confidence_history'][-1]):.0%}"
+                    )
+                if state.get("comparison_score_history"):
+                    detail_lines.append(
+                        f"Latest compliance score signal: {float(state['comparison_score_history'][-1]):.0%}"
+                    )
+                st.write("\n\n".join(detail_lines))
+
+                preview_text = (state.get("stream_preview") or "").strip()
+                if preview_text:
+                    st.caption("Streaming preview")
+                    st.code(preview_text[-1400:], language="json")
+                else:
+                    st.caption("Streaming preview will appear here while Ollama is generating.")
 
 
 def _build_executive_pdf(
@@ -657,6 +964,8 @@ with status_meta_col:
     if run_state_updated_label:
         st.caption(f"Last updated at {run_state_updated_label}")
 
+compliance_live_monitor_area = st.container()
+
 if run_btn:
     job_meta = {
         "document_id": document_id,
@@ -669,6 +978,15 @@ if run_btn:
         "message": f"Analysis in progress for {selected_label} using {provider.upper()} / {health.get('model', 'unknown')}...",
         "updated_at": time.time(),
     }
+    compliance_monitor_state = _create_compliance_monitor_state(selected_label)
+    with compliance_live_monitor_area.container(border=True):
+        monitor_placeholder = st.empty()
+
+    def compliance_progress(stage: str, status: str, payload: Optional[dict] = None) -> None:
+        _update_compliance_monitor_state(compliance_monitor_state, stage, status, payload)
+        _render_compliance_live_monitor(monitor_placeholder, compliance_monitor_state)
+
+    compliance_progress("classify", "pending", {"message": "Queued for Compliance analysis."})
     with st.spinner(
         f"Running compliance analysis with {provider.upper()} / {health.get('model', 'unknown')} — this may take 1–3 minutes..."
     ):
@@ -691,6 +1009,7 @@ if run_btn:
                     document_id=document_id,
                     document_text=doc_text_for_run,
                     reference_template=chosen_template,
+                    on_progress=compliance_progress if provider == "ollama" else None,
                 )
                 _result = _raw_result if isinstance(_raw_result, dict) else {
                     "error": "",
@@ -753,6 +1072,8 @@ if run_btn:
                     "message": _status_msg,
                     "updated_at": time.time(),
                 }
+                if provider == "ollama":
+                    compliance_progress("persist", "completed" if _status_state != "failed" else "failed", {"message": _status_msg})
         except Exception as _exc:
             import traceback as _tb
             st.error(f"Analysis error: {_exc}")
@@ -761,6 +1082,8 @@ if run_btn:
                 "message": f"Analysis failed: {_exc}",
                 "updated_at": time.time(),
             }
+            if provider == "ollama":
+                compliance_progress("compare", "failed", {"message": f"Analysis failed: {_exc}"})
             with st.expander("Debug traceback"):
                 st.code(_tb.format_exc())
 
@@ -1250,7 +1573,10 @@ if _render_last_run:
                 ])
                 st.dataframe(metrics_df, use_container_width=True, hide_index=True)
                 st.caption("XAI breakdown: coverage scores show how many reference template keywords/requirements/sections appear in the document.")
-                _render_shap_heatmap(shap_proxy)
+                _render_shap_heatmap(
+                    shap_proxy,
+                    chart_key=f"compliance-shap-latest-{job.get('document_id', document_id)}-{int(last_run.get('finished_at', 0) or 0)}",
+                )
 
             with tab_ref:
                 if reference_rows:
@@ -1626,7 +1952,10 @@ elif latest_saved_analysis:
             st.caption("Quick XAI mode: SHAP proxy is computed from saved compliance outputs. Click 'Load detailed saved analysis' for token/reference coverage diagnostics.")
         else:
             st.caption("This XAI view includes tokenization diagnostics and scoring coverage used for SHAP-style attribution.")
-        _render_shap_heatmap(saved_shap_proxy)
+        _render_shap_heatmap(
+            saved_shap_proxy,
+            chart_key=f"compliance-shap-saved-{document_id}-{saved_analysis_id}",
+        )
 
         with st.expander("Tokenization diagnostics", expanded=False):
             st.dataframe(

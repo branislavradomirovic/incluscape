@@ -14,6 +14,7 @@ _NAV = [
     ("🔎", "Compliance", "pages/6_Compliance.py"),
     ("🌐", "Sources",    "pages/8_Sources.py"),
     ("⚖️", "HRBA match", "pages/9_HRBA_match.py"),
+    ("🧾", "HRBA Insights", "pages/10_HRBA_Insights.py"),
     ("❓", "Help",       "pages/7_Help.py"),
 ]
 

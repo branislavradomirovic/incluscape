@@ -156,7 +156,7 @@ class GeminiSemanticAnalyzer:
         raise RuntimeError("Gemini call failed without a model candidate")
 
     # ------------------------------------------------------------------
-    def classify_document(self, text: str) -> Dict[str, Any]:
+    def classify_document(self, text: str, on_progress=None) -> Dict[str, Any]:
         """
         Classify a document by governing body and category.
 
@@ -185,6 +185,7 @@ class GeminiSemanticAnalyzer:
         self,
         document_text: str,
         template: Dict[str, Any],
+        on_progress=None,
     ) -> Dict[str, Any]:
         """
         Compare document text against a reference template dict.

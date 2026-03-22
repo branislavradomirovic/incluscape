@@ -530,6 +530,26 @@ class DatabaseManager:
             (document_id,),
         )
 
+    def get_latest_hrba_analyses(self, limit: int = 200, organisation_id: Optional[int] = None) -> List[Dict]:
+        """Return recent rows from `semantic_analyses` joined with document titles.
+
+        Returns rows with keys: id, document_id, doc_title, model_used, full_response_json, created_at.
+        """
+        params: list = []
+        where_clause = ""
+        if organisation_id is not None:
+            where_clause = "WHERE d.organisation_id = ?"
+            params.append(organisation_id)
+
+        params.append(limit)
+        sql = (
+            "SELECT sa.id, sa.document_id, d.title AS doc_title, sa.model_used, sa.full_response_json, sa.created_at "
+            "FROM semantic_analyses sa JOIN documents d ON d.id = sa.document_id "
+            f"{where_clause} "
+            "ORDER BY sa.created_at DESC LIMIT ?"
+        )
+        return self.fetchall(sql, tuple(params))
+
     def get_reference_templates(
         self,
         body: Optional[str] = None,

@@ -5,6 +5,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
+import streamlit.components.v1 as components
+import re
+import webbrowser
 from config import Config
 from utils.logger import setup_logging
 from database.db_manager import DatabaseManager
@@ -23,6 +26,25 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Auto-open the static landing HTML in the default browser once per session.
+# Uses a session flag to avoid repeated opens on Streamlit reruns.
+try:
+    assets_dir = Path(__file__).resolve().parent.parent / "landing_page_assets"
+    index_file = assets_dir / "index.html"
+    if index_file.exists() and "landing_opened" not in st.session_state:
+        try:
+            webbrowser.open_new_tab(index_file.resolve().as_uri())
+        except Exception:
+            pass
+        st.session_state.landing_opened = True
+except Exception:
+    # Fail silently if session state or file access is unavailable.
+    pass
+
+# Strongly hide Streamlit sidebar and UI chrome across versions so the app
+# starts with a clean canvas. This uses multiple selectors to cover DOM
+# differences between Streamlit releases and custom themes.
+# Render the sidebar and proceed to the interactive app UI
 render_sidebar()
 
 # ── Initialise database once per session ───────────────────────────────────
@@ -137,4 +159,4 @@ else:
     )
 
 st.markdown("---")
-st.info("Use the **sidebar** to navigate between sections.")
+st.info("Use the navigation controls to move between sections.")

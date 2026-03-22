@@ -3,12 +3,22 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 from config import Config
 from database.db_manager import DatabaseManager
 
+from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.help_button import render_help_button
 
-st.title("⚖️ HRBA Insights — Saved Justifications")
+st.set_page_config(page_title="HRBA Insights — SIPMT", page_icon="⚖️", layout="wide")
+render_sidebar()
+
+col1, col2 = st.columns([14, 4])
+with col1:
+    st.title("⚖️ HRBA Insights — Saved Justifications")
+with col2:
+    render_help_button("⚖️ HRBA Insights")
 
 st.markdown(
     """
@@ -30,16 +40,7 @@ doc_map = {d["id"] if isinstance(d, dict) else d[0]: (d["title"] if isinstance(d
 doc_options = ["All documents"] + [f"{doc_id}: {title}" for doc_id, title in doc_map.items()]
 selected_doc = st.selectbox("Filter by document", options=doc_options)
 
-# Build query
-params: List[Any] = [org_id]
-query = (
-    "SELECT sa.id, sa.document_id, d.title AS doc_title, sa.model_used, sa.full_response_json, sa.created_at "
-    "FROM semantic_analyses sa JOIN documents d ON d.id = sa.document_id "
-    "WHERE d.organisation_id = ? "
-    "ORDER BY sa.created_at DESC"
-)
-
-rows = db.fetchall(query, tuple(params))
+rows = db.get_latest_hrba_analyses(limit=500, organisation_id=org_id)
 
 records: List[Dict[str, Any]] = []
 for r in rows:
@@ -119,6 +120,50 @@ if not records:
 else:
     df = pd.DataFrame(records)
     st.subheader(f"Saved Justifications ({len(df)})")
+
+    # Timeline / per-document visualization
+    try:
+        df["created_at_dt"] = pd.to_datetime(df["created_at"], errors="coerce")
+    except Exception:
+        df["created_at_dt"] = pd.to_datetime(df["created_at"], errors="coerce")
+
+    if df["created_at_dt"].notna().any():
+        timeline_df = df.copy()
+        timeline_df["score_val"] = timeline_df["highest_score"].fillna(0).astype(float)
+        fig = px.scatter(
+            timeline_df,
+            x="created_at_dt",
+            y="document_title",
+            color="highest_category",
+            size="score_val",
+            hover_data=["document_id", "justification", "highest_score"],
+            title="HRBA Analyses Timeline",
+        )
+        fig.update_layout(height=360, xaxis_title="Analysis time", yaxis_title="Document")
+        st.plotly_chart(fig, use_container_width=True)
+        # Multi-document Gantt-style view: small bars centered on analysis time
+        try:
+            if df["document_title"].nunique() > 1:
+                md = df.copy()
+                md["score_val"] = md["highest_score"].fillna(0).astype(float)
+                # map score to a short duration (seconds) for visualization
+                md["delta_secs"] = md["score_val"].apply(lambda s: max(5, int(s * 60)))
+                md["start"] = md["created_at_dt"] - pd.to_timedelta(md["delta_secs"] / 2, unit="s")
+                md["end"] = md["created_at_dt"] + pd.to_timedelta(md["delta_secs"] / 2, unit="s")
+                gfig = px.timeline(
+                    md,
+                    x_start="start",
+                    x_end="end",
+                    y="document_title",
+                    color="highest_category",
+                    hover_data=["document_id", "original_text", "highest_score", "justification"],
+                    title="Multi-document HRBA Gantt (per analysis)",
+                )
+                gfig.update_yaxes(autorange="reversed")
+                gfig.update_layout(height=420)
+                st.plotly_chart(gfig, use_container_width=True)
+        except Exception:
+            pass
     st.dataframe(df[["created_at", "document_id", "document_title", "model_used", "highest_category", "highest_score", "justification"]])
 
     csv = df.to_csv(index=False).encode("utf-8")

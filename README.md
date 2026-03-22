@@ -9,6 +9,52 @@
 - 🔍 **Change monitoring** — detect and track changes across document versions over time
 - 🗺️ **Geospatial visualization** — extract locations from documents and plot them on an interactive map
 - 🏢 **Multi-organization support** — manage multiple organisations and user roles
+ - ⚖️ **HRBA (AAAQ) matcher** — scan documents for Availability, Accessibility, Acceptability, and Quality indicators using `spaCy` or a local Ollama LLM; includes live streaming previews and per-document timelines
+
+## Detailed Features
+
+Below is a concise but comprehensive description of SIPMT's major features and UI modules.
+
+- **Documents (Upload & Management)**
+    - Upload PDF/DOCX/XLSX files; optional OCR for scanned PDFs.
+    - Documents are split into pages and stored with metadata (title, author, created_at).
+    - Re-process uploaded files to refresh extraction results.
+
+- **Templates (Report Definitions)**
+    - Create structured templates with named fields and types (text, number, date, boolean, location).
+    - Templates drive automated extraction and report generation across many documents.
+
+- **Reports (Extraction & Export)**
+    - Select a template and run batch extraction across selected documents.
+    - Review extracted values and confidence scores before export (CSV/JSON/PDF).
+
+- **Change Monitoring**
+    - Detects document version changes and produces a diff highlighting added/removed/modified text.
+    - Stores an audit trail including timestamps and size deltas.
+
+- **Geospatial Mapping**
+    - Extracts place names and optionally geocodes them to lat/lon using Nominatim.
+    - Interactive Folium map shows markers with document source and context.
+
+- **HRBA — AAAQ Matching & Insights**
+    - Two modes: `spaCy` (fast, deterministic) and `Ollama` (LLM, JSON justifications).
+    - Ollama integration supports streaming responses; the UI shows a live preview and builds a per-segment Gantt/timeline for visibility into when segments were generated.
+    - Save full analysis JSON to the `semantic_analyses` table for later inspection in the `HRBA Insights` page.
+
+- **Compliance (Semantic Analysis)**
+    - Compare documents against reference frameworks (UN, EU, UNESCO) using semantic LLMs.
+    - Supports Google Gemini (cloud) and Ollama (local) backends.
+
+- **Insights & Exports**
+    - The HRBA Insights page surfaces saved justifications in a table, allows CSV export, and visualizes analysis activity across documents with timelines and multi-document Gantt views.
+
+- **Multi-organisation & Roles**
+    - Project supports storing documents and analyses per organisation; session state contains `org_id` selections used by pages.
+
+- **Developer & Admin Tools**
+    - `scripts/pre_deploy_check.sh` validates the environment before deploys.
+    - `scripts/migrate_sqlite_to_postgres.py` migrates demo SQLite data into Postgres in a foreign-key safe order.
+
 
 ## Tech Stack
 
@@ -48,6 +94,26 @@ streamlit run streamlit_app/app.py
 
 The app will be available at **http://localhost:8501**
 
+## HRBA — AAAQ Matching & Timeline
+
+The project includes an HRBA matcher that can run in two modes:
+
+- `spaCy (fast)`: lightweight local matcher for quick scans.
+- `Ollama (LLM)`: self-hosted LLM that returns structured JSON justifications and supports streaming output.
+
+When using the Ollama matcher the UI shows a live generation preview and a Gantt-style timeline per-document that helps visualise which segments were generated when and how long they took. To use Ollama locally:
+
+```bash
+# Start Ollama (follow Ollama docs for installation)
+ollama pull qwen2.5:14b-instruct
+# Ensure Ollama is reachable (default http://localhost:11434)
+export OLLAMA_BASE_URL=http://localhost:11434
+export OLLAMA_MODEL=qwen2.5:14b-instruct
+export SEMANTIC_LLM_PROVIDER=ollama
+```
+
+If the model does not stream intermediate chunks, the UI will still display the final JSON when available and the timeline will render after the segment completes.
+
 ## Database Configuration
 
 SIPMT supports two database modes:
@@ -59,7 +125,7 @@ Set one of the following:
 
 ```bash
 # Preferred: persistent cloud database
-DATABASE_URL=postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable
+DATABASE_URL=postgresql://postgres:replace-with-password@db-host:5432/incluscape?sslmode=require
 
 # Fallback local file database
 DATABASE_PATH=./data/sipmt.db
@@ -74,6 +140,29 @@ For Streamlit Community Cloud demos we intentionally prefer the bundled SQLite f
 
 This lets you keep `DATABASE_URL` set for local development while ensuring public Cloud deploys remain self-contained and use SQLite.
 
+### Streamlit Community Cloud + Gemini
+
+For Streamlit Community Cloud, use Gemini and leave `DATABASE_URL` empty unless you have a managed external PostgreSQL database.
+
+Recommended Streamlit Cloud Secrets:
+
+```toml
+ENABLE_SEMANTIC_ANALYSIS = true
+SEMANTIC_LLM_PROVIDER = "gemini"
+GEMINI_API_KEY = "your-real-google-api-key"
+GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_FALLBACK_MODELS = "gemini-2.0-flash-lite-001,gemini-2.0-flash,gemini-2.5-flash"
+DATABASE_URL = ""
+DATABASE_PATH = "./data/sipmt.db"
+```
+
+Notes:
+
+1. Do not use `OLLAMA_*` settings on Streamlit Community Cloud. Ollama requires a local server and is not available in that environment.
+2. Do not point `DATABASE_URL` at `localhost` for Cloud deploys.
+3. SQLite is acceptable for a lightweight demo, but saved data is not guaranteed to persist across container restarts or redeploys.
+4. If you need persistent uploaded documents and analysis history, use a managed PostgreSQL instance and set `DATABASE_URL` to that external service.
+
 ## Shipping Local Postgres + Ollama
 
 For demo deployments you can keep Streamlit on SQLite, but production/back-office installs should include a bundled PostgreSQL server plus Ollama for semantic analysis:
@@ -83,7 +172,7 @@ For demo deployments you can keep Streamlit on SQLite, but production/back-offic
 3. In `.env`, set:
 
 ```text
-DATABASE_URL=postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable
+DATABASE_URL=postgresql://postgres:replace-with-password@127.0.0.1:5432/incluscape?sslmode=disable
 ENABLE_SEMANTIC_ANALYSIS=true
 SEMANTIC_LLM_PROVIDER=ollama
 ```
@@ -124,7 +213,7 @@ Use one codebase with different providers per environment.
 | Environment | Hosting | Provider | Key Variables |
 |---|---|---|---|
 | Local development | Your notebook | Ollama | `SEMANTIC_LLM_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=qwen2.5:14b-instruct` |
-| Customer demo | Streamlit Community Cloud | Gemini | `SEMANTIC_LLM_PROVIDER=gemini`, `GEMINI_API_KEY=...`, `ENABLE_SEMANTIC_ANALYSIS=true` |
+| Customer demo | Streamlit Community Cloud | Gemini | `SEMANTIC_LLM_PROVIDER=gemini`, `GEMINI_API_KEY=...`, `ENABLE_SEMANTIC_ANALYSIS=true`, `DATABASE_URL=` |
 
 This keeps local AI quality and speed, while preserving a stable external demo URL from GitHub.
 
@@ -225,7 +314,7 @@ Before pushing to `main`, confirm all items below:
 docker build -t sipmt:latest .
 docker run --rm -p 8501:8501 \
   --env-file .env \
-    -e DATABASE_URL="postgresql://postgres:Natalija2006@127.0.0.1:5432/incluscape?sslmode=disable" \
+    -e DATABASE_URL="postgresql://postgres:replace-with-password@127.0.0.1:5432/incluscape?sslmode=disable" \
     sipmt:latest
 ```
 

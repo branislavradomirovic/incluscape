@@ -108,7 +108,7 @@ class CategoryMatcher:
         ]
 
     # ------------------------------------------------------------------
-    def classify_and_match(self, document_text: str) -> Dict[str, Any]:
+    def classify_and_match(self, document_text: str, on_progress=None) -> Dict[str, Any]:
         """
         Classify a document with Gemini, then find matching reference templates.
 
@@ -118,10 +118,43 @@ class CategoryMatcher:
                 "matched_templates": [ <template dict>, ... ]
             }
         """
-        classification = self.analyzer.classify_document(document_text)
+        if callable(on_progress):
+            on_progress("classify", "running", {"message": "Classifying document body and category."})
+
+        classify_stream = None
+        if callable(on_progress):
+            def classify_stream(part, obj, elapsed, done):
+                payload = {
+                    "message": "Streaming classification response.",
+                    "part": part,
+                    "elapsed": elapsed,
+                }
+                if isinstance(obj, dict):
+                    if obj.get("body"):
+                        payload["body"] = obj.get("body")
+                    if obj.get("category"):
+                        payload["category"] = obj.get("category")
+                    if obj.get("confidence") is not None:
+                        payload["confidence"] = obj.get("confidence")
+                on_progress("classify", "running", payload)
+
+        classification = self.analyzer.classify_document(document_text, on_progress=classify_stream)
+        if callable(on_progress):
+            on_progress(
+                "classify",
+                "completed" if "error" not in classification else "failed",
+                {
+                    "body": classification.get("body", "Other"),
+                    "category": classification.get("category", "Other"),
+                    "confidence": classification.get("confidence", 0.0),
+                    "message": classification.get("error") or "Document classification completed.",
+                },
+            )
         body = classification.get("body", "Other")
         category = classification.get("category", "Other")
 
+        if callable(on_progress):
+            on_progress("match", "running", {"message": "Matching reference templates."})
         matched = self.get_templates_for(body, category)
         if not matched:
             # Broaden: same body, any category
@@ -135,6 +168,18 @@ class CategoryMatcher:
                 t for t in self.get_all_templates()
                 if t.get("category", "").lower() == category.lower()
             ]
+
+        if callable(on_progress):
+            on_progress(
+                "match",
+                "completed",
+                {
+                    "matches": len(matched),
+                    "body": body,
+                    "category": category,
+                    "message": f"Matched {len(matched)} reference template(s).",
+                },
+            )
 
         return {
             "classification": classification,
