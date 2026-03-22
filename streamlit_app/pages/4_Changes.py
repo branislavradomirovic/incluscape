@@ -8,7 +8,7 @@ import pandas as pd
 from database.db_manager import DatabaseManager
 from change_tracking.change_detector import ChangeDetector
 from change_tracking.version_manager import VersionManager
-from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="Change Monitor — SIPMT", page_icon="🔍", layout="wide")
@@ -101,3 +101,5 @@ else:
             c3.metric("Impact level", result["impact_level"].upper())
             with st.expander("Diff snippet"):
                 st.code(result["diff_snippet"], language="diff")
+
+render_page_disclaimer()

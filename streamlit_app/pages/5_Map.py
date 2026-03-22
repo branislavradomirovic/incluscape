@@ -9,7 +9,7 @@ from database.db_manager import DatabaseManager
 from geospatial.location_extractor import LocationExtractor
 from geospatial.geocoder import Geocoder
 from geospatial.map_generator import MapGenerator
-from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="Map — SIPMT", page_icon="🗺️", layout="wide")
@@ -288,3 +288,5 @@ if last_locations:
     )
 elif selected:
     st.info("Click **Extract & Map Locations** to build or refresh the map for selected documents.")
+
+render_page_disclaimer()

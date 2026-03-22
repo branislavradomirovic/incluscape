@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
-from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 st.set_page_config(page_title="Help — SIPMT", page_icon="❓", layout="wide")
 render_sidebar()
@@ -480,3 +480,5 @@ st.markdown("""
 ---
 *Last updated: March 2026 | SIPMT v1.0*
 """)
+
+render_page_disclaimer()

@@ -896,3 +896,4 @@ if st.button("Save last analysis to DB"):
 
 st.markdown("---")
 st.caption(f"spaCy model: {Config.SPACY_MODEL} — Ollama base: {Config.OLLAMA_BASE_URL}")
+render_page_disclaimer()
