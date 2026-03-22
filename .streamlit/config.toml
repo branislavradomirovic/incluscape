@@ -1,4 +1,5 @@
 [server]
+headless = true[server]
 maxUploadSize = 20   # MB — enforced by Streamlit's file uploader widget
 fileWatcherType = "none"
 runOnSave = false
