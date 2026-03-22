@@ -387,6 +387,10 @@ def _create_compliance_monitor_state(selected_label: str) -> dict:
         "tokens_processed": 0,
         "chunk_history": [],
         "last_chunk_elapsed": None,
+        "chart_render_serial": 0,
+        "last_chart_render_at": 0.0,
+        "chart_dirty": True,
+        "force_chart_refresh": True,
         "classification_confidence_history": [],
         "classification_confidence_points": [],
         "comparison_score_history": [],
@@ -417,6 +421,7 @@ def _create_compliance_monitor_layout(container):
         summary_card = st.container(border=True)
         with summary_card:
             summary_cols = st.columns(6)
+            summary_slots = [col.empty() for col in summary_cols]
 
         left_col, right_col = st.columns([1.05, 0.95])
         with left_col:
@@ -445,7 +450,7 @@ def _create_compliance_monitor_layout(container):
             preview_code = st.empty()
 
     return {
-        "summary_cols": summary_cols,
+        "summary_slots": summary_slots,
         "stage_table": stage_table,
         "evolution_chart": evolution_chart,
         "rate_chart": rate_chart,
@@ -467,6 +472,7 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
         entry["started_at"] = entry["started_at"] or now
         entry["status"] = "running"
         state["active_stage"] = stage
+        state["chart_dirty"] = True
     elif status in {"completed", "failed", "skipped"}:
         entry["started_at"] = entry["started_at"] or now
         entry["ended_at"] = now
@@ -474,6 +480,7 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
         entry["status"] = status
         if state.get("active_stage") == stage:
             state["active_stage"] = None
+        state["chart_dirty"] = True
     else:
         entry["status"] = status
 
@@ -494,6 +501,7 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
         state["last_chunk_elapsed"] = elapsed
         state["chunks_processed"] = int(state.get("chunks_processed") or 0) + 1
         state["tokens_processed"] = int(state.get("tokens_processed") or 0) + max(1, len(part.split()))
+        state["chart_dirty"] = True
 
     if payload.get("body"):
         state["detected_body"] = payload.get("body")
@@ -513,6 +521,7 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
                 "series": "Classification confidence",
             })
             state["classification_confidence_points"] = state["classification_confidence_points"][-120:]
+            state["chart_dirty"] = True
         except Exception:
             pass
     if payload.get("score") is not None:
@@ -527,6 +536,7 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
                 "series": "Compliance score",
             })
             state["comparison_score_points"] = state["comparison_score_points"][-120:]
+            state["chart_dirty"] = True
         except Exception:
             pass
 
@@ -549,6 +559,24 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
 
 def _render_compliance_live_monitor(slots, state: dict) -> None:
     total_elapsed = max(0.0, time.time() - float(state.get("started_at") or time.time()))
+    chart_key_prefix = state.get("monitor_key") or "compliance-monitor"
+    current_time = time.time()
+    chart_refresh_due = bool(state.get("force_chart_refresh"))
+    if not chart_refresh_due and state.get("chart_dirty"):
+        last_chart_render_at = float(state.get("last_chart_render_at") or 0.0)
+        chart_refresh_due = (
+            last_chart_render_at == 0.0
+            or (current_time - last_chart_render_at) >= 0.45
+            or state.get("active_stage") is None
+        )
+    chart_render_serial = int(state.get("chart_render_serial") or 0)
+    if chart_refresh_due:
+        chart_render_serial += 1
+        state["chart_render_serial"] = chart_render_serial
+        state["last_chart_render_at"] = current_time
+        state["chart_dirty"] = False
+        state["force_chart_refresh"] = False
+
     stage_rows = []
     completed_count = 0
     for stage in COMPLIANCE_MONITOR_STAGES:
@@ -587,7 +615,7 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
         except Exception:
             active_rate = 0.0
 
-    k1, k2, k3, k4, k5, k6 = slots["summary_cols"]
+    k1, k2, k3, k4, k5, k6 = slots["summary_slots"]
     k1.metric("Document", state.get("document_label") or "-")
     k2.metric("Completed stages", f"{completed_count}/{len(COMPLIANCE_MONITOR_STAGES)}")
     k3.metric("Chunks", int(state.get("chunks_processed") or 0))
@@ -623,8 +651,13 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
             yaxis=dict(range=[0, 1], tickformat=".0%"),
             legend_title_text="Signal",
         )
-        slots["evolution_chart"].plotly_chart(evolution_fig, use_container_width=True)
-    else:
+        if chart_refresh_due:
+            slots["evolution_chart"].plotly_chart(
+                evolution_fig,
+                use_container_width=True,
+                key=f"{chart_key_prefix}-evolution-{chart_render_serial}",
+            )
+    elif chart_refresh_due:
         slots["evolution_chart"].info("Confidence and score evolution will appear once streamed values are available.")
 
     if chunk_history:
@@ -638,8 +671,13 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
         )
         rate_fig.update_traces(line=dict(color="#F8931F", width=3), marker=dict(size=7, color="#555759"))
         rate_fig.update_layout(height=240, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
-        slots["rate_chart"].plotly_chart(rate_fig, use_container_width=True)
-    else:
+        if chart_refresh_due:
+            slots["rate_chart"].plotly_chart(
+                rate_fig,
+                use_container_width=True,
+                key=f"{chart_key_prefix}-rate-{chart_render_serial}",
+            )
+    elif chart_refresh_due:
         slots["rate_chart"].info("Chunk-rate chart will appear after Ollama starts streaming output.")
     slots["rate_caption"].caption(f"Current active rate: {active_rate:.1f} chars/s")
 
@@ -656,8 +694,13 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
         )
         fig.update_yaxes(autorange="reversed")
         fig.update_layout(height=320, margin=dict(l=20, r=20, t=50, b=20), showlegend=False)
-        slots["timeline_chart"].plotly_chart(fig, use_container_width=True)
-    else:
+        if chart_refresh_due:
+            slots["timeline_chart"].plotly_chart(
+                fig,
+                use_container_width=True,
+                key=f"{chart_key_prefix}-timeline-{chart_render_serial}",
+            )
+    elif chart_refresh_due:
         slots["timeline_chart"].info("Timeline will appear once the Compliance run begins.")
 
     detail_lines = [state.get("latest_message") or "Waiting for Compliance analysis to begin."]
@@ -986,10 +1029,11 @@ with status_meta_col:
     if run_state_updated_label:
         st.caption(f"Last updated at {run_state_updated_label}")
 
-compliance_live_monitor_area = st.container()
+compliance_live_monitor_area = st.empty()
 
 persisted_monitor_state = st.session_state.get("compliance_live_monitor_state")
 if (not run_btn) and isinstance(persisted_monitor_state, dict) and persisted_monitor_state.get("document_label"):
+    compliance_live_monitor_area.empty()
     persisted_monitor_slots = _create_compliance_monitor_layout(compliance_live_monitor_area)
     _render_compliance_live_monitor(persisted_monitor_slots, persisted_monitor_state)
 
@@ -1007,6 +1051,7 @@ if run_btn:
     }
     compliance_monitor_state = _create_compliance_monitor_state(selected_label)
     st.session_state["compliance_live_monitor_state"] = compliance_monitor_state
+    compliance_live_monitor_area.empty()
     monitor_slots = _create_compliance_monitor_layout(compliance_live_monitor_area)
 
     def compliance_progress(stage: str, status: str, payload: Optional[dict] = None) -> None:

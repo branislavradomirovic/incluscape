@@ -122,40 +122,85 @@ with col4:
 
 st.markdown("---")
 
-# ── Scope map — locations from Policies documents ──────────────────────────
-st.subheader("📍 Document Scope — Policy Locations")
-st.caption(
-    "Locations extracted from **Policies** documents. "
-    "Full scope definition will be applied once document processing rules are configured."
-)
+# ── Scope map — prefer Policies, fallback to all geocoded documents ────────
+st.subheader("📍 Document Scope — Geo Locations")
 
 policy_locations = db.fetchall(
     """
     SELECT l.place_name, l.latitude, l.longitude,
            l.location_type, l.context,
-           d.title AS document_title
+           d.title AS document_title,
+           d.document_type
     FROM   locations l
     JOIN   documents d ON d.id = l.document_id
     WHERE  d.organisation_id = ?
       AND  d.document_type   = 'Policies'
       AND  l.geocoded        = 1
+      AND  l.latitude        IS NOT NULL
+      AND  l.longitude       IS NOT NULL
     """,
     (st.session_state.org_id,),
 )
 
+all_geocoded_locations = db.fetchall(
+    """
+    SELECT l.place_name, l.latitude, l.longitude,
+           l.location_type, l.context,
+           d.title AS document_title,
+           d.document_type
+    FROM   locations l
+    JOIN   documents d ON d.id = l.document_id
+    WHERE  d.organisation_id = ?
+      AND  l.geocoded        = 1
+      AND  l.latitude        IS NOT NULL
+      AND  l.longitude       IS NOT NULL
+    """,
+    (st.session_state.org_id,),
+)
+
+scope_locations = policy_locations or all_geocoded_locations
+
 if policy_locations:
+    st.caption(
+        "Showing geocoded locations extracted from **Policies** documents."
+    )
+elif all_geocoded_locations:
+    location_mix = db.fetchall(
+        """
+        SELECT d.document_type, COUNT(*) AS count
+        FROM   locations l
+        JOIN   documents d ON d.id = l.document_id
+        WHERE  d.organisation_id = ?
+          AND  l.geocoded        = 1
+          AND  l.latitude        IS NOT NULL
+          AND  l.longitude       IS NOT NULL
+        GROUP  BY d.document_type
+        ORDER  BY count DESC, d.document_type
+        """,
+        (st.session_state.org_id,),
+    )
+    mix_label = ", ".join(f"{row['document_type']}: {row['count']}" for row in location_mix)
+    st.caption(
+        "No geocoded rows are currently stored on **Policies** documents, so the dashboard is showing all available geocoded document locations instead. "
+        f"Current mix: {mix_label}."
+    )
+else:
+    st.caption(
+        "No geocoded document locations are stored yet. Upload and process documents, then use the Map page to extract and geocode locations."
+    )
+
+if scope_locations:
     try:
         from streamlit_folium import st_folium
         mapper = MapGenerator()
-        m = mapper.build_map(policy_locations)
+        m = mapper.build_map(scope_locations)
         if m:
             st_folium(m, use_container_width=True, height=420)
     except ImportError:
         st.warning("`streamlit-folium` not installed. Run `pip install streamlit-folium`.")
 else:
     st.info(
-        "No geocoded locations from **Policies** documents yet. "
-        "Upload and process policy documents — locations will appear here automatically."
+        "No geocoded locations are available for the current organisation yet."
     )
 
 st.markdown("---")
