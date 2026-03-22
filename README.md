@@ -52,7 +52,7 @@ Below is a concise but comprehensive description of SIPMT's major features and U
     - Project supports storing documents and analyses per organisation; session state contains `org_id` selections used by pages.
 
 - **Developer & Admin Tools**
-    - `scripts/pre_deploy_check.sh` validates the environment before deploys.
+    - `scripts/pre_deploy_check.sh` validates the environment before deploys and refreshes the SQLite demo mirror when PostgreSQL is configured locally.
     - `scripts/migrate_sqlite_to_postgres.py` migrates demo SQLite data into Postgres in a foreign-key safe order.
 
 
@@ -118,27 +118,32 @@ If the model does not stream intermediate chunks, the UI will still display the 
 
 SIPMT supports two database modes:
 
-1. PostgreSQL (recommended for Streamlit Cloud and production)
-2. SQLite (local fallback for quick development)
+1. PostgreSQL as the primary local and production database
+2. SQLite as a synced demo mirror for Streamlit Community Cloud or offline demos
 
 Set one of the following:
 
 ```bash
-# Preferred: persistent cloud database
+# Preferred local/production primary database
 DATABASE_URL=postgresql://postgres:replace-with-password@db-host:5432/incluscape?sslmode=require
 
-# Fallback local file database
+# SQLite demo mirror used by Streamlit Community Cloud
 DATABASE_PATH=./data/sipmt.db
+SQLITE_MIRROR_PATH=./data/sipmt.db
+ENABLE_SQLITE_MIRROR_SYNC=true
 ```
 
-When `DATABASE_URL` is present, PostgreSQL is used automatically.
+When `DATABASE_URL` is present, PostgreSQL is used automatically unless you explicitly set `FORCE_SQLITE=true`.
 
 Note about deployments
 ----------------------
 
-For Streamlit Community Cloud demos we intentionally prefer the bundled SQLite file to avoid the app attempting to connect to a developer's local Postgres instance. If `DATABASE_URL` points to `localhost` or `127.0.0.1`, the application will fall back to `DATABASE_PATH` (SQLite) unless you explicitly set `FORCE_POSTGRES=1` in your environment or secrets to force using Postgres.
+Recommended split:
 
-This lets you keep `DATABASE_URL` set for local development while ensuring public Cloud deploys remain self-contained and use SQLite.
+1. Local development: keep `DATABASE_URL` pointed at PostgreSQL and enable `ENABLE_SQLITE_MIRROR_SYNC=true` so SQLite stays aligned with your live local data.
+2. Streamlit Community Cloud: leave `DATABASE_URL` empty, keep `DATABASE_PATH` / `SQLITE_MIRROR_PATH` pointed at the SQLite file, and optionally set `FORCE_SQLITE=true` in secrets for clarity.
+
+This keeps local development authoritative on Postgres while maintaining a demo-ready SQLite database for Cloud.
 
 ### Streamlit Community Cloud + Gemini
 
@@ -154,6 +159,8 @@ GEMINI_MODEL = "gemini-2.0-flash"
 GEMINI_FALLBACK_MODELS = "gemini-2.0-flash-lite-001,gemini-2.0-flash,gemini-2.5-flash"
 DATABASE_URL = ""
 DATABASE_PATH = "./data/sipmt.db"
+SQLITE_MIRROR_PATH = "./data/sipmt.db"
+FORCE_SQLITE = true
 ```
 
 Notes:
@@ -162,6 +169,27 @@ Notes:
 2. Do not point `DATABASE_URL` at `localhost` for Cloud deploys.
 3. SQLite is acceptable for a lightweight demo, but saved data is not guaranteed to persist across container restarts or redeploys.
 4. If you need persistent uploaded documents and analysis history, use a managed PostgreSQL instance and set `DATABASE_URL` to that external service.
+
+### Postgres-Primary Local Workflow With SQLite Demo Sync
+
+Use this when you want your local instance to stay authoritative on PostgreSQL while keeping the SQLite demo database ready for Streamlit Community Cloud.
+
+```bash
+# Local development
+DATABASE_URL=postgresql://postgres:replace-with-password@127.0.0.1:5432/incluscape?sslmode=disable
+DATABASE_PATH=./data/sipmt.db
+SQLITE_MIRROR_PATH=./data/sipmt.db
+ENABLE_SQLITE_MIRROR_SYNC=true
+
+# Refresh the SQLite demo snapshot manually whenever needed
+python scripts/sync_postgres_to_sqlite.py
+```
+
+Notes:
+
+1. With `ENABLE_SQLITE_MIRROR_SYNC=true`, normal app writes performed through `DatabaseManager` are mirrored into the SQLite demo database automatically.
+2. `python scripts/sync_postgres_to_sqlite.py` performs a full refresh from PostgreSQL into SQLite and is useful after backfills, migrations, or legacy data imports.
+3. Streamlit Community Cloud should still use the SQLite file by leaving `DATABASE_URL` empty in Cloud secrets.
 
 ## Shipping Local Postgres + Ollama
 
@@ -178,6 +206,7 @@ SEMANTIC_LLM_PROVIDER=ollama
 ```
 
 4. Initialize the database by running `python setup.py`, then run the Postgres migration script if you have existing SQLite data.
+5. If you want the Streamlit Cloud demo database to match the latest local Postgres data, run `python scripts/sync_postgres_to_sqlite.py` before pushing the updated SQLite file.
 
 The bundled installer should include PostgreSQL binaries, your `sipmt` database, and the required Ollama model/configuration so the customer only needs to configure service credentials and secrets.
 
@@ -282,6 +311,7 @@ The check script validates:
 - required project files
 - Python syntax compilation for app modules
 - local environment sample consistency
+- automatic SQLite mirror refresh from PostgreSQL when Postgres is configured locally
 
 ## Release to Streamlit
 
@@ -301,7 +331,7 @@ Before pushing to `main`, confirm all items below:
 2. Core pages load: Documents, Reports, Changes, Map, Compliance
 3. Semantic analysis works in target demo environment
 4. No secrets committed (API keys only in platform secrets)
-5. `bash scripts/pre_deploy_check.sh` passes
+5. `bash scripts/pre_deploy_check.sh` passes and refreshes the SQLite demo mirror when applicable
 6. Demo dataset is present and recent outputs are clean
 7. Commit message clearly describes customer-visible change
 8. Push to `main` completed and cloud deployment is green

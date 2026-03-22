@@ -21,6 +21,42 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     """Database access layer for SIPMT (PostgreSQL or SQLite)."""
 
+    APP_TABLE_ORDER = [
+        "organisations",
+        "users",
+        "documents",
+        "document_blobs",
+        "document_pages",
+        "extracted_entities",
+        "report_templates",
+        "template_fields",
+        "reports",
+        "report_values",
+        "report_sources",
+        "document_changes",
+        "locations",
+        "audit_log",
+        "reference_templates",
+        "semantic_analyses",
+    ]
+
+    APP_ID_TABLES = [
+        "organisations",
+        "users",
+        "documents",
+        "document_pages",
+        "extracted_entities",
+        "report_templates",
+        "template_fields",
+        "reports",
+        "report_values",
+        "document_changes",
+        "locations",
+        "audit_log",
+        "reference_templates",
+        "semantic_analyses",
+    ]
+
     DOCUMENT_TYPE_MIGRATION_MAP = {
         "policy": "Policies",
         "procedure": "Instructions",
@@ -33,37 +69,136 @@ class DatabaseManager:
     def __init__(self, db_path: Optional[str] = None):
         self.backend = "sqlite"
         self.database_url = ""
+        self.sqlite_mirror_path = ""
+        self.enable_sqlite_mirror_sync = False
+        self._sqlite_mirror_ready = False
 
         if db_path is None:
             from config import Config
 
-            # Prefer PostgreSQL when DATABASE_URL is provided.
-            # If DATABASE_URL points to a local host (127.0.0.1 or localhost),
-            # prefer SQLite in deployed/demo environments unless explicitly forced
-            # by setting FORCE_POSTGRES=1 (either in Config or environment).
             self.database_url = str(getattr(Config, "DATABASE_URL", "") or "").strip()
-            force_pg = str(getattr(Config, "FORCE_POSTGRES", "") or os.getenv("FORCE_POSTGRES", "")).lower() in (
-                "1",
-                "true",
-                "yes",
-            )
+            force_pg = bool(getattr(Config, "FORCE_POSTGRES", False))
+            force_sqlite = bool(getattr(Config, "FORCE_SQLITE", False))
+            self.sqlite_mirror_path = str(getattr(Config, "SQLITE_MIRROR_PATH", "") or getattr(Config, "DATABASE_PATH", "")).strip()
 
-            if self.database_url.startswith("postgresql://") or self.database_url.startswith("postgres://"):
-                # If URL targets localhost and user did not force Postgres, ignore it
-                if ("localhost" in self.database_url or "127.0.0.1" in self.database_url) and not force_pg:
-                    logger.info(
-                        "Local DATABASE_URL detected but FORCE_POSTGRES not set — falling back to SQLite (ignoring DATABASE_URL)."
-                    )
-                    self.database_url = ""
-                else:
-                    self.backend = "postgres"
+            if force_sqlite:
+                self.database_url = ""
+                self.backend = "sqlite"
+            elif self.database_url.startswith("postgresql://") or self.database_url.startswith("postgres://"):
+                self.backend = "postgres"
+                if force_pg or "sslmode=" not in self.database_url.lower():
                     self.database_url = self._ensure_sslmode(self.database_url)
 
             db_path = Config.DATABASE_PATH
+        else:
+            self.sqlite_mirror_path = str(db_path)
 
         self.db_path = str(db_path)
         if self.backend == "sqlite":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        elif self.sqlite_mirror_path:
+            self.enable_sqlite_mirror_sync = bool(os.getenv("ENABLE_SQLITE_MIRROR_SYNC", "").strip().lower() in ("1", "true", "yes"))
+            try:
+                from config import Config
+
+                self.enable_sqlite_mirror_sync = bool(getattr(Config, "ENABLE_SQLITE_MIRROR_SYNC", False))
+                if not self.sqlite_mirror_path:
+                    self.sqlite_mirror_path = str(getattr(Config, "SQLITE_MIRROR_PATH", "") or getattr(Config, "DATABASE_PATH", ""))
+            except Exception:
+                pass
+
+    @staticmethod
+    def _is_mutating_sql(sql: str) -> bool:
+        statement = (sql or "").lstrip().split(None, 1)
+        if not statement:
+            return False
+        return statement[0].upper() in {"INSERT", "UPDATE", "DELETE", "REPLACE"}
+
+    @staticmethod
+    def _coerce_sqlite_value(value: Any) -> Any:
+        if isinstance(value, memoryview):
+            return value.tobytes()
+        return value
+
+    def _ensure_sqlite_mirror_ready(self) -> None:
+        if not self.enable_sqlite_mirror_sync or not self.sqlite_mirror_path:
+            return
+        if self._sqlite_mirror_ready:
+            return
+
+        mirror_db = DatabaseManager(db_path=self.sqlite_mirror_path)
+        mirror_db.initialize()
+        self._sqlite_mirror_ready = True
+
+    def _run_sqlite_mirror(self, sql: str, params: tuple = (), many: Optional[List[tuple]] = None) -> None:
+        if not self.enable_sqlite_mirror_sync or not self.sqlite_mirror_path:
+            return
+
+        self._ensure_sqlite_mirror_ready()
+        with sqlite3.connect(self.sqlite_mirror_path, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
+            conn.execute("PRAGMA foreign_keys = ON")
+            if many is not None:
+                rows = [tuple(self._coerce_sqlite_value(v) for v in row) for row in many]
+                conn.executemany(sql, rows)
+            else:
+                conn.execute(sql, tuple(self._coerce_sqlite_value(v) for v in params))
+            conn.commit()
+
+    def sync_sqlite_mirror(self, sqlite_path: Optional[str] = None) -> Dict[str, int]:
+        if self.backend != "postgres":
+            raise RuntimeError("SQLite mirror sync is only available when PostgreSQL is the primary backend.")
+
+        target_path = str(sqlite_path or self.sqlite_mirror_path or self.db_path)
+        if not target_path:
+            raise ValueError("Missing SQLite mirror path.")
+
+        target = Path(target_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temp_target = target.with_suffix(target.suffix + ".sync")
+        temp_target.unlink(missing_ok=True)
+
+        mirror_db = DatabaseManager(db_path=str(temp_target))
+        mirror_db.initialize()
+
+        summary: Dict[str, int] = {}
+        with self.get_connection() as pg_conn:
+            with sqlite3.connect(str(temp_target), detect_types=sqlite3.PARSE_DECLTYPES) as sqlite_conn:
+                sqlite_conn.execute("PRAGMA foreign_keys = OFF")
+                for table in reversed(self.APP_TABLE_ORDER):
+                    sqlite_conn.execute(f"DELETE FROM {table}")
+
+                with pg_conn.cursor() as cur:
+                    for table in self.APP_TABLE_ORDER:
+                        cur.execute(f"SELECT * FROM {table}")
+                        rows = cur.fetchall()
+                        col_names = [desc[0] for desc in cur.description]
+                        summary[table] = len(rows)
+                        if not rows:
+                            continue
+
+                        placeholders = ", ".join("?" * len(col_names))
+                        sql = f"INSERT INTO {table} ({', '.join(col_names)}) VALUES ({placeholders})"
+                        sqlite_conn.executemany(
+                            sql,
+                            [tuple(self._coerce_sqlite_value(row[col]) for col in col_names) for row in rows],
+                        )
+
+                sqlite_conn.execute("DELETE FROM sqlite_sequence")
+                for table in self.APP_ID_TABLES:
+                    max_id_row = sqlite_conn.execute(f"SELECT COALESCE(MAX(id), 0) FROM {table}").fetchone()
+                    max_id = int(max_id_row[0] if max_id_row else 0)
+                    if max_id > 0:
+                        sqlite_conn.execute(
+                            "INSERT INTO sqlite_sequence(name, seq) VALUES(?, ?)",
+                            (table, max_id),
+                        )
+
+                sqlite_conn.execute("PRAGMA foreign_keys = ON")
+                sqlite_conn.commit()
+
+        os.replace(temp_target, target)
+        self._sqlite_mirror_ready = False
+        return summary
 
     @staticmethod
     def _ensure_sslmode(url: str) -> str:
@@ -361,6 +496,7 @@ class DatabaseManager:
     # Generic helpers
     # ------------------------------------------------------------------
     def execute(self, sql: str, params: tuple = ()) -> None:
+        mirror_sql = sql
         sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
             if self.backend == "postgres":
@@ -368,6 +504,8 @@ class DatabaseManager:
                     cur.execute(sql, params)
             else:
                 conn.execute(sql, params)
+        if self.backend == "postgres" and self._is_mutating_sql(mirror_sql):
+            self._run_sqlite_mirror(mirror_sql, params)
 
     def fetchone(self, sql: str, params: tuple = ()) -> Optional[Dict]:
         sql = self._normalise_sql(sql)
@@ -404,7 +542,16 @@ class DatabaseManager:
                 with conn.cursor() as cur:
                     cur.execute(sql, tuple(data.values()))
                     row = cur.fetchone()
-                    return int(row["id"] if isinstance(row, dict) else row[0])
+                    inserted_id = int(row["id"] if isinstance(row, dict) else row[0])
+                mirror_data = dict(data)
+                mirror_data.setdefault("id", inserted_id)
+                mirror_cols = ", ".join(mirror_data.keys())
+                mirror_placeholders = ", ".join("?" * len(mirror_data))
+                self._run_sqlite_mirror(
+                    f"INSERT INTO {table} ({mirror_cols}) VALUES ({mirror_placeholders})",
+                    tuple(mirror_data.values()),
+                )
+                return inserted_id
             cur = conn.execute(sql, tuple(data.values()))
             return cur.lastrowid
 
@@ -412,6 +559,7 @@ class DatabaseManager:
         placeholder = "%s" if self.backend == "postgres" else "?"
         set_clause = ", ".join(f"{k} = {placeholder}" for k in data.keys())
         sql = f"UPDATE {table} SET {set_clause} WHERE {where}"
+        mirror_sql = f"UPDATE {table} SET {', '.join(f'{k} = ?' for k in data.keys())} WHERE {where}"
         sql = self._normalise_sql(sql)
         with self.get_connection() as conn:
             if self.backend == "postgres":
@@ -419,6 +567,8 @@ class DatabaseManager:
                     cur.execute(sql, tuple(data.values()) + params)
             else:
                 conn.execute(sql, tuple(data.values()) + params)
+        if self.backend == "postgres":
+            self._run_sqlite_mirror(mirror_sql, tuple(data.values()) + params)
 
     # ------------------------------------------------------------------
     # Domain helpers
@@ -456,6 +606,11 @@ class DatabaseManager:
             with self.get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(sql, (document_id, psycopg2.Binary(content), mime_type))
+            self._run_sqlite_mirror(
+                "INSERT INTO document_blobs (document_id, content, mime_type) VALUES (?, ?, ?) "
+                "ON CONFLICT(document_id) DO UPDATE SET content = excluded.content, mime_type = excluded.mime_type",
+                (document_id, sqlite3.Binary(content), mime_type),
+            )
             return
 
         sql = (
@@ -507,6 +662,8 @@ class DatabaseManager:
                     cur.executemany(self._normalise_sql(sql), rows)
             else:
                 conn.executemany(sql, rows)
+        if self.backend == "postgres":
+            self._run_sqlite_mirror(sql, many=rows)
 
     def get_document_history(self, document_id: int) -> List[Dict]:
         return self.fetchall(

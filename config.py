@@ -74,10 +74,14 @@ class Config:
     BASE_DIR: Path = BASE_DIR
     DATABASE_URL: str = str(_get_setting("DATABASE_URL", ""))
     DATABASE_PATH: str = str(_get_setting("DATABASE_PATH", str(BASE_DIR / "data" / "sipmt.db")))
+    SQLITE_MIRROR_PATH: str = str(_get_setting("SQLITE_MIRROR_PATH", DATABASE_PATH))
     UPLOAD_FOLDER: str = str(_get_setting("UPLOAD_FOLDER", str(BASE_DIR / "uploads")))
     EXPORT_FOLDER: str = str(_get_setting("EXPORT_FOLDER", str(BASE_DIR / "exports")))
     TEMP_FOLDER: str = str(_get_setting("TEMP_FOLDER", str(BASE_DIR / "temp")))
     LOG_FILE: str = str(_get_setting("LOG_FILE", str(BASE_DIR / "logs" / "sipmt.log")))
+    FORCE_POSTGRES: bool = _as_bool(_get_setting("FORCE_POSTGRES", "False"), default=False)
+    FORCE_SQLITE: bool = _as_bool(_get_setting("FORCE_SQLITE", "False"), default=False)
+    ENABLE_SQLITE_MIRROR_SYNC: bool = _as_bool(_get_setting("ENABLE_SQLITE_MIRROR_SYNC", "False"), default=False)
 
     # Application
     DEBUG: bool = _as_bool(_get_setting("DEBUG", "False"), default=False)
