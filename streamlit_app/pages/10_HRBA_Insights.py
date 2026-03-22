@@ -9,6 +9,7 @@ from config import Config
 from database.db_manager import DatabaseManager
 
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="HRBA Insights — SIPMT", page_icon="⚖️", layout="wide")
@@ -178,3 +179,5 @@ else:
             st.write(row.get("justification"))
             st.markdown("**Raw JSON**")
             st.json(json.loads(row["raw_json"]) if row["raw_json"] else {})
+
+render_page_disclaimer()

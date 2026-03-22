@@ -60,6 +60,16 @@ _HELP = {
     ),
 }
 
+_DISCLAIMER_TEXT = (
+    "Disclaimer: This application, developed by Opus Labs d.o.o. Novi Sad, utilizes "
+    "Ollama Generative AI to provide management suggestions and data analysis. These insights "
+    "are for informational purposes only and do not constitute professional or safety advice. "
+    "No Guarantee: AI outputs are probabilistic and may be incorrect or biased. Human Oversight: "
+    "This tool is an assistant, not a replacement for human supervision. Liability: Use of this "
+    "application is at the user's sole risk. Opus Labs d.o.o. disclaims all liability for "
+    "operational errors or financial losses resulting from its use."
+)
+
 
 def render_sidebar() -> None:
     """Render custom sidebar navigation and help section on every page."""
@@ -141,3 +151,25 @@ def render_sidebar() -> None:
             for section, description in _HELP.items():
                 st.markdown(f"**{section}** — {description}")
                 st.markdown("")
+
+
+def render_page_disclaimer() -> None:
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="
+            margin-top: 0.25rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(100, 116, 139, 0.22);
+            border-radius: 0.5rem;
+            background: rgba(248, 250, 252, 0.96);
+            color: rgb(71, 85, 105);
+            font-size: 0.84rem;
+            line-height: 1.55;
+        ">
+            <strong>Disclaimer</strong><br>
+            {_DISCLAIMER_TEXT}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )

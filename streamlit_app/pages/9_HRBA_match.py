@@ -9,6 +9,7 @@ from database.db_manager import DatabaseManager
 from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
 from template_matching.hrba_matcher import HRBAMatcherLLM
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="HRBA — SIPMT", page_icon="⚖️", layout="wide")
@@ -710,3 +711,4 @@ if st.button("Save last analysis to DB"):
 
 st.markdown("---")
 st.caption(f"spaCy model: {Config.SPACY_MODEL} — Ollama base: {Config.OLLAMA_BASE_URL}")
+render_page_disclaimer()

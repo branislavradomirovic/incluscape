@@ -7,6 +7,7 @@ import streamlit as st
 from database.db_manager import DatabaseManager
 from template_matching.template_manager import TemplateManager
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
 st.set_page_config(page_title="Templates — SIPMT", page_icon="📋", layout="wide")
@@ -76,3 +77,5 @@ with tab_new:
             tid = tm.create_template(name, fields, org_id, description)
             st.success(f"✅ Template '{name}' created (id={tid})")
             st.rerun()
+
+render_page_disclaimer()

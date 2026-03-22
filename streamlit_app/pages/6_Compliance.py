@@ -22,6 +22,8 @@ from document_processing.semantic_comparison.compliance_checker import Complianc
 from document_processing.semantic_comparison.reference_updater import ReferenceTemplateUpdater
 from streamlit_app.components.help_button import render_help_button
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
+render_page_disclaimer()
 
 
 st.set_page_config(page_title="Compliance - SIPMT", page_icon="🔎", layout="wide")

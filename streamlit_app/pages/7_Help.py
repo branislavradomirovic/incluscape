@@ -1,23 +1,182 @@
 import sys
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+HELP_IMAGE_ROOTS = [
+   PROJECT_ROOT / "assets" / "help",
+   PROJECT_ROOT / "assets",
+   PROJECT_ROOT / "landing_page_assets",
+]
+
+VISUAL_CALLOUTS = {
+   "Home": {
+      "focus": "Dashboard overview",
+      "highlights": [
+         "The KPI cards at the top summarize the current workspace state: documents, templates, reports, and detected changes.",
+         "The geo-scope panel underneath shows where extracted locations are concentrated and whether the dashboard is using policy-only or fallback geocoded data.",
+         "This screen is the fastest place to confirm that ingestion, reporting, and geospatial extraction are all populated.",
+      ],
+   },
+   "Documents": {
+      "focus": "Upload and library workflow",
+      "highlights": [
+         "The upload controls are the entry point for new PDFs, Word files, and spreadsheets.",
+         "The document library beneath the uploader is the operational list where users review titles, document type, processing state, and available actions.",
+         "This screenshot is intended to show both ingestion and post-processing management in one frame.",
+      ],
+   },
+   "Templates": {
+      "focus": "Template builder",
+      "highlights": [
+         "The main form defines the template name and the extraction schema that downstream reports rely on.",
+         "Field rows represent the exact structure SIPMT will try to populate from uploaded documents.",
+         "This screen is the reference view for how a reporting schema is authored before extraction begins.",
+      ],
+   },
+   "Reports": {
+      "focus": "Report generation flow",
+      "highlights": [
+         "The top selectors determine which template and which documents are used for the extraction run.",
+         "The results region shows extracted values, confidence signals, and generated report outputs once processing completes.",
+         "This image should help users connect report setup with the saved/generated outputs that appear lower on the page.",
+      ],
+   },
+   "Changes": {
+      "focus": "Version comparison view",
+      "highlights": [
+         "Recent change entries summarize which document revisions were detected and when they were stored.",
+         "The comparison widget is where two versions are placed side-by-side to inspect additions, deletions, and modifications.",
+         "This screenshot emphasizes the audit trail and the detailed diff workflow together.",
+      ],
+   },
+   "Map": {
+      "focus": "Geospatial exploration",
+      "highlights": [
+         "The map itself is the primary widget, showing geocoded locations extracted from documents.",
+         "Supporting panels such as the extraction summary and location list explain what was found and from which documents it came.",
+         "This image should orient users to both the visual map and the underlying extracted location records.",
+      ],
+   },
+   "KPIs & Charts": {
+      "focus": "Metric interpretation",
+      "highlights": [
+         "The screenshot anchors the KPI explanations to a real dashboard view so users can identify each metric card visually.",
+         "It also shows where the map/chart region sits relative to the numeric summary cards.",
+         "Use this callout when explaining what the dashboard is counting and where those values come from.",
+      ],
+   },
+   "Sources": {
+      "focus": "Reference source management",
+      "highlights": [
+         "The catalogue region displays the currently managed sources grouped by body, category, and refresh status.",
+         "The source creation and refresh widgets drive how external standards are fetched and transformed into internal reference templates.",
+         "This screenshot should make the governance workflow for compliance source material visible at a glance.",
+      ],
+   },
+   "Compliance": {
+      "focus": "Semantic analysis workspace",
+      "highlights": [
+         "The provider selection, document selection, and reference template controls define the analysis run configuration.",
+         "Score summaries and charts explain both the final alignment result and the evidence behind it.",
+         "This image is meant to show the full path from setup controls to analysis output in a single visual summary.",
+      ],
+   },
+   "HRBA": {
+      "focus": "AAAQ matching workflow",
+      "highlights": [
+         "The central view shows the document-level AAAQ matching process and any generated matches or scores.",
+         "Live output or timeline panels expose how the selected model produced the result over time.",
+         "This screenshot should help users understand that HRBA is both an analysis tool and an evidence capture workflow.",
+      ],
+   },
+   "HRBA Insights": {
+      "focus": "Saved analysis review",
+      "highlights": [
+         "The saved justifications table is the historical record of previously persisted HRBA findings.",
+         "The raw entries section gives audit-level visibility into the stored payloads and explanations.",
+         "This view is designed for review and evidence tracing rather than new analysis generation.",
+      ],
+   },
+   "Developer & Admin": {
+      "focus": "Operational controls",
+      "highlights": [
+         "This section is the operational reference for environment variables, troubleshooting steps, and maintenance commands.",
+         "The paired screenshot should help administrators connect the written setup guidance with the visible admin interface.",
+         "Use it when onboarding maintainers or diagnosing deployment and runtime configuration issues.",
+      ],
+   },
+}
+
+
+def _resolve_help_image(*candidates: str) -> Optional[Path]:
+   for root in HELP_IMAGE_ROOTS:
+      for candidate in candidates:
+         image_path = root / candidate
+         if image_path.exists():
+            return image_path
+   return None
+
+
+def render_help_screenshot(section_name: str, caption: str, *candidates: str) -> None:
+   image_path = _resolve_help_image(*candidates)
+   callout = VISUAL_CALLOUTS.get(section_name, {})
+
+   left_col, right_col = st.columns([1.75, 1.0], gap="large")
+   with left_col:
+      if image_path:
+         st.image(str(image_path), width="stretch", caption=caption)
+      else:
+         joined_candidates = ", ".join(candidates)
+         st.info(
+            f"Screenshot for {section_name} will appear here when an asset is added as one of: {joined_candidates}."
+         )
+
+   with right_col:
+      focus_label = callout.get("focus", "Screen focus")
+      highlights = callout.get("highlights", [])
+      st.markdown(f"### Visual Callout")
+      st.markdown(f"**Primary focus:** {focus_label}")
+      if highlights:
+         st.markdown("**What To Look For**")
+         for item in highlights:
+            st.markdown(f"- {item}")
+      st.markdown("**Image use in Help**")
+      st.markdown(
+         "Use this screenshot as the visual reference while reading the section guidance below. "
+         "It is intended to connect the written workflow with the actual controls and outputs on the page."
+      )
+   st.markdown("")
 
 st.set_page_config(page_title="Help — SIPMT", page_icon="❓", layout="wide")
 render_sidebar()
 
 st.title("❓ Help & Documentation")
 st.markdown("Comprehensive guide to all features in SIPMT")
+st.caption(
+   "This help page can embed live application screenshots from the repository. "
+   "Place section images under assets/help, assets, or landing_page_assets to populate them automatically."
+)
 st.markdown("---")
 
 # ──────────────────────────────────────────────────────────────────────────
 # HOME
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🏠 **Home** — Overview Dashboard", expanded=True):
-    st.markdown("""
+   render_help_screenshot(
+      "Home",
+      "Current dashboard screenshot showing KPI cards and the geo-scope area.",
+      "home.png",
+      "dashboard.png",
+      "Dashboard.png",
+   )
+   st.markdown("""
     The **Home** page is your workspace dashboard, providing at-a-glance metrics and overview of your data.
 
     #### Key Features:
@@ -44,7 +203,14 @@ with st.expander("🏠 **Home** — Overview Dashboard", expanded=True):
 # DOCUMENTS
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("📄 **Documents** — Upload & Manage Source Files"):
-    st.markdown("""
+   render_help_screenshot(
+      "Documents",
+      "Documents page screenshot with upload controls, categorisation options, and processing results.",
+      "documents.png",
+      "Documents.png",
+      "page_documents.png",
+   )
+   st.markdown("""
     The **Documents** page is where you upload and manage all your source files.
     
     #### Supported File Formats:
@@ -88,7 +254,14 @@ with st.expander("📄 **Documents** — Upload & Manage Source Files"):
 # TEMPLATES
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("📋 **Templates** — Define Data Extraction Fields"):
-    st.markdown("""
+   render_help_screenshot(
+      "Templates",
+      "Templates page screenshot with template form fields and extraction schema editor.",
+      "templates.png",
+      "Templates.png",
+      "page_templates.png",
+   )
+   st.markdown("""
     The **Templates** page lets you create reusable field definitions for automated data extraction.
     
     #### What is a Template?
@@ -135,7 +308,14 @@ with st.expander("📋 **Templates** — Define Data Extraction Fields"):
 # REPORTS
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("📊 **Reports** — Generate Structured Data Extracts"):
-    st.markdown("""
+   render_help_screenshot(
+      "Reports",
+      "Reports page screenshot with template selection, document selection, extracted values, and export actions.",
+      "reports.png",
+      "Reports.png",
+      "page_reports.png",
+   )
+   st.markdown("""
     The **Reports** page handles automated extraction of structured data using templates.
     
     #### The Report Generation Workflow:
@@ -170,7 +350,14 @@ with st.expander("📊 **Reports** — Generate Structured Data Extracts"):
 # CHANGES
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🔍 **Changes** — Track Document Versions"):
-    st.markdown("""
+   render_help_screenshot(
+      "Changes",
+      "Changes page screenshot with version comparison output and detected differences.",
+      "changes.png",
+      "Changes.png",
+      "page_changes.png",
+   )
+   st.markdown("""
     The **Changes** page detects and visualizes differences between document versions.
     
     #### Change Tracking Workflow:
@@ -207,7 +394,14 @@ with st.expander("🔍 **Changes** — Track Document Versions"):
 # MAP
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🗺️ **Map** — Geospatial Visualization"):
-    st.markdown("""
+   render_help_screenshot(
+      "Map",
+      "Map page screenshot with document location markers and geographic filters.",
+      "map.png",
+      "Map.png",
+      "page_map.png",
+   )
+   st.markdown("""
     The **Map** page provides interactive geographic visualization of extracted locations.
     
     #### How It Works:
@@ -250,7 +444,14 @@ with st.expander("🗺️ **Map** — Geospatial Visualization"):
 # KPIS & CHARTS
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("📈 **KPIs & Charts — Definitions, Data Sources, and Population Details", expanded=False):
-      st.markdown("""
+   render_help_screenshot(
+      "KPIs & Charts",
+      "Dashboard screenshot used as a reference for KPI cards and the geo-scope overview chart area.",
+      "dashboard.png",
+      "Dashboard.png",
+      "kpis.png",
+   )
+   st.markdown("""
       This section explains every KPI shown on the **Home** dashboard and every chart used across the application: what each metric represents, which DB tables and queries populate it, how often it updates, and any caveats.
 
       **General notes**
@@ -338,10 +539,49 @@ with st.expander("📈 **KPIs & Charts — Definitions, Data Sources, and Popula
       """)
 
 # ──────────────────────────────────────────────────────────────────────────
+# SOURCES
+# ──────────────────────────────────────────────────────────────────────────
+with st.expander("🌐 **Sources** — Reference Catalogue & Refresh Workflow"):
+   render_help_screenshot(
+      "Sources",
+      "Sources page screenshot showing the reference catalogue, source management, and refresh controls.",
+      "sources.png",
+      "Sources.png",
+      "page_sources.png",
+   )
+   st.markdown("""
+    The **Sources** page manages the official external reference material used by the compliance engine.
+
+    #### What This Page Does:
+    - Lists all configured source catalog entries and reference bodies
+    - Lets you add new official URLs for standards, directives, and guidance notes
+    - Runs refresh workflows to fetch source pages and update the internal template database
+    - Shows a current database snapshot of the active reference set
+
+    #### Main Interface Elements:
+    - **Catalogue table** — Displays the current source records, grouped by body and category
+    - **Add new source form** — Creates a new source entry with body, label, URL, and file hint
+    - **Fetch / enrich controls** — Pulls source content from the internet, then enriches it with the selected provider
+    - **DB snapshot section** — Shows the currently materialized template records used by compliance analysis
+
+    #### When to Use:
+    - When new international or institutional guidance needs to be added
+    - When existing external URLs changed and references must be refreshed
+    - Before running compliance analyses that depend on newly updated source material
+    """)
+
+# ──────────────────────────────────────────────────────────────────────────
 # COMPLIANCE
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🔎 **Compliance** — Semantic Analysis Against Standards"):
-    st.markdown("""
+   render_help_screenshot(
+      "Compliance",
+      "Compliance page screenshot with provider selector, reference template selection, score outputs, and charts.",
+      "compliance.png",
+      "Compliance.png",
+      "page_compliance.png",
+   )
+   st.markdown("""
     The **Compliance** page provides advanced AI-powered semantic analysis of your documents
     against international reference frameworks.
     
@@ -445,7 +685,14 @@ with st.expander("⚙️ **Configuration** — Environment Setup"):
 # HRBA
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("⚖️ **HRBA — AAAQ Matching & Insights"):
-      st.markdown("""
+   render_help_screenshot(
+      "HRBA",
+      "HRBA page screenshot with AAAQ matches, live output, and timeline visualisations.",
+      "hrba.png",
+      "HRBA.png",
+      "page_hrba.png",
+   )
+   st.markdown("""
       The **HRBA** page scans documents for AAAQ indicators (Availability, Accessibility,
       Acceptability, Quality) using either a fast `spaCy` matcher or the local Ollama LLM.
 
@@ -473,10 +720,46 @@ with st.expander("⚖️ **HRBA — AAAQ Matching & Insights"):
       """)
 
 # ──────────────────────────────────────────────────────────────────────────
+# HRBA INSIGHTS
+# ──────────────────────────────────────────────────────────────────────────
+with st.expander("🧾 **HRBA Insights** — Saved Justifications & Review"):
+   render_help_screenshot(
+      "HRBA Insights",
+      "HRBA Insights screenshot showing saved justifications, aggregated views, and raw saved entries.",
+      "hrba_insights.png",
+      "HRBA_Insights.png",
+      "page_hrba_insights.png",
+   )
+   st.markdown("""
+    The **HRBA Insights** page is the review workspace for previously saved AAAQ analyses.
+
+    #### What You See Here:
+    - **Saved Justifications table** — A structured view of all persisted HRBA justifications
+    - **Filters and grouping** — Lets you narrow results by document or analysis context
+    - **Raw entries** — Full stored payloads for auditing, export, or manual inspection
+
+    #### What It Represents:
+    - Each row corresponds to a saved analysis record previously stored from the HRBA match workflow
+    - This page is not generating new analyses; it is reading historical records from storage
+
+    #### When to Use:
+    - To review previously generated human-rights-based analyses
+    - To compare justification quality across documents
+    - To audit the saved evidence that supports HRBA findings
+    """)
+
+# ──────────────────────────────────────────────────────────────────────────
 # Developer & Admin
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🛠️ Developer & Admin — Setup, Env vars, Troubleshooting", expanded=False):
-      st.markdown("""
+   render_help_screenshot(
+      "Developer & Admin",
+      "Developer and admin screenshot with environment, maintenance, and troubleshooting utilities.",
+      "developer_admin.png",
+      "Developer_Admin.png",
+      "page_admin.png",
+   )
+   st.markdown("""
       This section covers environment variables, common admin tasks, and troubleshooting steps.
 
       Environment variables (important):
@@ -571,3 +854,5 @@ st.markdown("""
 ---
 *Last updated: March 2026 | SIPMT v1.0*
 """)
+
+render_page_disclaimer()

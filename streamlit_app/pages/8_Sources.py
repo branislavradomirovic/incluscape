@@ -17,6 +17,7 @@ from document_processing.semantic_comparison.category_matcher import CategoryMat
 from document_processing.semantic_comparison.reference_updater import ReferenceTemplateUpdater
 from document_processing.semantic_comparison.sources_catalogue import SourcesCatalogue
 from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 st.set_page_config(page_title="Sources – SIPMT", page_icon="🌐", layout="wide")
 render_sidebar()
@@ -322,3 +323,5 @@ with tab_refresh:
         st.dataframe(pd.DataFrame(snap), use_container_width=True, hide_index=True)
     else:
         st.info("No templates in database yet. Use **Sync** or **Refresh** above.")
+
+    render_page_disclaimer()
