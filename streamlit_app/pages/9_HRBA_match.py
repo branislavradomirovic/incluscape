@@ -8,7 +8,6 @@ from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
 from template_matching.hrba_matcher import HRBAMatcherLLM
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
@@ -152,6 +151,187 @@ def extract_aaaq_scores(item):
         except Exception:
             continue
     return scores
+
+
+def build_hrba_executive_summary(parsed, seg_meta=None):
+    if not isinstance(parsed, list):
+        return ""
+
+    scored_items = []
+    justification_count = 0
+    top_category_counts = {key: 0 for key in AAAQ_KEYS}
+
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        scores = extract_aaaq_scores(item)
+        if scores:
+            scored_items.append(scores)
+        if item.get("justification"):
+            justification_count += 1
+        category, _score = infer_top_hrba_match(item)
+        if category in top_category_counts:
+            top_category_counts[category] += 1
+
+    if not scored_items:
+        return ""
+
+    avg_scores = {
+        key: sum(scores.get(key, 0.0) for scores in scored_items) / len(scored_items)
+        for key in AAAQ_KEYS
+    }
+    lead_category = max(avg_scores, key=avg_scores.get)
+    lead_score = avg_scores[lead_category]
+    avg_confidence = sum(max(scores.values()) for scores in scored_items) / len(scored_items)
+    total_segments = len(seg_meta or []) or len(scored_items)
+    completed_segments = (
+        sum(1 for meta in (seg_meta or []) if (meta.get("status") or "") == "done")
+        if seg_meta else len(scored_items)
+    )
+    represented = [key.capitalize() for key, count in top_category_counts.items() if count > 0]
+
+    lines = [
+        f"Overall AAAQ signal: **{lead_category.capitalize()}** leads with average score **{lead_score:.0%}**.",
+        f"Coverage snapshot: **{completed_segments}/{total_segments}** segments completed, **{len(scored_items)}** structured Ollama outputs, average top-signal confidence **{avg_confidence:.0%}**.",
+    ]
+    if represented:
+        lines.append("Detected categories across the document: " + ", ".join(represented) + ".")
+    if justification_count:
+        lines.append(f"Generated justifications for **{justification_count}** segment(s), providing an explainable trace for the strongest detected signals.")
+    return "\n\n".join(lines)
+
+
+def compute_hrba_xai_metrics(parsed, seg_meta=None):
+    if not isinstance(parsed, list):
+        return None
+
+    scored_items = []
+    justification_count = 0
+    top_category_counts = {key: 0 for key in AAAQ_KEYS}
+
+    for item in parsed:
+        if not isinstance(item, dict):
+            continue
+        scores = extract_aaaq_scores(item)
+        if scores:
+            scored_items.append(scores)
+        if item.get("justification"):
+            justification_count += 1
+        category, _score = infer_top_hrba_match(item)
+        if category in top_category_counts:
+            top_category_counts[category] += 1
+
+    if not scored_items:
+        return None
+
+    total_items = len(scored_items)
+    avg_scores = {
+        key: sum(scores.get(key, 0.0) for scores in scored_items) / total_items
+        for key in AAAQ_KEYS
+    }
+    avg_top_confidence = sum(max(scores.values()) for scores in scored_items) / total_items
+    total_segments = len(seg_meta or []) or total_items
+    completed_segments = (
+        sum(1 for meta in (seg_meta or []) if (meta.get("status") or "") == "done")
+        if seg_meta else total_items
+    )
+
+    return {
+        "segments_completed": completed_segments,
+        "segment_completion": completed_segments / max(total_segments, 1),
+        "structured_outputs": total_items,
+        "justification_coverage": justification_count / max(total_items, 1),
+        "avg_top_confidence": avg_top_confidence,
+        "avg_scores": avg_scores,
+        "top_category_counts": top_category_counts,
+    }
+
+
+def compute_hrba_shap_proxy(xai_metrics):
+    if not xai_metrics:
+        return {}
+
+    avg_scores = xai_metrics.get("avg_scores") or {}
+    proxy = {
+        "Availability": (avg_scores.get("availability", 0.0) - 0.5) * 2,
+        "Accessibility": (avg_scores.get("accessibility", 0.0) - 0.5) * 2,
+        "Acceptability": (avg_scores.get("acceptability", 0.0) - 0.5) * 2,
+        "Quality": (avg_scores.get("quality", 0.0) - 0.5) * 2,
+        "Segment completion": (float(xai_metrics.get("segment_completion", 0.0)) - 0.5) * 1.6,
+        "Justification coverage": (float(xai_metrics.get("justification_coverage", 0.0)) - 0.5) * 1.6,
+        "Average confidence": (float(xai_metrics.get("avg_top_confidence", 0.0)) - 0.5) * 1.8,
+    }
+    return {label: max(-1.0, min(1.0, float(value))) for label, value in proxy.items()}
+
+
+def render_hrba_shap_heatmap(shap_proxy, chart_key):
+    if not shap_proxy:
+        st.info("No SHAP proxy data available.")
+        return
+
+    labels = list(shap_proxy.keys())
+    values = [float(shap_proxy[label]) for label in labels]
+    figure = go.Figure(
+        data=go.Heatmap(
+            z=[values],
+            x=labels,
+            y=["Contribution"],
+            zmin=-1,
+            zmax=1,
+            zmid=0,
+            colorscale=[
+                [0.0, "#b30000"],
+                [0.25, "#f46d43"],
+                [0.5, "#fff7bc"],
+                [0.75, "#78c679"],
+                [1.0, "#238443"],
+            ],
+            text=[[f"{value:+.2f}" for value in values]],
+            texttemplate="%{text}",
+            hovertemplate="%{x}<br>Contribution=%{z:.2f}<extra></extra>",
+        )
+    )
+    figure.update_layout(height=260, margin=dict(l=10, r=10, t=35, b=10), title="SHAP-style contribution proxy")
+    st.plotly_chart(figure, use_container_width=True, key=chart_key)
+    st.caption("Positive values reinforce the document's AAAQ signal. This is a transparent proxy derived from structured scores, completion, and justification coverage.")
+
+
+def render_hrba_ollama_summary(doc_id, parsed, seg_meta, key_prefix):
+    xai_metrics = compute_hrba_xai_metrics(parsed, seg_meta)
+    if not xai_metrics:
+        return
+
+    executive_summary = build_hrba_executive_summary(parsed, seg_meta)
+    shap_proxy = compute_hrba_shap_proxy(xai_metrics)
+    avg_scores = xai_metrics.get("avg_scores") or {}
+    top_counts = xai_metrics.get("top_category_counts") or {}
+
+    st.markdown("**Ollama Executive Summary**")
+    if executive_summary:
+        st.info(executive_summary)
+
+    xai_col, shap_col = st.columns([1, 1])
+    with xai_col:
+        xai_rows = [
+            {"Metric": "Segments completed", "Value": str(xai_metrics["segments_completed"])} ,
+            {"Metric": "Segment completion", "Value": f"{xai_metrics['segment_completion']:.0%}"},
+            {"Metric": "Structured outputs", "Value": str(xai_metrics["structured_outputs"])} ,
+            {"Metric": "Justification coverage", "Value": f"{xai_metrics['justification_coverage']:.0%}"},
+            {"Metric": "Average confidence", "Value": f"{xai_metrics['avg_top_confidence']:.0%}"},
+            {"Metric": "Availability avg", "Value": f"{avg_scores.get('availability', 0.0):.0%}"},
+            {"Metric": "Accessibility avg", "Value": f"{avg_scores.get('accessibility', 0.0):.0%}"},
+            {"Metric": "Acceptability avg", "Value": f"{avg_scores.get('acceptability', 0.0):.0%}"},
+            {"Metric": "Quality avg", "Value": f"{avg_scores.get('quality', 0.0):.0%}"},
+        ]
+        for category in AAAQ_KEYS:
+            xai_rows.append({
+                "Metric": f"Top category hits - {category.capitalize()}",
+                "Value": str(int(top_counts.get(category, 0))),
+            })
+        st.dataframe(pd.DataFrame(xai_rows), use_container_width=True, hide_index=True)
+
+    with shap_col:
+        render_hrba_shap_heatmap(shap_proxy, chart_key=f"{key_prefix}_hrba_shap_{doc_id}")
 
 
 def render_live_process_chart(seg_meta, radar_container, rate_container, timeline_container, active_idx=None):
@@ -638,11 +818,14 @@ if analyze_all_clicked and docs:
     for doc_id, analysis in aggregate.items():
         st.markdown(f"**Document {doc_id}**")
         parsed = analysis
+        seg_meta = None
         if isinstance(analysis, dict) and "seg_meta" in analysis:
             seg_meta = analysis.get("seg_meta")
             if seg_meta:
                 render_seg_meta_panel(doc_id, seg_meta, "agg")
             parsed = analysis.get("final")
+
+        render_hrba_ollama_summary(doc_id, parsed, seg_meta, "agg")
 
         if isinstance(parsed, str):
             try:
@@ -679,6 +862,8 @@ if st.session_state.get('hrba_last_results'):
         # If analysis was returned as a dict, extract the final payload for normal rendering
         if isinstance(analysis, dict) and 'final' in analysis:
             parsed = analysis['final']
+
+        render_hrba_ollama_summary(doc_id, parsed, seg_meta, "final")
 
         detail_df = normalize_analysis_rows(parsed)
         if detail_df is not None:
