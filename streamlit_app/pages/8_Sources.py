@@ -16,7 +16,6 @@ from database.db_manager import DatabaseManager
 from document_processing.semantic_comparison.category_matcher import CategoryMatcher
 from document_processing.semantic_comparison.reference_updater import ReferenceTemplateUpdater
 from document_processing.semantic_comparison.sources_catalogue import SourcesCatalogue
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 st.set_page_config(page_title="Sources – SIPMT", page_icon="🌐", layout="wide")
@@ -324,4 +323,4 @@ with tab_refresh:
     else:
         st.info("No templates in database yet. Use **Sync** or **Refresh** above.")
 
-    render_page_disclaimer()
+render_page_disclaimer()

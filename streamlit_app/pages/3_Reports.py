@@ -10,7 +10,6 @@ from geospatial.geocoder import Geocoder
 from geospatial.location_extractor import LocationExtractor
 from geospatial.map_generator import MapGenerator
 from template_matching.template_manager import TemplateManager
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 

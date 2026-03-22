@@ -10,7 +10,6 @@ from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.pipeline import DocumentProcessingPipeline
 from utils.file_handler import FileHandler
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 

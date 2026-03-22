@@ -8,7 +8,6 @@ import pandas as pd
 from database.db_manager import DatabaseManager
 from change_tracking.change_detector import ChangeDetector
 from change_tracking.version_manager import VersionManager
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 

@@ -6,7 +6,6 @@ import json
 import streamlit as st
 from database.db_manager import DatabaseManager
 from template_matching.template_manager import TemplateManager
-from streamlit_app.components.sidebar import render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
