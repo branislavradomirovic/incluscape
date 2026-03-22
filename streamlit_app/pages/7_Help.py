@@ -247,6 +247,97 @@ with st.expander("🗺️ **Map** — Geospatial Visualization"):
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
+# KPIS & CHARTS
+# ──────────────────────────────────────────────────────────────────────────
+with st.expander("📈 **KPIs & Charts — Definitions, Data Sources, and Population Details", expanded=False):
+      st.markdown("""
+      This section explains every KPI shown on the **Home** dashboard and every chart used across the application: what each metric represents, which DB tables and queries populate it, how often it updates, and any caveats.
+
+      **General notes**
+      - All KPIs on the dashboard are read-only aggregates run against the `documents`, `report_templates`, `reports`, and `document_changes` tables.
+      - Charts may be rendered from aggregated SQL queries or from in-memory analysis payloads saved in JSON columns (for semantic analyses and reports).
+      - Dashboard values are computed at render time; they reflect the current contents of the database when the page is loaded or when the user navigates to the page.
+
+      ---
+
+      **Dashboard KPIs (Home page)**
+
+      - **Documents** (label: "📄 Documents")
+         - What it represents: Total count of document records stored for the current organisation.
+         - Data source / SQL: `SELECT COUNT(*) FROM documents WHERE organisation_id = ?`
+         - How it's created: incremented when a new document is uploaded and processed; deletions reduce the count (soft-deletes respect `status` field).
+         - Update frequency: real-time at page render.
+
+      - **Templates** (label: "📋 Templates")
+         - What it represents: Number of saved report templates available for extraction & reporting.
+         - Data source / SQL: `SELECT COUNT(*) FROM report_templates`
+         - How it's created: created via the Templates page when the user saves a new template.
+         - Caveats: template bodies may include large JSON; the KPI counts templates regardless of body size or source (DB or file-imported).
+
+      - **Reports** (label: "📊 Reports")
+         - What it represents: Count of generated reports (structured extraction outputs) stored in `reports` table.
+         - Data source / SQL: `SELECT COUNT(*) FROM reports WHERE organisation_id = ?`
+         - How it's created: when a user runs extraction against documents and saves or exports results.
+
+      - **Changes detected** (label: "🔍 Changes detected")
+         - What it represents: Number of detected change instances (diff records) between document versions.
+         - Data source / SQL: `SELECT COUNT(*) FROM document_changes WHERE organisation_id = ?`
+         - How it's created: when a new upload is identified as a new version of an existing document and the diff process creates change rows.
+
+      ---
+
+      **Map & Location Data**
+      - The scope map shows geocoded `locations` joined to `documents` (see `locations` table).
+      - Primary SQL used for the dashboard map (Policies-preferred):
+         - Policies restricted: SELECT rows from `locations` JOIN `documents` WHERE `document_type = 'Policies'` AND `geocoded = 1`.
+         - Fallback: all geocoded locations when Policies have none.
+      - How markers are populated: each geocoded `location` row provides `latitude`/`longitude`, `place_name`, `context` and `document_title` used in the pop-up.
+
+      ---
+
+      **Compliance page charts & KPIs**
+      - **Compliance Score**
+         - What it represents: a normalized alignment score (0–1) computed by `ComplianceChecker` combining keyword, requirement, and section coverage with small body/category bonuses.
+         - How it's computed: see `_score_reference_template` and `_build_executive_summary` in the compliance page code — the algorithm combines token-coverage metrics and applies weights (keywords 45%, requirements 35%, sections 20% plus bonuses).
+         - Source: analysis payloads stored in `semantic_analyses` and the temporary result in-memory while running the analysis.
+
+      - **SHAP-style heatmap (feature contribution proxy)**
+         - What it represents: an explainability proxy that shows which factors (Present elements, Strengths, Missing, Partial, Gaps, Recommendation pressure, Keyword/Requirement/Section coverage) contributed positively or negatively to the final compliance score.
+         - How it's created: `_compute_shap_proxy` aggregates counts from the analysis result and returns normalized contribution values between -1 and +1.
+         - Chart population: uses Plotly Heatmap with a single-row `z` array of contributions and an explicit color scale centered at 0.
+
+      - **Classification & Comparison score histories (line/points)**
+         - What they represent: time-series of the classifier confidence and template comparison scores for the current monitor session or historical analyses.
+         - Source: `classification_confidence_history` and `comparison_score_history` arrays maintained in the compliance monitor state; persisted analyses are available via `checker.get_analyses(document_id)`.
+         - How populated: appended as the monitor runs each stage (classify, match, compare, persist). Charts use Plotly `scatter` or `line` traces with points recorded in `*_points` lists.
+
+      - **Gantt-style timeline (per-segment timeline)**
+         - What it represents: per-segment generation timing when streaming LLM outputs; bars are sized by score and colored by AAAQ label.
+         - Source: streaming chunks processed during Ollama/Gemini runs, each tracked with start/end and assigned category/score.
+         - How populated: compliance monitor records chunk timestamps and scores into `chunk_history`; the timeline is rendered from those records.
+
+      ---
+
+      **HRBA page visuals**
+      - **Live streaming preview**: incremental text from the LLM while running a HRBA analysis. Populated by streaming HTTP responses from Ollama (if supported) or replaced by final JSON when streaming not available.
+      - **Per-segment Gantt**: same mechanism as Compliance timeline — segments are generated and timed during model runs.
+
+      ---
+
+      **Other charts across the app**
+      - **Template source health table**: a diagnostics table produced by `_probe_source_url_health` that verifies external source URLs for templates; populated by issuing HEAD/GET requests and collecting HTTP status and suggestions.
+      - **Map exports & filters**: map layers are created by `MapGenerator.build_map()` using the `scope_locations` rows; filters are executed by SQL before the map is built.
+
+      ---
+
+      **Troubleshooting & caveats**
+      - If a KPI is unexpectedly zero or stale, check whether your organisation filter (`organisation_id`) is set and whether documents have `status='active'`.
+      - Semantic analysis-derived charts rely on cached analysis payloads; re-run analyses or clear cache if you believe stale results are shown.
+      - Charts that rely on LLM streaming require the selected provider to support streaming; otherwise charts will update once the final response arrives.
+
+      """)
+
+# ──────────────────────────────────────────────────────────────────────────
 # COMPLIANCE
 # ──────────────────────────────────────────────────────────────────────────
 with st.expander("🔎 **Compliance** — Semantic Analysis Against Standards"):
