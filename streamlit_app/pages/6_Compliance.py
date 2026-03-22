@@ -21,7 +21,7 @@ from document_processing.semantic_comparison.category_matcher import CategoryMat
 from document_processing.semantic_comparison.compliance_checker import ComplianceChecker
 from document_processing.semantic_comparison.reference_updater import ReferenceTemplateUpdater
 from streamlit_app.components.help_button import render_help_button
-from streamlit_app.components.sidebar import render_sidebar
+from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 
 st.set_page_config(page_title="Compliance - SIPMT", page_icon="🔎", layout="wide")
@@ -2102,6 +2102,9 @@ elif latest_saved_analysis:
             st.dataframe(pd.DataFrame(saved_reference_rows), use_container_width=True, hide_index=True)
         else:
             st.info("No reference templates scored for this saved analysis context.")
+
+
+render_page_disclaimer()
 
 
 
