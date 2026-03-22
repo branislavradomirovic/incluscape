@@ -409,6 +409,54 @@ def _create_compliance_monitor_state(selected_label: str) -> dict:
     }
 
 
+def _create_compliance_monitor_layout(container):
+    with container.container(border=True):
+        st.markdown("**Compliance live monitor**")
+        st.caption("Full-width runtime view for Compliance analysis: stage progress, timing, and current execution state.")
+
+        summary_card = st.container(border=True)
+        with summary_card:
+            summary_cols = st.columns(6)
+
+        left_col, right_col = st.columns([1.05, 0.95])
+        with left_col:
+            with st.container(border=True):
+                st.markdown("**Stage status**")
+                stage_table = st.empty()
+
+            with st.container(border=True):
+                st.markdown("**Score and confidence evolution**")
+                evolution_chart = st.empty()
+
+        with right_col:
+            with st.container(border=True):
+                st.markdown("**Live chunk rate**")
+                rate_chart = st.empty()
+                rate_caption = st.empty()
+
+            with st.container(border=True):
+                st.markdown("**Execution timeline**")
+                timeline_chart = st.empty()
+
+        with st.container(border=True):
+            st.markdown("**Latest runtime detail**")
+            detail_text = st.empty()
+            preview_caption = st.empty()
+            preview_code = st.empty()
+
+    return {
+        "summary_cols": summary_cols,
+        "stage_table": stage_table,
+        "evolution_chart": evolution_chart,
+        "rate_chart": rate_chart,
+        "rate_caption": rate_caption,
+        "timeline_chart": timeline_chart,
+        "detail_text": detail_text,
+        "preview_caption": preview_caption,
+        "preview_code": preview_code,
+    }
+
+
 def _update_compliance_monitor_state(state: dict, stage: str, status: str, payload: Optional[dict] = None) -> None:
     if stage not in state["stages"]:
         return
@@ -499,9 +547,8 @@ def _update_compliance_monitor_state(state: dict, stage: str, status: str, paylo
     state["latest_message"] = entry["detail"] or payload.get("message") or state.get("latest_message")
 
 
-def _render_compliance_live_monitor(container, state: dict) -> None:
+def _render_compliance_live_monitor(slots, state: dict) -> None:
     total_elapsed = max(0.0, time.time() - float(state.get("started_at") or time.time()))
-    chart_key_prefix = state.get("monitor_key") or "compliance-monitor"
     stage_rows = []
     completed_count = 0
     for stage in COMPLIANCE_MONITOR_STAGES:
@@ -540,130 +587,103 @@ def _render_compliance_live_monitor(container, state: dict) -> None:
         except Exception:
             active_rate = 0.0
 
-    with container.container():
-        st.markdown("**Compliance live monitor**")
-        st.caption("Full-width runtime view for Compliance analysis: stage progress, timing, and current execution state.")
-        with st.container(border=True):
-            k1, k2, k3, k4, k5, k6 = st.columns(6)
-            k1.metric("Document", state.get("document_label") or "-")
-            k2.metric("Completed stages", f"{completed_count}/{len(COMPLIANCE_MONITOR_STAGES)}")
-            k3.metric("Chunks", int(state.get("chunks_processed") or 0))
-            k4.metric("Approx. tokens", int(state.get("tokens_processed") or 0))
-            k5.metric("Elapsed", f"{total_elapsed:.1f}s")
-            active_stage = state.get("active_stage")
-            k6.metric("Active stage", COMPLIANCE_STAGE_LABELS.get(active_stage, "Waiting"))
+    k1, k2, k3, k4, k5, k6 = slots["summary_cols"]
+    k1.metric("Document", state.get("document_label") or "-")
+    k2.metric("Completed stages", f"{completed_count}/{len(COMPLIANCE_MONITOR_STAGES)}")
+    k3.metric("Chunks", int(state.get("chunks_processed") or 0))
+    k4.metric("Approx. tokens", int(state.get("tokens_processed") or 0))
+    k5.metric("Elapsed", f"{total_elapsed:.1f}s")
+    active_stage = state.get("active_stage")
+    k6.metric("Active stage", COMPLIANCE_STAGE_LABELS.get(active_stage, "Waiting"))
 
-        left_col, right_col = st.columns([1.05, 0.95])
-        with left_col:
-            with st.container(border=True):
-                st.markdown("**Stage status**")
-                table_height = max(320, min(760, 52 * (len(stage_rows) + 2)))
-                st.dataframe(pd.DataFrame(stage_rows), use_container_width=True, hide_index=True, height=table_height)
+    table_height = max(320, min(760, 52 * (len(stage_rows) + 2)))
+    slots["stage_table"].dataframe(pd.DataFrame(stage_rows), use_container_width=True, hide_index=True, height=table_height)
 
-            with st.container(border=True):
-                st.markdown("**Score and confidence evolution**")
-                evolution_rows = confidence_points + score_points
-                if evolution_rows:
-                    evolution_df = pd.DataFrame(evolution_rows)
-                    evolution_fig = px.line(
-                        evolution_df,
-                        x="elapsed",
-                        y="value",
-                        color="series",
-                        markers=True,
-                        title="Live score and confidence trend",
-                        color_discrete_map={
-                            "Classification confidence": "#2E6F40",
-                            "Compliance score": "#144F47",
-                        },
-                    )
-                    evolution_fig.update_traces(line=dict(width=3), marker=dict(size=7))
-                    evolution_fig.update_layout(
-                        height=280,
-                        margin=dict(l=20, r=20, t=50, b=20),
-                        xaxis_title="Elapsed (s)",
-                        yaxis_title="Value",
-                        yaxis=dict(range=[0, 1], tickformat=".0%"),
-                        legend_title_text="Signal",
-                    )
-                    st.plotly_chart(
-                        evolution_fig,
-                        use_container_width=True,
-                        key=f"{chart_key_prefix}-evolution",
-                    )
-                else:
-                    st.info("Confidence and score evolution will appear once streamed values are available.")
-        with right_col:
-            with st.container(border=True):
-                st.markdown("**Live chunk rate**")
-                if chunk_history:
-                    rate_df = pd.DataFrame(chunk_history)
-                    rate_fig = px.line(
-                        rate_df,
-                        x="elapsed",
-                        y="chunk_rate",
-                        markers=True,
-                        title="Streaming throughput",
-                    )
-                    rate_fig.update_traces(line=dict(color="#F8931F", width=3), marker=dict(size=7, color="#555759"))
-                    rate_fig.update_layout(height=240, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
-                    st.plotly_chart(
-                        rate_fig,
-                        use_container_width=True,
-                        key=f"{chart_key_prefix}-rate",
-                    )
-                else:
-                    st.info("Chunk-rate chart will appear after Ollama starts streaming output.")
-                st.caption(f"Current active rate: {active_rate:.1f} chars/s")
+    evolution_rows = confidence_points + score_points
+    if evolution_rows:
+        evolution_df = pd.DataFrame(evolution_rows)
+        evolution_fig = px.line(
+            evolution_df,
+            x="elapsed",
+            y="value",
+            color="series",
+            markers=True,
+            title="Live score and confidence trend",
+            color_discrete_map={
+                "Classification confidence": "#2E6F40",
+                "Compliance score": "#144F47",
+            },
+        )
+        evolution_fig.update_traces(line=dict(width=3), marker=dict(size=7))
+        evolution_fig.update_layout(
+            height=280,
+            margin=dict(l=20, r=20, t=50, b=20),
+            xaxis_title="Elapsed (s)",
+            yaxis_title="Value",
+            yaxis=dict(range=[0, 1], tickformat=".0%"),
+            legend_title_text="Signal",
+        )
+        slots["evolution_chart"].plotly_chart(evolution_fig, use_container_width=True)
+    else:
+        slots["evolution_chart"].info("Confidence and score evolution will appear once streamed values are available.")
 
-            with st.container(border=True):
-                st.markdown("**Execution timeline**")
-                if timeline_rows:
-                    timeline_df = pd.DataFrame(timeline_rows)
-                    fig = px.timeline(
-                        timeline_df,
-                        x_start="start",
-                        x_end="end",
-                        y="Stage",
-                        color="status",
-                        color_discrete_map={"pending": "#D9D9D9", "running": "#F8931F", "completed": "#2E6F40", "failed": "#B42318", "skipped": "#555759"},
-                        title="Compliance execution timeline",
-                    )
-                    fig.update_yaxes(autorange="reversed")
-                    fig.update_layout(height=320, margin=dict(l=20, r=20, t=50, b=20), showlegend=False)
-                    st.plotly_chart(
-                        fig,
-                        use_container_width=True,
-                        key=f"{chart_key_prefix}-timeline",
-                    )
-                else:
-                    st.info("Timeline will appear once the Compliance run begins.")
+    if chunk_history:
+        rate_df = pd.DataFrame(chunk_history)
+        rate_fig = px.line(
+            rate_df,
+            x="elapsed",
+            y="chunk_rate",
+            markers=True,
+            title="Streaming throughput",
+        )
+        rate_fig.update_traces(line=dict(color="#F8931F", width=3), marker=dict(size=7, color="#555759"))
+        rate_fig.update_layout(height=240, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
+        slots["rate_chart"].plotly_chart(rate_fig, use_container_width=True)
+    else:
+        slots["rate_chart"].info("Chunk-rate chart will appear after Ollama starts streaming output.")
+    slots["rate_caption"].caption(f"Current active rate: {active_rate:.1f} chars/s")
 
-            with st.container(border=True):
-                st.markdown("**Latest runtime detail**")
-                detail_lines = [state.get("latest_message") or "Waiting for Compliance analysis to begin."]
-                if state.get("detected_body") or state.get("detected_category"):
-                    detail_lines.append(
-                        f"Detected type: {(state.get('detected_body') or 'Unknown')} / {(state.get('detected_category') or 'Unknown')}"
-                    )
-                if state.get("current_template"):
-                    detail_lines.append(f"Reference template: {state.get('current_template')}")
-                if state.get("classification_confidence_history"):
-                    detail_lines.append(
-                        f"Latest classification confidence: {float(state['classification_confidence_history'][-1]):.0%}"
-                    )
-                if state.get("comparison_score_history"):
-                    detail_lines.append(
-                        f"Latest compliance score signal: {float(state['comparison_score_history'][-1]):.0%}"
-                    )
-                st.write("\n\n".join(detail_lines))
+    if timeline_rows:
+        timeline_df = pd.DataFrame(timeline_rows)
+        fig = px.timeline(
+            timeline_df,
+            x_start="start",
+            x_end="end",
+            y="Stage",
+            color="status",
+            color_discrete_map={"pending": "#D9D9D9", "running": "#F8931F", "completed": "#2E6F40", "failed": "#B42318", "skipped": "#555759"},
+            title="Compliance execution timeline",
+        )
+        fig.update_yaxes(autorange="reversed")
+        fig.update_layout(height=320, margin=dict(l=20, r=20, t=50, b=20), showlegend=False)
+        slots["timeline_chart"].plotly_chart(fig, use_container_width=True)
+    else:
+        slots["timeline_chart"].info("Timeline will appear once the Compliance run begins.")
 
-                preview_text = (state.get("stream_preview") or "").strip()
-                if preview_text:
-                    st.caption("Streaming preview")
-                    st.code(preview_text[-1400:], language="json")
-                else:
-                    st.caption("Streaming preview will appear here while Ollama is generating.")
+    detail_lines = [state.get("latest_message") or "Waiting for Compliance analysis to begin."]
+    if state.get("detected_body") or state.get("detected_category"):
+        detail_lines.append(
+            f"Detected type: {(state.get('detected_body') or 'Unknown')} / {(state.get('detected_category') or 'Unknown')}"
+        )
+    if state.get("current_template"):
+        detail_lines.append(f"Reference template: {state.get('current_template')}")
+    if state.get("classification_confidence_history"):
+        detail_lines.append(
+            f"Latest classification confidence: {float(state['classification_confidence_history'][-1]):.0%}"
+        )
+    if state.get("comparison_score_history"):
+        detail_lines.append(
+            f"Latest compliance score signal: {float(state['comparison_score_history'][-1]):.0%}"
+        )
+    slots["detail_text"].write("\n\n".join(detail_lines))
+
+    preview_text = (state.get("stream_preview") or "").strip()
+    if preview_text:
+        slots["preview_caption"].caption("Streaming preview")
+        slots["preview_code"].code(preview_text[-1400:], language="json")
+    else:
+        slots["preview_caption"].caption("Streaming preview will appear here while Ollama is generating.")
+        slots["preview_code"].empty()
 
 
 def _build_executive_pdf(
@@ -861,6 +881,8 @@ if "compliance_run_state" not in st.session_state:
         "message": "Ready to run compliance analysis.",
         "updated_at": None,
     }
+if "compliance_live_monitor_state" not in st.session_state:
+    st.session_state["compliance_live_monitor_state"] = None
 if "llm_health" not in st.session_state:
     # Do NOT call run_llm_health_check() here — that fires an Ollama inference
     # call immediately every time the user opens this tab, causing a cold-start
@@ -966,6 +988,11 @@ with status_meta_col:
 
 compliance_live_monitor_area = st.container()
 
+persisted_monitor_state = st.session_state.get("compliance_live_monitor_state")
+if (not run_btn) and isinstance(persisted_monitor_state, dict) and persisted_monitor_state.get("document_label"):
+    persisted_monitor_slots = _create_compliance_monitor_layout(compliance_live_monitor_area)
+    _render_compliance_live_monitor(persisted_monitor_slots, persisted_monitor_state)
+
 if run_btn:
     job_meta = {
         "document_id": document_id,
@@ -979,12 +1006,13 @@ if run_btn:
         "updated_at": time.time(),
     }
     compliance_monitor_state = _create_compliance_monitor_state(selected_label)
-    with compliance_live_monitor_area.container(border=True):
-        monitor_placeholder = st.empty()
+    st.session_state["compliance_live_monitor_state"] = compliance_monitor_state
+    monitor_slots = _create_compliance_monitor_layout(compliance_live_monitor_area)
 
     def compliance_progress(stage: str, status: str, payload: Optional[dict] = None) -> None:
         _update_compliance_monitor_state(compliance_monitor_state, stage, status, payload)
-        _render_compliance_live_monitor(monitor_placeholder, compliance_monitor_state)
+        st.session_state["compliance_live_monitor_state"] = compliance_monitor_state
+        _render_compliance_live_monitor(monitor_slots, compliance_monitor_state)
 
     compliance_progress("classify", "pending", {"message": "Queued for Compliance analysis."})
     with st.spinner(
@@ -1124,6 +1152,39 @@ if isinstance(latest_result, dict):
     snapshot_gaps = _to_list_snapshot(snapshot_gaps)
     snapshot_recs = _to_list_snapshot(snapshot_recs)
 
+    snapshot_job = latest_snapshot.get("job") or {}
+    snapshot_doc_id = int(snapshot_job.get("document_id", document_id) or document_id)
+    snapshot_ref = latest_result.get("reference_template") or chosen_template or {}
+    snapshot_detected_body = latest_result.get("body_detected") or snapshot_ref.get("body") or "Unknown body"
+    snapshot_detected_category = latest_result.get("category_detected") or snapshot_ref.get("category") or "Unknown category"
+    snapshot_xai_metrics = None
+    snapshot_shap_proxy = None
+    try:
+        snapshot_pages = db.fetchall(
+            "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
+            (snapshot_doc_id,),
+        )
+        snapshot_text = "\n".join(p["content"] for p in snapshot_pages if p.get("content"))
+        snapshot_doc_tokens = _tokenize(snapshot_text)
+        snapshot_xai_template = snapshot_ref if snapshot_ref else {
+            "body": snapshot_detected_body,
+            "category": snapshot_detected_category,
+            "name": "Latest snapshot context",
+            "keywords": [],
+            "key_requirements": snapshot_missing + snapshot_present,
+            "key_sections": [],
+        }
+        snapshot_xai_metrics = _score_reference_template(
+            snapshot_xai_template,
+            snapshot_doc_tokens,
+            snapshot_detected_body,
+            snapshot_detected_category,
+        )
+        snapshot_shap_proxy = _compute_shap_proxy(latest_result, snapshot_xai_metrics)
+    except Exception:
+        snapshot_xai_metrics = None
+        snapshot_shap_proxy = None
+
     snap_c1, snap_c2, snap_c3, snap_c4 = st.columns(4)
     snap_c1.metric("Score", f"{snapshot_score:.0%}")
     snap_c2.metric("Present", str(len(snapshot_present) if isinstance(snapshot_present, list) else 0))
@@ -1136,6 +1197,28 @@ if isinstance(latest_result, dict):
         st.warning(f"Model warning: {latest_result.get('error')}")
     else:
         st.warning("LLM output is available but summary text is empty; see detailed tabs below.")
+
+    if snapshot_xai_metrics or snapshot_shap_proxy:
+        with st.container(border=True):
+            st.markdown("**XAI and SHAP snapshot**")
+            xai_col, shap_col = st.columns([1, 1])
+            with xai_col:
+                xai_rows = [
+                    {"Metric": "Detected body", "Value": snapshot_detected_body},
+                    {"Metric": "Detected category", "Value": snapshot_detected_category},
+                ]
+                if snapshot_xai_metrics:
+                    xai_rows.extend([
+                        {"Metric": "Keyword coverage", "Value": f"{snapshot_xai_metrics['keyword_coverage']:.0%}"},
+                        {"Metric": "Requirement coverage", "Value": f"{snapshot_xai_metrics['requirements_coverage']:.0%}"},
+                        {"Metric": "Section coverage", "Value": f"{snapshot_xai_metrics['sections_coverage']:.0%}"},
+                    ])
+                st.dataframe(pd.DataFrame(xai_rows), use_container_width=True, hide_index=True)
+            with shap_col:
+                _render_shap_heatmap(
+                    snapshot_shap_proxy or {},
+                    chart_key=f"compliance-shap-snapshot-{snapshot_doc_id}-{int(latest_snapshot.get('finished_at', 0) or 0)}",
+                )
 
     with st.expander("LLM Output - Detailed Compliance Sections", expanded=True):
         col_a, col_b = st.columns(2)
