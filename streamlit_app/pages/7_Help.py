@@ -5,8 +5,12 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
+
+
+enable_serbian_locale(st)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 HELP_IMAGE_ROOTS = [
@@ -139,31 +143,219 @@ def render_help_screenshot(section_name: str, caption: str, *candidates: str) ->
          )
 
    with right_col:
-      focus_label = callout.get("focus", "Screen focus")
+      focus_label = callout.get("focus", "Fokus ekrana")
       highlights = callout.get("highlights", [])
-      st.markdown(f"### Visual Callout")
-      st.markdown(f"**Primary focus:** {focus_label}")
+      st.markdown("### Vizuelni fokus")
+      st.markdown(f"**Primarni fokus:** {focus_label}")
       if highlights:
-         st.markdown("**What To Look For**")
+         st.markdown("**Na šta obratiti pažnju**")
          for item in highlights:
             st.markdown(f"- {item}")
-      st.markdown("**Image use in Help**")
+      st.markdown("**Upotreba slike u pomoći**")
       st.markdown(
-         "Use this screenshot as the visual reference while reading the section guidance below. "
-         "It is intended to connect the written workflow with the actual controls and outputs on the page."
+         "Koristite ovaj snimak kao vizuelnu referencu dok čitate smernice u nastavku sekcije. "
+         "Cilj je da poveže pisana uputstva sa stvarnim kontrolama i rezultatima na stranici."
       )
    st.markdown("")
 
-st.set_page_config(page_title="Help — SIPMT", page_icon="❓", layout="wide")
+st.set_page_config(page_title="Pomoć — SIPMT", page_icon="❓", layout="wide")
 render_sidebar()
 
-st.title("❓ Help & Documentation")
-st.markdown("Comprehensive guide to all features in SIPMT")
+st.title("❓ Pomoć i dokumentacija")
+st.markdown("Kompletan vodič kroz funkcionalnosti sistema SIPMT")
 st.caption(
-   "This help page can embed live application screenshots from the repository. "
-   "Place section images under assets/help, assets, or landing_page_assets to populate them automatically."
+   "Ova stranica može prikazati žive snimke ekrana iz repozitorijuma. "
+   "Postavite slike sekcija u assets/help, assets ili landing_page_assets i one će se automatski učitati."
 )
 st.markdown("---")
+
+# Serbian-first help content (shown to users). Legacy English content below is skipped.
+st.caption("Snimci ekrana se automatski učitavaju iz assets/help, assets ili landing_page_assets.")
+
+with st.expander("🏠 Početna", expanded=True):
+   render_help_screenshot(
+      "Home",
+      "Prikaz početne stranice sa KPI karticama i mapom obuhvata.",
+      "home.png",
+      "dashboard.png",
+      "Dashboard.png",
+   )
+   st.markdown(
+      """
+- **Početna** daje brz pregled sistema: dokumenti, šabloni, izveštaji i izmene.
+- Mapa prikazuje geokodirane lokacije izdvojene iz obrađenih dokumenata.
+- Koristite ovu stranicu za brzu proveru stanja pre detaljne analize.
+"""
+   )
+
+with st.expander("📄 Dokumenti"):
+   render_help_screenshot(
+      "Documents",
+      "Stranica Dokumenti sa otpremanjem fajlova i rezultatima obrade.",
+      "documents.png",
+      "Documents.png",
+      "page_documents.png",
+   )
+   st.markdown(
+      """
+- Otpremanje PDF/DOCX/XLSX fajlova (do 20 MB po fajlu).
+- Kategorizacija i obrada sadržaja sa izdvajanje teksta, entiteta i lokacija.
+- Pregled biblioteke, ponovno procesiranje i bezbedno brisanje dokumenata.
+"""
+   )
+
+with st.expander("📋 Šabloni"):
+   render_help_screenshot(
+      "Templates",
+      "Definisanje šablona polja za automatsko izdvajanje podataka.",
+      "templates.png",
+      "Templates.png",
+      "page_templates.png",
+   )
+   st.markdown(
+      """
+- Kreiranje šablona sa poljima i tipovima podataka.
+- Obeležavanje obaveznih i opcionalnih polja.
+- Hint-ovi za ekstrakciju radi boljeg uparivanja sa sadržajem dokumenta.
+"""
+   )
+
+with st.expander("📊 Izveštaji"):
+   render_help_screenshot(
+      "Reports",
+      "Generisanje izveštaja na osnovu šablona i izabranih dokumenata.",
+      "reports.png",
+      "Reports.png",
+      "page_reports.png",
+   )
+   st.markdown(
+      """
+- Izbor šablona i izvornih dokumenata.
+- Automatsko popunjavanje vrednosti i prikaz nivoa pouzdanosti.
+- Čuvanje rezultata u bazi i dalji pregled istorije izveštaja.
+"""
+   )
+
+with st.expander("🔍 Izmene"):
+   render_help_screenshot(
+      "Changes",
+      "Poređenje verzija dokumenata i prikaz detektovanih razlika.",
+      "changes.png",
+      "Changes.png",
+      "page_changes.png",
+   )
+   st.markdown(
+      """
+- Praćenje razlika između starih i novih verzija dokumenata.
+- Prikaz procenta promene, dodatih i uklonjenih linija.
+- Korisno za audit trag i kontrolu izmena.
+"""
+   )
+
+with st.expander("🗺️ Mapa"):
+   render_help_screenshot(
+      "Map",
+      "Interaktivna mapa lokacija izdvojenih iz dokumenata.",
+      "map.png",
+      "Map.png",
+      "page_map.png",
+   )
+   st.markdown(
+      """
+- Vizualizacija geokodiranih lokacija na mapi.
+- Filtriranje po dokumentu i pregled konteksta u tabeli.
+- Za prikaz koordinata potrebno je uključeno geokodiranje.
+"""
+   )
+
+with st.expander("🔎 Usklađenost"):
+   render_help_screenshot(
+      "Compliance",
+      "Semantička analiza dokumenta prema referentnim okvirima.",
+      "compliance.png",
+      "Compliance.png",
+      "page_compliance.png",
+   )
+   st.markdown(
+      """
+- Izaberite dokument i referentni šablon.
+- Pokrenite analizu (Gemini ili Ollama).
+- Dobijate skor usklađenosti, praznine i preporuke.
+"""
+   )
+
+with st.expander("🌐 Izvori"):
+   render_help_screenshot(
+      "Sources",
+      "Katalog referentnih izvora i kontrole za osvežavanje.",
+      "sources.png",
+      "Sources.png",
+      "page_sources.png",
+   )
+   st.markdown(
+      """
+- Upravljanje zvaničnim URL izvorima.
+- Osvežavanje i obogaćivanje referenci.
+- Pregled aktivnih šablona koji se koriste u analizi usklađenosti.
+"""
+   )
+
+with st.expander("⚖️ HRBA"):
+   render_help_screenshot(
+      "HRBA",
+      "AAAQ analiza i tok obrade po segmentima.",
+      "hrba.png",
+      "HRBA.png",
+      "page_hrba.png",
+   )
+   st.markdown(
+      """
+- Analiza dostupnosti, pristupačnosti, prihvatljivosti i kvaliteta (AAAQ).
+- Režimi rada: spaCy (brže) i Ollama LLM (dublja analiza).
+- Rezultati se mogu sačuvati i kasnije pregledati.
+"""
+   )
+
+with st.expander("🧾 HRBA uvidi"):
+   render_help_screenshot(
+      "HRBA Insights",
+      "Pregled sačuvanih HRBA analiza i obrazloženja.",
+      "hrba_insights.png",
+      "HRBA_Insights.png",
+      "page_hrba_insights.png",
+   )
+   st.markdown(
+      """
+- Filtriranje i pregled sačuvanih HRBA nalaza.
+- Izvoz rezultata u CSV.
+- Revizija sirovih JSON zapisa.
+"""
+   )
+
+st.markdown("---")
+with st.expander("⚙️ Konfiguracija", expanded=False):
+   st.markdown(
+      """
+- `ENABLE_SEMANTIC_ANALYSIS`, `SEMANTIC_LLM_PROVIDER`
+- `GEMINI_API_KEY`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`
+- `ENABLE_GEOCODING`
+- `DATABASE_URL` / `DATABASE_PATH`
+"""
+   )
+
+st.markdown("---")
+with st.expander("💡 Saveti", expanded=False):
+   st.markdown(
+      """
+- Koristite jasna imena dokumenata i verzija.
+- Proveravajte polja sa niskom pouzdanošću.
+- Redovno osvežavajte referentne izvore.
+- Za sporiji model povećajte timeout ili koristite manji model.
+"""
+   )
+
+render_page_disclaimer()
+st.stop()
 
 # ──────────────────────────────────────────────────────────────────────────
 # HOME

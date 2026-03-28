@@ -4,6 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import pandas as pd
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from geospatial.location_extractor import LocationExtractor
@@ -12,7 +13,8 @@ from geospatial.map_generator import MapGenerator
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Map — SIPMT", page_icon="🗺️", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Mapa — SIPMT", page_icon="🗺️", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])

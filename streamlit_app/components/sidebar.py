@@ -1,73 +1,76 @@
-import base64
 import streamlit as st
 from pathlib import Path
+from streamlit_app.i18n import enable_serbian_locale
+
+
+enable_serbian_locale(st)
 
 
 # ── Navigation definition ──────────────────────────────────────────────────
 _NAV = [
-    ("🏠", "Home",       "app.py"),
-    ("📄", "Documents",  "pages/1_Documents.py"),
-    ("📋", "Templates",  "pages/2_Templates.py"),
-    ("📊", "Reports",    "pages/3_Reports.py"),
-    ("🔍", "Changes",    "pages/4_Changes.py"),
-    ("🗺️", "Map",        "pages/5_Map.py"),
-    ("🔎", "Compliance", "pages/6_Compliance.py"),
-    ("🌐", "Sources",    "pages/8_Sources.py"),
-    ("⚖️", "HRBA match", "pages/9_HRBA_match.py"),
-    ("🧾", "HRBA Insights", "pages/10_HRBA_Insights.py"),
-    ("❓", "Help",       "pages/7_Help.py"),
+    ("🏠", "Početna",       "app.py"),
+    ("📄", "Dokumenti",     "pages/1_Documents.py"),
+    ("📋", "Šabloni",       "pages/2_Templates.py"),
+    ("📊", "Izveštaji",     "pages/3_Reports.py"),
+    ("🔍", "Izmene",        "pages/4_Changes.py"),
+    ("🗺️", "Mapa",          "pages/5_Map.py"),
+    ("🔎", "Usklađenost",   "pages/6_Compliance.py"),
+    ("🌐", "Izvori",        "pages/8_Sources.py"),
+    ("⚖️", "HRBA uparivanje", "pages/9_HRBA_match.py"),
+    ("🧾", "HRBA uvidi",      "pages/10_HRBA_Insights.py"),
+    ("❓", "Pomoć",          "pages/7_Help.py"),
 ]
 
 _LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "SIPMT_LOGO.png"
 
 # ── Help descriptions ──────────────────────────────────────────────────────
 _HELP = {
-    "🏠 Home": (
-        "Overview dashboard with metrics and scope map. "
-        "See total documents, templates, reports, and changes at a glance."
+    "🏠 Početna": (
+        "Pregledna kontrolna tabla sa metrikama i mapom obuhvata. "
+        "Na jednom mestu vidite broj dokumenata, šablona, izveštaja i izmena."
     ),
-    "📄 Documents": (
-        "Upload (PDF/DOCX/XLSX), categorize, and manage your source documents. "
-        "Max 20 MB per file. System extracts text, tables, entities, and locations."
+    "📄 Dokumenti": (
+        "Otpremite (PDF/DOCX/XLSX), kategorizujte i upravljajte izvornim dokumentima. "
+        "Maksimalna veličina je 20 MB po fajlu. Sistem izdvaja tekst, tabele, entitete i lokacije."
     ),
-    "📋 Templates": (
-        "Define reusable field templates for data extraction. "
-        "Specify field names, types (text/number/date/boolean/list/location), and priorities."
+    "📋 Šabloni": (
+        "Definišite višekratne šablone polja za izdvajanje podataka. "
+        "Podesite nazive polja, tipove (tekst/broj/datum/boolean/lista/lokacija) i prioritete."
     ),
-    "📊 Reports": (
-        "Generate structured data reports by matching templates to documents. "
-        "System extracts values with confidence scores and saves results."
+    "📊 Izveštaji": (
+        "Generišite strukturisane izveštaje uparivanjem šablona sa dokumentima. "
+        "Sistem izdvaja vrednosti, dodeljuje nivo pouzdanosti i čuva rezultate."
     ),
-    "🔍 Changes": (
-        "Track and visualize differences between document versions. "
-        "See what was added, removed, or modified side-by-side."
+    "🔍 Izmene": (
+        "Pratite i vizualizujte razlike između verzija dokumenata. "
+        "Pregledajte šta je dodato, uklonjeno ili izmenjeno, uporedo."
     ),
-    "🗺️ Map": (
-        "Interactive geospatial visualization. "
-        "Explore locations extracted from your documents on OpenStreetMap."
+    "🗺️ Mapa": (
+        "Interaktivna geoprostorna vizualizacija. "
+        "Istražite lokacije izdvojene iz dokumenata na OpenStreetMap mapi."
     ),
-    "🔎 Compliance": (
-        "Semantic analysis against international reference frameworks (UN, UNESCO, EU). "
-        "Powered by Gemini or Ollama. Get compliance scores and recommendations."
+    "🔎 Usklađenost": (
+        "Semantička analiza prema međunarodnim referentnim okvirima (UN, UNESCO, EU). "
+        "Pokreću je Gemini ili Ollama modeli. Dobijate ocenu usklađenosti i preporuke."
     ),
-    "🌐 Sources": (
-        "Manage official external source URLs and refresh the reference repository. "
-        "Python fetches source pages, then Ollama/Gemini enriches requirements locally."
+    "🌐 Izvori": (
+        "Upravljajte zvaničnim spoljnim URL izvorima i osvežavajte referentni repozitorijum. "
+        "Python preuzima stranice izvora, a zatim Ollama/Gemini lokalno obogaćuje zahteve."
     ),
-    "❓ Help": (
-        "Comprehensive documentation for all features. "
-        "Detailed guides, tips, best practices, and configuration reference."
+    "❓ Pomoć": (
+        "Kompletna dokumentacija svih funkcionalnosti. "
+        "Detaljna uputstva, saveti, najbolje prakse i referenca konfiguracije."
     ),
 }
 
 _DISCLAIMER_TEXT = (
-    "Disclaimer: This application, developed by Opus Labs d.o.o. Novi Sad, utilizes "
-    "Ollama Generative AI to provide management suggestions and data analysis. These insights "
-    "are for informational purposes only and do not constitute professional or safety advice. "
-    "No Guarantee: AI outputs are probabilistic and may be incorrect or biased. Human Oversight: "
-    "This tool is an assistant, not a replacement for human supervision. Liability: Use of this "
-    "application is at the user's sole risk. Opus Labs d.o.o. disclaims all liability for "
-    "operational errors or financial losses resulting from its use."
+    "Odricanje od odgovornosti: Ova aplikacija, koju je razvila kompanija Opus Labs d.o.o. Novi Sad, "
+    "koristi generativnu veštačku inteligenciju (Ollama) radi predloga i analize podataka. Prikazani uvidi "
+    "služe isključivo u informativne svrhe i ne predstavljaju profesionalni, pravni, bezbednosni ili drugi "
+    "stručni savet. Bez garancije: izlazi AI sistema su probabilistički i mogu biti netačni ili pristrasni. "
+    "Ljudski nadzor: alat je pomoćno sredstvo i ne zamenjuje ljudsku procenu i odgovornost. Odgovornost: "
+    "korišćenje aplikacije je na sopstveni rizik korisnika. Opus Labs d.o.o. ne snosi odgovornost za "
+    "operativne greške ili finansijske gubitke nastale njenom upotrebom."
 )
 
 
@@ -79,7 +82,8 @@ def render_sidebar() -> None:
         """
         <style>
             [data-testid="stSidebarNav"] { display: none; }
-            .block-container { padding-top: 1.1rem; }
+            .block-container { padding-top: 2.5rem; }
+            [data-testid="stSidebar"] .block-container { padding-top: 0.05rem !important; }
 
             /* Nav links — button style */
             [data-testid="stPageLink"] {
@@ -115,38 +119,25 @@ def render_sidebar() -> None:
     )
 
     with st.sidebar:
-        # Render logo + subtitle as inline HTML so margin-top pulls it
-        # flush to the top regardless of Streamlit's container padding.
-        logo_html = ""
+        # Render the logo with Streamlit's native image widget for better
+        # cross-version reliability inside the sidebar.
+        st.markdown("<div style='margin-top:-0.95rem;'></div>", unsafe_allow_html=True)
         if _LOGO_PATH.exists():
-            try:
-                logo_b64 = base64.b64encode(_LOGO_PATH.read_bytes()).decode()
-                logo_html = (
-                    f'<img src="data:image/png;base64,{logo_b64}" '
-                    'style="width:85%;max-width:220px;display:block;margin:0 auto;">'
-                )
-            except Exception:
-                pass
-        st.markdown(
-            f"<div style='text-align:center;margin-top:-3.5rem;padding-bottom:0.5rem;'>"
-            f"{logo_html}"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
+            st.image(str(_LOGO_PATH), use_container_width=True)
 
-        st.markdown("### Navigation")
+        st.markdown("### Navigacija")
         for icon, label, page in _NAV:
             st.page_link(page, label=f"{icon}  {label}")
 
         st.markdown("---")
 
-        st.markdown("### 📚 Help & Resources")
+        st.markdown("### 📚 Pomoć i resursi")
 
-        st.page_link("pages/7_Help.py", label="📖 Full Documentation", icon="❓")
+        st.page_link("pages/7_Help.py", label="📖 Kompletna dokumentacija", icon="❓")
         
         # Quick reference in expander
-        with st.expander("⚡ Quick Guide", expanded=False):
-            st.markdown("**Navigation quick tips:**")
+        with st.expander("⚡ Brzi vodič", expanded=False):
+            st.markdown("**Brzi saveti za navigaciju:**")
             st.markdown("")
             for section, description in _HELP.items():
                 st.markdown(f"**{section}** — {description}")
@@ -167,7 +158,7 @@ def render_page_disclaimer() -> None:
             font-size: 0.84rem;
             line-height: 1.55;
         ">
-            <strong>Disclaimer</strong><br>
+            <strong>Odricanje od odgovornosti</strong><br>
             {_DISCLAIMER_TEXT}
         </div>
         """,

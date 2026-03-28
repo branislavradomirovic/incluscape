@@ -37,6 +37,7 @@ Constraints:
 - key_requirements: 8 to 20 items
 - keywords: 10 to 25 items
 - items must be short, specific, and deduplicated
+- All returned textual values must be in Serbian (Latin script)
 """
 
 

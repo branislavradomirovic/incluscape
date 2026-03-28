@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh the SQLite demo database from the current PostgreSQL primary database."""
+"""Osveži SQLite demo bazu podataka iz trenutne primarne PostgreSQL baze."""
 
 from __future__ import annotations
 
@@ -21,22 +21,22 @@ from config import Config
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Sync the SQLite demo database from PostgreSQL so Streamlit Community Cloud can use the latest data."
+        description="Sinhronizuj SQLite demo bazu iz PostgreSQL-a kako bi Streamlit Community Cloud koristio najnovije podatke."
     )
     parser.add_argument(
         "--if-configured",
         action="store_true",
-        help="Exit successfully when PostgreSQL-primary sync is not configured instead of failing.",
+        help="Završi uspešno kada sinhronizacija sa primarnim PostgreSQL-om nije podešena umesto da prijavi grešku.",
     )
     parser.add_argument(
         "--postgres-url",
         default=str(getattr(Config, "DATABASE_URL", "") or ""),
-        help="Primary PostgreSQL URL. Defaults to DATABASE_URL.",
+        help="URL primarnog PostgreSQL-a. Podrazumevano DATABASE_URL.",
     )
     parser.add_argument(
         "--sqlite-path",
         default=str(getattr(Config, "SQLITE_MIRROR_PATH", "") or getattr(Config, "DATABASE_PATH", "") or "./data/sipmt.db"),
-        help="Target SQLite path. Defaults to SQLITE_MIRROR_PATH, then DATABASE_PATH.",
+        help="Putanja ciljnog SQLite fajla. Podrazumevano SQLITE_MIRROR_PATH, zatim DATABASE_PATH.",
     )
     return parser.parse_args()
 
@@ -47,13 +47,13 @@ def main() -> int:
     sqlite_path = (args.sqlite_path or "").strip()
 
     if args.if_configured and (not postgres_url or bool(getattr(Config, "FORCE_SQLITE", False))):
-        print("Skipping SQLite mirror refresh: PostgreSQL-primary sync is not configured.")
+        print("Preskačem osvežavanje SQLite kopije: sinhronizacija sa primarnim PostgreSQL-om nije podešena.")
         return 0
 
     if not postgres_url:
-        raise ValueError("Missing PostgreSQL URL. Pass --postgres-url or set DATABASE_URL.")
+        raise ValueError("Nedostaje PostgreSQL URL. Prosledi --postgres-url ili postavi DATABASE_URL.")
     if not sqlite_path:
-        raise ValueError("Missing SQLite mirror path. Pass --sqlite-path or set SQLITE_MIRROR_PATH / DATABASE_PATH.")
+        raise ValueError("Nedostaje putanja SQLite kopije. Prosledi --sqlite-path ili postavi SQLITE_MIRROR_PATH / DATABASE_PATH.")
 
     os.environ["DATABASE_URL"] = postgres_url
     os.environ["FORCE_SQLITE"] = "false"
@@ -63,16 +63,16 @@ def main() -> int:
     db = DatabaseManager()
     if db.backend != "postgres":
         if args.if_configured:
-            print("Skipping SQLite mirror refresh: active backend is not PostgreSQL.")
+            print("Preskačem osvežavanje SQLite kopije: aktivni backend nije PostgreSQL.")
             return 0
-        raise RuntimeError("Primary backend is not PostgreSQL. Check DATABASE_URL / FORCE_SQLITE settings.")
+        raise RuntimeError("Primarni backend nije PostgreSQL. Proveri podešavanja DATABASE_URL / FORCE_SQLITE.")
 
     db.initialize()
     summary = db.sync_sqlite_mirror(sqlite_path)
 
-    print(f"SQLite mirror refreshed: {sqlite_path}")
+    print(f"SQLite kopija je osvežena: {sqlite_path}")
     for table, count in summary.items():
-        print(f"  {table}: {count} rows")
+        print(f"  {table}: {count} redova")
     return 0
 
 

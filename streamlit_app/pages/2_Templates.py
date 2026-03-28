@@ -4,12 +4,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import json
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 from database.db_manager import DatabaseManager
 from template_matching.template_manager import TemplateManager
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Templates — SIPMT", page_icon="📋", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Šabloni — SIPMT", page_icon="📋", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -23,13 +25,13 @@ db.initialize()
 tm = TemplateManager(db)
 org_id = st.session_state.get("org_id", db.get_or_create_organisation("Default Organisation"))
 
-tab_list, tab_new = st.tabs(["Existing Templates", "Create New Template"])
+tab_list, tab_new = st.tabs(["Postojeći šabloni", "Kreiraj Novi Šablon"])
 
 # ── List templates ──────────────────────────────────────────────────────────
 with tab_list:
     templates = tm.list_templates(org_id)
     if not templates:
-        st.info("No templates yet. Create one in the 'Create New Template' tab.")
+        st.info("Još nema šablona. Kreiraj novi šablon sa 'Kreiraj Novi Šablon' tab.")
     else:
         for tmpl in templates:
             with st.expander(f"📋 {tmpl['name']} (id={tmpl['id']})"):

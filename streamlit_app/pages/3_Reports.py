@@ -4,6 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 import pandas as pd
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from geospatial.geocoder import Geocoder
@@ -13,7 +14,8 @@ from template_matching.template_manager import TemplateManager
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Reports — SIPMT", page_icon="📊", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Izveštaji — SIPMT", page_icon="📊", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -242,7 +244,7 @@ if summary_rows:
             )
 
         selected_doc_id = st.selectbox(
-            "Select document from Executive Summary for interactive map",
+            "Izaberite dokument iz izvršnog sažetka za interaktivnu mapu",
             option_ids,
             format_func=_format_doc_option,
             key="reports_geo_selected_doc_id",
@@ -250,7 +252,7 @@ if summary_rows:
 
         prep_col, refresh_col = st.columns([4, 1])
         with refresh_col:
-            refresh_geo = st.button("Refresh geo", key="reports_geo_refresh", use_container_width=True)
+            refresh_geo = st.button("Osveži geo", key="reports_geo_refresh", use_container_width=True)
 
         last_prepared_doc = st.session_state.get("reports_geo_last_prepared_doc")
         should_prepare = bool(refresh_geo) or (last_prepared_doc != selected_doc_id)

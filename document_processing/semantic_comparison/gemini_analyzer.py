@@ -31,6 +31,10 @@ Respond ONLY with valid JSON — no markdown fences, no extra text — using thi
   "reasoning": "<one sentence explanation>"
 }}
 
+Important language rule:
+- Keep "body" and "category" values exactly from the allowed English enums above.
+- Write "topic", "social_inclusion_aspects", and "reasoning" in Serbian (Latin script).
+
 Document text (first 3 000 characters):
 {text}
 """
@@ -66,6 +70,10 @@ Respond ONLY with valid JSON — no markdown fences, no extra text — using thi
   "recommendations": ["<specific actionable improvement>"],
   "summary": "<2-3 sentence overall assessment>"
 }}
+
+Important language rule:
+- Keep JSON keys unchanged.
+- Write all textual values (elements, strengths, gaps, recommendations, summary) in Serbian (Latin script).
 """
 
 

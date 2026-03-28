@@ -8,6 +8,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import re
 import webbrowser
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from utils.logger import setup_logging
 from database.db_manager import DatabaseManager
@@ -16,6 +17,7 @@ from streamlit_app.components.sidebar import render_page_disclaimer, render_side
 from streamlit_app.components.help_button import render_help_button
 
 # ── Bootstrap ──────────────────────────────────────────────────────────────
+enable_serbian_locale(st)
 Config.ensure_directories()
 setup_logging(Config.LOG_FILE, Config.LOG_LEVEL)
 
@@ -91,13 +93,13 @@ col1, col2 = st.columns([14, 4])
 with col1:
     st.title("🌍 SIPMT")
 with col2:
-    render_help_button("🏠 Home")
-st.subheader("Social Inclusion Document Analyzer")
+    render_help_button("🏠 Početna")
+st.subheader("Analizator dokumenata socijalne inkluzije")
 
 st.markdown("""
-Welcome to **SIPMT** — upload questionnaires, policies, instructions, forms,
-reports, and monitoring documents, then let the system extract structured information, fill your report
-templates automatically, and visualise locations on an interactive map.
+Dobrodošli u **SIPMT** — otpremite upitnike, politike, uputstva, formulare,
+izveštaje i monitoring dokumente, a sistem će izdvojiti strukturisane informacije,
+automatski popuniti šablone izveštaja i prikazati lokacije na interaktivnoj mapi.
 
 ---
 """)
@@ -118,12 +120,12 @@ with col3:
 
 with col4:
     chg_count = db.fetchone("SELECT COUNT(*) AS n FROM document_changes") or {"n": 0}
-    st.metric("🔍 Changes detected", chg_count["n"])
+    st.metric("🔍 Detektovane izmene", chg_count["n"])
 
 st.markdown("---")
 
 # ── Scope map — prefer Policies, fallback to all geocoded documents ────────
-st.subheader("📍 Document Scope — Geo Locations")
+st.subheader("📍 Obuhvat dokumenata — geo lokacije")
 
 policy_locations = db.fetchall(
     """
@@ -162,7 +164,7 @@ scope_locations = policy_locations or all_geocoded_locations
 
 if policy_locations:
     st.caption(
-        "Showing geocoded locations extracted from **Policies** documents."
+        "Prikazane su geokodirane lokacije izdvojene iz dokumenata kategorije **Politike**."
     )
 elif all_geocoded_locations:
     location_mix = db.fetchall(
@@ -181,12 +183,14 @@ elif all_geocoded_locations:
     )
     mix_label = ", ".join(f"{row['document_type']}: {row['count']}" for row in location_mix)
     st.caption(
-        "No geocoded rows are currently stored on **Policies** documents, so the dashboard is showing all available geocoded document locations instead. "
-        f"Current mix: {mix_label}."
+        "Trenutno nema geokodiranih zapisa u dokumentima kategorije **Politike**, "
+        "pa kontrolna tabla prikazuje sve dostupne geokodirane lokacije iz dokumenata. "
+        f"Trenutna struktura: {mix_label}."
     )
 else:
     st.caption(
-        "No geocoded document locations are stored yet. Upload and process documents, then use the Map page to extract and geocode locations."
+        "Još nema sačuvanih geokodiranih lokacija dokumenata. Otpremite i obradite dokumente, "
+        "zatim koristite stranicu Mapa za izdvajanje i geokodiranje lokacija."
     )
 
 if scope_locations:
@@ -197,12 +201,12 @@ if scope_locations:
         if m:
             st_folium(m, use_container_width=True, height=420)
     except ImportError:
-        st.warning("`streamlit-folium` not installed. Run `pip install streamlit-folium`.")
+        st.warning("Paket `streamlit-folium` nije instaliran. Pokrenite `pip install streamlit-folium`.")
 else:
     st.info(
-        "No geocoded locations are available for the current organisation yet."
+        "Za trenutnu organizaciju još nisu dostupne geokodirane lokacije."
     )
 
 st.markdown("---")
-st.info("Use the navigation controls to move between sections.")
+st.info("Koristite navigaciju sa leve strane za prelazak između sekcija.")
 render_page_disclaimer()

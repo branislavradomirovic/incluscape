@@ -6,6 +6,7 @@ import tempfile
 from datetime import datetime
 import streamlit as st
 import pandas as pd
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.pipeline import DocumentProcessingPipeline
@@ -13,7 +14,8 @@ from utils.file_handler import FileHandler
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Documents — SIPMT", page_icon="📄", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Dokumenti — SIPMT", page_icon="📄", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -46,13 +48,13 @@ def _fmt_date(val):
 
 
 # ── Upload ──────────────────────────────────────────────────────────────────
-with st.expander("📤 Upload New Documents", expanded=True):
+with st.expander("📤 Otpremi novi dokument", expanded=True):
     uploaded_files = st.file_uploader(
         "Choose files (PDF, DOCX, XLSX) — max 20 MB each",
         type=Config.ALLOWED_EXTENSIONS,
         accept_multiple_files=True,
     )
-    doc_type = st.selectbox("Document category", Config.DOCUMENT_CATEGORIES)
+    doc_type = st.selectbox("Kategorija dokumenta", Config.DOCUMENT_CATEGORIES)
 
     if uploaded_files and st.button("Process & Save", type="primary", use_container_width=True):
         progress = st.progress(0)
@@ -123,7 +125,7 @@ with st.expander("📤 Upload New Documents", expanded=True):
                             db.save_entities(proc["entities"])
                             st.success(
                                 f"✅ **{uf.name}** — {result.page_count} page(s), "
-                                f"{len(proc['entities'])} entities extracted."
+                                f"{len(proc['entities'])} entiteta izdvojeno."
                             )
                         else:
                             st.error(f"❌ {uf.name}: {proc['error']}")
@@ -135,7 +137,7 @@ with st.expander("📤 Upload New Documents", expanded=True):
 
 # ── Document Library ─────────────────────────────────────────────────────────
 st.markdown("---")
-st.subheader("📚 Document Library")
+st.subheader("📚 Biblioteka dokumenata")
 
 docs = db.fetchall(
     "SELECT id, title, document_type, file_name, file_path, file_size, status, created_at "
@@ -149,12 +151,12 @@ if not docs:
     st.stop()
 
 display_df = pd.DataFrame([{
-    "Title":    d["title"],
-    "Category": d["document_type"],
-    "File":     d["file_name"],
-    "Size":     _fmt_size(d["file_size"]),
-    "Status":   d["status"].capitalize(),
-    "Uploaded": _fmt_date(d["created_at"]),
+    "Naslov":      d["title"],
+    "Kategorija":  d["document_type"],
+    "Fajl":        d["file_name"],
+    "Veličina":    _fmt_size(d["file_size"]),
+    "Status":      d["status"].capitalize(),
+    "Otpremljeno": _fmt_date(d["created_at"]),
 } for d in docs])
 st.dataframe(display_df, use_container_width=True, hide_index=True)
 
@@ -165,7 +167,7 @@ doc_options = {
     for d in docs
 }
 selected_label = st.selectbox(
-    "Select document to preview or delete",
+    "Izaberite dokument za pregled ili brisanje",
     list(doc_options.keys()),
 )
 selected_id = doc_options[selected_label]
@@ -175,19 +177,19 @@ sel = next(d for d in docs if d["id"] == selected_id)
 col_info, col_reprocess, col_btn = st.columns([5, 1, 1])
 with col_info:
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Category", sel["document_type"])
+    m1.metric("Kategorija", sel["document_type"])
     m2.metric("Status",   sel["status"].capitalize())
-    m3.metric("Size",     _fmt_size(sel["file_size"]))
-    m4.metric("Uploaded", _fmt_date(sel["created_at"]))
+    m3.metric("Veličina", _fmt_size(sel["file_size"]))
+    m4.metric("Otpremljeno", _fmt_date(sel["created_at"]))
 
 with col_reprocess:
     st.markdown("<div style='padding-top:1.8rem'></div>", unsafe_allow_html=True)
-    if st.button("🔄 Re-process", use_container_width=True, help="Re-extract text and entities from the stored file"):
+    if st.button("🔄 Ponovo obradi", use_container_width=True, help="Ponovo izdvoji tekst i entitete iz sačuvanog fajla"):
         st.session_state["_reprocess"] = selected_id
 
 with col_btn:
     st.markdown("<div style='padding-top:1.8rem'></div>", unsafe_allow_html=True)
-    if st.button("🗑️ Delete", use_container_width=True):
+    if st.button("🗑️ Obriši", use_container_width=True):
         st.session_state["_confirm_delete"] = selected_id
 
 # ── Re-process ────────────────────────────────────────────────────────────────
@@ -238,8 +240,8 @@ if st.session_state.get("_reprocess") == selected_id:
                     ent["document_id"] = selected_id
                 db.save_entities(entities)
                 st.success(
-                    f"✅ Re-processed: {result.page_count} page(s), "
-                    f"{len(entities)} entities extracted."
+                    f"✅ Ponovo obrađeno: {result.page_count} stranica, "
+                    f"{len(entities)} entiteta izdvojeno."
                 )
     finally:
         if temp_materialized_path:

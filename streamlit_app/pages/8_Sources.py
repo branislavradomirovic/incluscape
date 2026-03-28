@@ -10,6 +10,7 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 
 from config import Config
 from database.db_manager import DatabaseManager
@@ -18,7 +19,8 @@ from document_processing.semantic_comparison.reference_updater import ReferenceT
 from document_processing.semantic_comparison.sources_catalogue import SourcesCatalogue
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
-st.set_page_config(page_title="Sources – SIPMT", page_icon="🌐", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Izvori – SIPMT", page_icon="🌐", layout="wide")
 render_sidebar()
 
 st.title("🌐 Reference Sources Catalogue")
@@ -77,7 +79,7 @@ def _fmt_ts(value) -> str:
 
 # ── tabs ───────────────────────────────────────────────────────────────────────
 
-tab_view, tab_add, tab_refresh = st.tabs(["📋 All Sources", "➕ Add Source", "🔄 Refresh & Enrich"])
+tab_view, tab_add, tab_refresh = st.tabs(["📋 Svi izvori", "➕ Dodaj izvor", "🔄 Osveži i obogati"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — View / manage catalogue
@@ -90,31 +92,31 @@ with tab_view:
     col_filter, col_probe = st.columns([3, 1])
     with col_filter:
         body_filter = st.multiselect(
-            "Filter by governing body",
-            options=["All"] + known_bodies,
-            default=["All"],
+            "Filtriraj po upravnom telu",
+            options=["Svi"] + known_bodies,
+            default=["Svi"],
         )
     with col_probe:
-        run_probe = st.button("🩺 Run URL health check", use_container_width=True)
+        run_probe = st.button("🩺 Pokreni proveru URL dostupnosti", use_container_width=True)
 
-    if "All" in body_filter or not body_filter:
+    if "Svi" in body_filter or not body_filter:
         filtered = all_sources
     else:
         filtered = [s for s in all_sources if s.get("body") in body_filter]
 
     probe_results: dict = {}
     if run_probe:
-        prog = st.progress(0, text="Probing URLs…")
+        prog = st.progress(0, text="Proveravam URL adrese…")
         for i, src in enumerate(filtered):
             probe_results[src.get("source_url", "")] = _probe(src.get("source_url", ""))
-            prog.progress((i + 1) / max(len(filtered), 1), text=f"Checked {i+1}/{len(filtered)}")
+            prog.progress((i + 1) / max(len(filtered), 1), text=f"Provereno {i+1}/{len(filtered)}")
         prog.empty()
         healthy = sum(1 for v in probe_results.values() if v["ok"])
-        st.info(f"Health check done — {healthy}/{len(probe_results)} healthy.")
+        st.info(f"Provera završena — ispravno: {healthy}/{len(probe_results)}.")
 
     for body in sorted({s.get("body", "Other") for s in filtered}):
         body_entries = [s for s in filtered if s.get("body", "Other") == body]
-        with st.expander(f"**{body}** — {len(body_entries)} source(s)", expanded=False):
+        with st.expander(f"**{body}** — {len(body_entries)} izvor(a)", expanded=False):
             for src in body_entries:
                 url = src.get("source_url") or ""
                 enabled = src.get("enabled", True)
@@ -129,74 +131,74 @@ with tab_view:
                         f"{status_icon} **{src.get('name', '—')}** · *{src.get('category', '')}*  \n"
                         f"<small>[{url}]({url})</small>" if url else
                         f"{status_icon} **{src.get('name', '—')}** · *{src.get('category', '')}*  \n"
-                        f"<small>_(no URL)_</small>",
+                        f"<small>_(nema URL-a)_</small>",
                         unsafe_allow_html=True,
                     )
                 with c2:
-                    toggle_label = "Disable" if enabled else "Enable"
+                    toggle_label = "Onemogući" if enabled else "Omogući"
                     if url and st.button(toggle_label, key=f"toggle_{url}", use_container_width=True):
                         catalogue.set_enabled(url, not enabled)
                         st.rerun()
                 with c3:
-                    if url and st.button("Remove", key=f"remove_{url}", use_container_width=True):
+                    if url and st.button("Ukloni", key=f"remove_{url}", use_container_width=True):
                         if st.session_state.get(f"confirm_remove_{url}"):
                             catalogue.remove_source(url)
-                            st.success(f"Removed: {src.get('name')}")
+                            st.success(f"Uklonjeno: {src.get('name')}")
                             st.rerun()
                         else:
                             st.session_state[f"confirm_remove_{url}"] = True
-                            st.warning("Click Remove again to confirm.")
+                            st.warning("Kliknite ponovo na Ukloni za potvrdu.")
 
     st.markdown("---")
-    if st.button("📥 Sync enabled sources → DB (creates missing templates)", use_container_width=True):
+    if st.button("📥 Sinhronizuj aktivne izvore u bazu (kreira nedostajuće šablone)", use_container_width=True):
         n = catalogue.sync_to_db(db)
         matcher.seed_database()
-        st.success(f"Synced {n} catalogue entries to the database.")
+        st.success(f"Sinhronizovano {n} stavki kataloga u bazu.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — Add a new source
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_add:
-    st.subheader("Add a new reference source")
+    st.subheader("Dodaj novi referentni izvor")
     st.caption(
-        "Enter the governing body, category, and official URL. "
-        "After saving, use **Refresh & Enrich** to fetch and extract compliance requirements."
+        "Unesite upravno telo, kategoriju i zvanični URL. "
+        "Nakon čuvanja, koristite **Osveži i obogati** da preuzmete i izdvojite zahteve usklađenosti."
     )
 
     with st.form("add_source_form"):
-        body_opt = catalogue.known_bodies() + ["Other (new body)"]
-        selected_body = st.selectbox("Governing body", options=body_opt)
+        body_opt = catalogue.known_bodies() + ["Drugo (novo telo)"]
+        selected_body = st.selectbox("Upravno telo", options=body_opt)
         custom_body = ""
-        if selected_body == "Other (new body)":
-            custom_body = st.text_input("New body name (e.g. UNICEF, African Union, …)")
-        body_val = custom_body.strip() if selected_body == "Other (new body)" else selected_body
+        if selected_body == "Drugo (novo telo)":
+            custom_body = st.text_input("Naziv novog tela (npr. UNICEF, Afrička unija, …)")
+        body_val = custom_body.strip() if selected_body == "Drugo (novo telo)" else selected_body
 
         CATEGORIES = [
             "Policies", "Reports", "Monitoring", "Questionnaire",
             "Instructions", "Forms", "Guideline", "Resolution", "Directive", "Other",
         ]
-        category_val = st.selectbox("Category", options=CATEGORIES)
-        name_val = st.text_input("Short name", placeholder="e.g. UNICEF Child Rights Convention Summary")
-        url_val = st.text_input("Official source URL", placeholder="https://…")
+        category_val = st.selectbox("Kategorija", options=CATEGORIES)
+        name_val = st.text_input("Kratak naziv", placeholder="npr. UNICEF sažetak konvencije o pravima deteta")
+        url_val = st.text_input("Zvanični URL izvora", placeholder="https://…")
         file_hint_val = st.text_input(
-            "File hint (optional)",
+            "Predlog putanje fajla (opciono)",
             placeholder="unicef/child_rights.json",
-            help="Relative path under reference_templates/ where the JSON will be stored.",
+            help="Relativna putanja unutar reference_templates/ gde će JSON biti sačuvan.",
         )
-        submitted = st.form_submit_button("Save to catalogue")
+        submitted = st.form_submit_button("Sačuvaj u katalog")
 
     if submitted:
         missing = []
         if not body_val:
-            missing.append("Governing body")
+            missing.append("Upravno telo")
         if not name_val.strip():
-            missing.append("Name")
+            missing.append("Naziv")
         if not url_val.strip():
-            missing.append("Source URL")
+            missing.append("URL izvora")
         if missing:
-            st.error(f"Required fields missing: {', '.join(missing)}")
+            st.error(f"Nedostaju obavezna polja: {', '.join(missing)}")
         elif catalogue.find(url_val.strip()):
-            st.warning("This URL is already in the catalogue.")
+            st.warning("Ovaj URL već postoji u katalogu.")
         else:
             entry = catalogue.add_source(
                 body=body_val,
@@ -205,19 +207,18 @@ with tab_add:
                 category=category_val,
                 file_hint=file_hint_val.strip(),
             )
-            st.success(f"Added **{entry['name']}** [{body_val}] to the catalogue.")
-            st.info("Go to the **Refresh & Enrich** tab to fetch and process this source.")
+            st.success(f"Dodat je izvor **{entry['name']}** [{body_val}] u katalog.")
+            st.info("Pređite na karticu **Osveži i obogati** da preuzmete i obradite ovaj izvor.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — Refresh and LLM enrich
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_refresh:
-    st.subheader(f"Fetch sources from the internet · Enrich with {provider_label}")
+    st.subheader(f"Preuzmi izvore sa interneta · Obogati pomoću modela {provider_label}")
     st.caption(
-        "Python fetches each official URL over the internet and strips HTML → plain text. "
-        f"**{provider_label}** (running locally) then reads that text and extracts "
-        "key sections, compliance requirements, and keywords. "
-        "No user documents leave your machine."
+        "Python preuzima svaki zvanični URL sa interneta i uklanja HTML sadržaj u običan tekst. "
+        f"Zatim **{provider_label}** (lokalno pokrenut) čita taj tekst i izdvaja ključne sekcije, "
+        "zahteve usklađenosti i ključne reči. Korisnički dokumenti ne napuštaju vašu mašinu."
     )
 
     catalogue.reload()
@@ -226,42 +227,42 @@ with tab_refresh:
     col_bodies, col_opts = st.columns([3, 1])
     with col_bodies:
         selected_bodies = st.multiselect(
-            "Bodies to refresh",
+            "Tela za osvežavanje",
             options=known_bodies,
             default=[b for b in ["UN", "UNESCO", "EU", "OECD"] if b in known_bodies],
         )
     with col_opts:
         do_enrich = st.checkbox(
-            f"Enrich with {provider_label}",
+            f"Obogati pomoću modela {provider_label}",
             value=True,
             help=(
-                "After fetching the source page, send the extracted text to the local LLM "
-                "to extract key sections, requirements, and keywords."
+                "Nakon preuzimanja stranice izvora, pošalji izdvojeni tekst lokalnom LLM modelu "
+                "radi izdvajanja ključnih sekcija, zahteva i ključnih reči."
             ),
         )
 
     st.info(
-        f"**Data flow:**  \n"
-        f"1. Python → internet → fetches official URL  \n"
-        f"2. Strip HTML → plain text (stays local)  \n"
-        f"3. {'→ ' + provider_label + ' (local model) → extracts compliance requirements' if do_enrich else '→ hash-only update (no LLM call)'}  \n"
-        f"4. Results saved to local SQLite database"
+        f"**Tok podataka:**  \n"
+        f"1. Python → internet → preuzima zvanični URL  \n"
+        f"2. Uklanjanje HTML-a → običan tekst (ostaje lokalno)  \n"
+        f"3. {'→ ' + provider_label + ' (lokalni model) → izdvajanje zahteva usklađenosti' if do_enrich else '→ samo hash ažuriranje (bez LLM poziva)'}  \n"
+        f"4. Rezultati se čuvaju u lokalnoj SQLite bazi"
     )
 
     if st.button(
-        f"🔄 Refresh {', '.join(selected_bodies) if selected_bodies else 'all'} sources"
-        + (f" + {provider_label} enrichment" if do_enrich else ""),
+        f"🔄 Osveži izvore: {', '.join(selected_bodies) if selected_bodies else 'sve'}"
+        + (f" + obogaćivanje modelom {provider_label}" if do_enrich else ""),
         use_container_width=True,
         type="primary",
     ):
         if not selected_bodies:
-            st.warning("Select at least one governing body to refresh.")
+            st.warning("Izaberite najmanje jedno upravno telo za osvežavanje.")
         else:
             # Make sure catalogue entries are in the DB first
             catalogue.sync_to_db(db)
             matcher.seed_database()
 
-            with st.spinner(f"Fetching sources and running {provider_label} enrichment…"):
+            with st.spinner(f"Preuzimam izvore i pokrećem obogaćivanje modelom {provider_label}…"):
                 results = updater.refresh_bodies(
                     bodies=selected_bodies,
                     use_llm=do_enrich,
@@ -274,19 +275,19 @@ with tab_refresh:
             enrich_errors = [r for r in results if r.get("llm_error")]
 
             st.success(
-                f"Refresh complete — **{updated}** updated, **{unchanged}** unchanged, "
-                f"**{len(errors)}** source errors"
-                + (f", **{enriched}** {provider_label}-enriched" if do_enrich else "")
+                f"Osvežavanje završeno — ažurirano: **{updated}**, neizmenjeno: **{unchanged}**, "
+                f"greške izvora: **{len(errors)}**"
+                + (f", obogaćeno modelom {provider_label}: **{enriched}**" if do_enrich else "")
                 + "."
             )
 
             if errors:
-                with st.expander("⚠️ Source fetch errors", expanded=True):
+                with st.expander("⚠️ Greške pri preuzimanju izvora", expanded=True):
                     for r in errors:
                         st.markdown(f"- **[{r.get('body')}] {r.get('name')}**: {r.get('error')}")
 
             if enrich_errors:
-                with st.expander(f"⚠️ {provider_label} enrichment warnings", expanded=False):
+                with st.expander(f"⚠️ Upozorenja za obogaćivanje modelom {provider_label}", expanded=False):
                     for r in enrich_errors:
                         st.markdown(f"- **[{r.get('body')}] {r.get('name')}**: {r.get('llm_error')}")
 
@@ -294,33 +295,33 @@ with tab_refresh:
             rows = []
             for r in results:
                 rows.append({
-                    "Body": r.get("body", ""),
-                    "Name": r.get("name", ""),
+                    "Telo": r.get("body", ""),
+                    "Naziv": r.get("name", ""),
                     "Status": r.get("status", "error" if r.get("error") else "—"),
-                    "Updated": "✅" if r.get("updated") else "—",
-                    f"{provider_label} enriched": "✅" if r.get("llm_enriched") else ("⚠️" if r.get("llm_error") else "—"),
-                    "Error": (r.get("error") or "")[:80],
+                    "Ažurirano": "✅" if r.get("updated") else "—",
+                    f"Obogaćeno ({provider_label})": "✅" if r.get("llm_enriched") else ("⚠️" if r.get("llm_error") else "—"),
+                    "Greška": (r.get("error") or "")[:80],
                 })
             if rows:
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     st.markdown("---")
-    st.subheader("Current DB template snapshot")
+    st.subheader("Trenutni pregled šablona u bazi")
     db_templates = db.get_reference_templates()
     if db_templates:
         snap = []
         for t in db_templates:
             snap.append({
-                "Body": t.get("body", ""),
-                "Category": t.get("category", ""),
-                "Name": t.get("name", ""),
-                "Version": t.get("version", ""),
-                "Source URL": (t.get("source_url") or "")[:60],
-                "Last checked": _fmt_ts(t.get("source_last_checked")),
-                "Active": "✅" if t.get("is_active") else "⚫",
+                "Telo": t.get("body", ""),
+                "Kategorija": t.get("category", ""),
+                "Naziv": t.get("name", ""),
+                "Verzija": t.get("version", ""),
+                "URL izvora": (t.get("source_url") or "")[:60],
+                "Poslednja provera": _fmt_ts(t.get("source_last_checked")),
+                "Aktivan": "✅" if t.get("is_active") else "⚫",
             })
         st.dataframe(pd.DataFrame(snap), use_container_width=True, hide_index=True)
     else:
-        st.info("No templates in database yet. Use **Sync** or **Refresh** above.")
+        st.info("U bazi još nema šablona. Koristite iznad opcije **Sinhronizuj** ili **Osveži**.")
 
 render_page_disclaimer()

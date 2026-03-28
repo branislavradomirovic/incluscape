@@ -14,6 +14,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 
 from config import Config
 from database.db_manager import DatabaseManager
@@ -24,7 +25,8 @@ from streamlit_app.components.help_button import render_help_button
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 
-st.set_page_config(page_title="Compliance - SIPMT", page_icon="🔎", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Usklađenost - SIPMT", page_icon="🔎", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])

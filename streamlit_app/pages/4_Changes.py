@@ -5,13 +5,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import json
 import streamlit as st
 import pandas as pd
+from streamlit_app.i18n import enable_serbian_locale
 from database.db_manager import DatabaseManager
 from change_tracking.change_detector import ChangeDetector
 from change_tracking.version_manager import VersionManager
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Change Monitor — SIPMT", page_icon="🔍", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Nadzor izmena — SIPMT", page_icon="🔍", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -27,7 +29,7 @@ vm = VersionManager(db)
 org_id = st.session_state.get("org_id", db.get_or_create_organisation("Default Organisation"))
 
 # ── List all detected changes ───────────────────────────────────────────────
-st.subheader("Recent Changes")
+st.subheader("Trenutne izmene")
 changes = db.fetchall(
     "SELECT dc.id, d.title AS document, dc.change_type, dc.impact_level, "
     "       dc.diff_summary, dc.detected_at "
@@ -38,7 +40,7 @@ changes = db.fetchall(
     (org_id,),
 )
 if not changes:
-    st.info("No changes detected yet. Upload a new version of an existing document to see changes.")
+    st.info("Nisu detektovane izmene. Prosledi novu verziju dokumenta da bi se utvrdili izmene.")
 else:
     IMPACT_COLOUR = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}
     rows = []
@@ -63,7 +65,7 @@ else:
 
 # ── Compare two documents ───────────────────────────────────────────────────
 st.markdown("---")
-st.subheader("Compare Two Document Versions")
+st.subheader("Uporedi dva dokumenta i verzije")
 
 docs = db.fetchall(
     "SELECT id, title, version, created_at FROM documents "
@@ -75,8 +77,8 @@ if len(docs) < 2:
 else:
     doc_labels = {f"{d['title']} v{d['version']} (id={d['id']})": d["id"] for d in docs}
     col1, col2 = st.columns(2)
-    old_label = col1.selectbox("Old version", list(doc_labels.keys()), key="old_doc")
-    new_label = col2.selectbox("New version", list(doc_labels.keys()), key="new_doc")
+    old_label = col1.selectbox("Prethodna verzija", list(doc_labels.keys()), key="old_doc")
+    new_label = col2.selectbox("Nova verzija", list(doc_labels.keys()), key="new_doc")
     old_id = doc_labels[old_label]
     new_id = doc_labels[new_label]
 

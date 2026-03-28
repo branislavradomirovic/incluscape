@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
@@ -11,7 +12,8 @@ from template_matching.hrba_matcher import HRBAMatcherLLM
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="HRBA — SIPMT", page_icon="⚖️", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="HRBA uparivanje — SIPMT", page_icon="⚖️", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
@@ -22,8 +24,8 @@ with col2:
 
 st.markdown(
     """
-    Use the HRBA matcher to scan text for AAAQ indicators (Availability, Accessibility,
-    Acceptability, Quality). Select documents from the database for batch analysis or paste text below.
+    Koristite HRBA uparivač za analizu teksta kroz AAAQ indikatore (Availability, Accessibility,
+    Acceptability, Quality). Izaberite dokumente iz baze za grupnu analizu.
     """
 )
 
@@ -306,7 +308,7 @@ def render_hrba_ollama_summary(doc_id, parsed, seg_meta, key_prefix):
     avg_scores = xai_metrics.get("avg_scores") or {}
     top_counts = xai_metrics.get("top_category_counts") or {}
 
-    st.markdown("**Ollama Executive Summary**")
+    st.markdown("**Ollama izvršni sažetak**")
     if executive_summary:
         st.info(executive_summary)
 
@@ -750,18 +752,18 @@ docs = db.fetchall(
     (org_id,),
 )
 doc_options = [f"{d['id']}: {d['title']}" for d in docs]
-selected = st.multiselect("Select documents to analyze", options=doc_options, default=[])
+selected = st.multiselect("Izaberite dokumente za analizu", options=doc_options, default=[])
 
 col1, col2 = st.columns(2)
 analyze_selected_clicked = False
 analyze_all_clicked = False
 with col1:
-    analyze_selected_clicked = st.button("Analyze selected")
+    analyze_selected_clicked = st.button("Analiziraj izabrane")
     if analyze_selected_clicked and not selected:
-        st.warning("Select one or more documents to analyze.")
+        st.warning("Izaberite jedan ili više dokumenata za analizu.")
 
 with col2:
-    analyze_all_clicked = st.button("Analyze all documents")
+    analyze_all_clicked = st.button("Analiziraj sve dokumente")
     if analyze_all_clicked and not docs:
         st.info("No documents available for this organisation.")
 
@@ -794,7 +796,7 @@ if analyze_selected_clicked and selected:
         results[doc_id] = analysis
 
     st.session_state['hrba_last_results'] = results
-    st.success("Analysis complete — results available below.")
+    st.success("Analiza je završena — rezultati su dostupni ispod.")
 
 if analyze_all_clicked and docs:
     aggregate = {}
@@ -814,7 +816,7 @@ if analyze_all_clicked and docs:
                         analysis.extend([{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights])
                     aggregate[doc_id] = {"final": analysis, "seg_meta": build_static_seg_meta(texts)}
 
-    st.write("Batch analysis complete")
+    st.write("Grupna analiza je završena")
     for doc_id, analysis in aggregate.items():
         st.markdown(f"**Document {doc_id}**")
         parsed = analysis
@@ -843,7 +845,7 @@ if analyze_all_clicked and docs:
 if st.session_state.get('hrba_last_results'):
     results = st.session_state.get('hrba_last_results')
     st.markdown("---")
-    st.header("Analysis Results")
+    st.header("Rezultati analize")
     for doc_id, analysis in results.items():
         st.subheader(f"Document {doc_id} — {len(analysis['final']) if isinstance(analysis, dict) and 'final' in analysis else (len(analysis) if isinstance(analysis, (list, dict)) else 0)} matches")
         parsed = analysis
@@ -873,12 +875,12 @@ if st.session_state.get('hrba_last_results'):
 
 # Option to save results to DB
 st.markdown("---")
-if st.button("Save last analysis to DB"):
+if st.button("Sačuvaj poslednju analizu u bazu"):
     try:
         # Attempt to find last results in page state by checking `results` or `aggregate` variables
         to_save = locals().get("results") or locals().get("aggregate")
         if not to_save:
-            st.warning("No analysis results found to save. Run an analysis first.")
+            st.warning("Nema rezultata analize za čuvanje. Najpre pokrenite analizu.")
         else:
             saved_count = 0
             for doc_id, analysis in to_save.items():
@@ -890,9 +892,9 @@ if st.button("Save last analysis to DB"):
                 }
                 db.insert("semantic_analyses", payload)
                 saved_count += 1
-            st.success(f"Saved HRBA analyses for {saved_count} documents into semantic_analyses table.")
+            st.success(f"Sačuvane su HRBA analize za {saved_count} dokumenata u tabelu semantic_analyses.")
     except Exception as e:
-        st.error(f"Saving to DB failed: {e}")
+        st.error(f"Čuvanje u bazu nije uspelo: {e}")
 
 st.markdown("---")
 st.caption(f"spaCy model: {Config.SPACY_MODEL} — Ollama base: {Config.OLLAMA_BASE_URL}")
