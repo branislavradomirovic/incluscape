@@ -7,6 +7,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$REPO_ROOT"
 
+COMPOSE_ARGS=(-f docker-compose.yml)
+
 if [[ $# -lt 1 ]]; then
   echo "Usage: bash scripts/restore_customer_data.sh <backup-directory>" >&2
   exit 1
@@ -50,25 +52,25 @@ restore_volume() {
 }
 
 echo "[INFO] Ensuring PostgreSQL service is running"
-docker compose up -d postgres
+docker compose "${COMPOSE_ARGS[@]}" up -d postgres
 
 echo "[INFO] Waiting for PostgreSQL readiness"
 for _ in $(seq 1 60); do
-  if docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
+  if docker compose "${COMPOSE_ARGS[@]}" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
     break
   fi
   sleep 2
 done
 
-if ! docker compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
+if ! docker compose "${COMPOSE_ARGS[@]}" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
   echo "[FAIL] PostgreSQL did not become ready in time" >&2
   exit 1
 fi
 
 if [[ -f "$BACKUP_DIR/postgres.sql" ]]; then
   echo "[INFO] Restoring PostgreSQL database dump"
-  docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-  docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$BACKUP_DIR/postgres.sql"
+  docker compose "${COMPOSE_ARGS[@]}" exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+  docker compose "${COMPOSE_ARGS[@]}" exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$BACKUP_DIR/postgres.sql"
 else
   echo "[WARN] Database dump not found, skipping DB restore"
 fi

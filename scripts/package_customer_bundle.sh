@@ -7,6 +7,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUNDLE_ROOT="$REPO_ROOT/customer_bundle"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 OUTPUT_DIR="${1:-$BUNDLE_ROOT/transfer/sipmt_customer_bundle_$TIMESTAMP}"
+COMPOSE_ARGS=(-f docker-compose.yml)
 
 BUILD_IMAGES="${BUILD_IMAGES:-true}"
 EXPORT_IMAGES="${EXPORT_IMAGES:-true}"
@@ -126,7 +127,7 @@ if [[ "$BUILD_IMAGES" == "true" ]]; then
   echo "[INFO] Building bundled images"
   (
     cd "$REPO_ROOT"
-    docker compose build sipmt ollama
+    docker compose "${COMPOSE_ARGS[@]}" build sipmt ollama
   )
 fi
 

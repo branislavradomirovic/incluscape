@@ -2,6 +2,8 @@ services:
   sipmt:
     build:
       context: .
+      dockerfile: Dockerfile
+    image: incluscape-sipmt:latest
     container_name: sipmt-app
     depends_on:
       ollama:
@@ -41,12 +43,18 @@ services:
       - sipmt_temp:/app/temp
       - sipmt_data:/app/data
     restart: unless-stopped
+    # Override in docker-compose.override.yml for development:
+    # volumes:
+    #   - ./streamlit_app:/app/streamlit_app
+    #   - ./utils:/app/utils
+    #   - ./config.py:/app/config.py
 
   ollama:
     build:
       context: ./docker/ollama
       args:
         OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b-instruct}
+    image: incluscape-ollama:latest
     container_name: sipmt-ollama
     ports:
       - "11434:11434"
@@ -65,6 +73,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-sipmt}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-replace-with-a-strong-password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sipmt}"]
       interval: 10s
@@ -74,6 +83,7 @@ services:
     volumes:
       - sipmt_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    # Persistence: data survives container restarts via named volume
 
 volumes:
   sipmt_uploads:
@@ -82,3 +92,19 @@ volumes:
   sipmt_temp:
   sipmt_data:
   sipmt_pgdata:
+
+# Development overrides (use with: docker compose -f docker-compose.yml -f docker-compose.override.yml up)
+# Create docker-compose.override.yml with:
+# services:
+#   sipmt:
+#     build:
+#       context: .
+#       args:
+#         - BUILDKIT_INLINE_CACHE=1
+#     environment:
+#       DEBUG: "True"
+#     volumes:
+#       - ./streamlit_app:/app/streamlit_app
+#       - ./utils:/app/utils
+#       - ./config.py:/app/config.py
+#     command: streamlit run streamlit_app/app.py --logger.level=debug
