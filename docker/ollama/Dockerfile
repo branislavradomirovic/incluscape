@@ -15,4 +15,4 @@ RUN sh -c 'ollama serve >/tmp/ollama-build.log 2>&1 & \
 
 EXPOSE 11434
 
-CMD ["ollama", "serve"]
+CMD ["serve"]

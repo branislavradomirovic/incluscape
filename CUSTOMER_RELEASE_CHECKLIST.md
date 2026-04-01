@@ -67,6 +67,8 @@ bash scripts/smoke_test_bundle.sh
   - restart instructions
   - stop instructions
   - log inspection instructions
+  - backup command: `bash scripts/backup_customer_data.sh`
+  - restore command: `bash scripts/restore_customer_data.sh <backup-directory>`
 
 ## 6. Operations Commands
 
@@ -92,6 +94,18 @@ View logs:
 
 ```bash
 docker compose logs -f sipmt ollama postgres
+```
+
+Backup customer data:
+
+```bash
+bash scripts/backup_customer_data.sh
+```
+
+Restore customer data:
+
+```bash
+bash scripts/restore_customer_data.sh backups/sipmt_bundle_YYYYMMDD_HHMMSS
 ```
 
 Stop bundle:

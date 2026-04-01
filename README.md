@@ -433,6 +433,18 @@ Manual smoke test:
 bash scripts/smoke_test_bundle.sh
 ```
 
+Backup customer data:
+
+```bash
+bash scripts/backup_customer_data.sh
+```
+
+Restore customer data:
+
+```bash
+bash scripts/restore_customer_data.sh backups/sipmt_bundle_YYYYMMDD_HHMMSS
+```
+
 Customer handover checklist:
 - [CUSTOMER_RELEASE_CHECKLIST.md](CUSTOMER_RELEASE_CHECKLIST.md)
 
