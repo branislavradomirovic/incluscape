@@ -35,6 +35,7 @@ python-dotenv==1.0.1
 pydantic==2.6.3
 psycopg2-binary==2.9.9
 protobuf>=4.25.3,<5
+playwright==1.52.0
 
 # Semantic Analysis
 google-generativeai==0.8.3

@@ -5,20 +5,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import json
 import streamlit as st
 import pandas as pd
+from streamlit_app.i18n import enable_serbian_locale
 from database.db_manager import DatabaseManager
 from change_tracking.change_detector import ChangeDetector
 from change_tracking.version_manager import VersionManager
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Change Monitor — SIPMT", page_icon="🔍", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Nadzor izmena dokumenata — SIPMT", page_icon="🔍", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("🔍 Change Monitor")
+    st.title("🔍 Nadzor izmena dokumenata")
 with col2:
-    render_help_button("🔍 Changes")
+    render_help_button("🔍 Nadzor izmena")
 
 db = DatabaseManager()
 db.initialize()
@@ -27,7 +29,7 @@ vm = VersionManager(db)
 org_id = st.session_state.get("org_id", db.get_or_create_organisation("Default Organisation"))
 
 # ── List all detected changes ───────────────────────────────────────────────
-st.subheader("Recent Changes")
+st.subheader("Trenutne izmene")
 changes = db.fetchall(
     "SELECT dc.id, d.title AS document, dc.change_type, dc.impact_level, "
     "       dc.diff_summary, dc.detected_at "
@@ -38,7 +40,7 @@ changes = db.fetchall(
     (org_id,),
 )
 if not changes:
-    st.info("No changes detected yet. Upload a new version of an existing document to see changes.")
+    st.info("Nisu detektovane izmene. Prosledi novu verziju dokumenta da bi se utvrdile izmene.")
 else:
     IMPACT_COLOUR = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}
     rows = []
@@ -63,7 +65,7 @@ else:
 
 # ── Compare two documents ───────────────────────────────────────────────────
 st.markdown("---")
-st.subheader("Compare Two Document Versions")
+st.subheader("Uporedi dva dokumenta i verzije")
 
 docs = db.fetchall(
     "SELECT id, title, version, created_at FROM documents "
@@ -71,16 +73,16 @@ docs = db.fetchall(
     (org_id,),
 )
 if len(docs) < 2:
-    st.info("Upload at least two documents to compare.")
+    st.info("Uploadujte najmanje dva dokumenta za upoređivanje.")
 else:
     doc_labels = {f"{d['title']} v{d['version']} (id={d['id']})": d["id"] for d in docs}
     col1, col2 = st.columns(2)
-    old_label = col1.selectbox("Old version", list(doc_labels.keys()), key="old_doc")
-    new_label = col2.selectbox("New version", list(doc_labels.keys()), key="new_doc")
+    old_label = col1.selectbox("Prethodna verzija", list(doc_labels.keys()), key="old_doc")
+    new_label = col2.selectbox("Nova verzija", list(doc_labels.keys()), key="new_doc")
     old_id = doc_labels[old_label]
     new_id = doc_labels[new_label]
 
-    if st.button("Compare", type="primary"):
+    if st.button("Uporedi", type="primary"):
         def get_text(doc_id):
             pages = db.fetchall(
                 "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
@@ -91,14 +93,14 @@ else:
         old_text = get_text(old_id)
         new_text = get_text(new_id)
         if not old_text or not new_text:
-            st.error("One or both documents have no extracted text.")
+            st.error("Jedan ili oba dokumenta nemaju izdvojeni tekst.")
         else:
             result = cd.compare(old_text, new_text)
-            st.metric("Change percentage", f"{result['change_percentage']}%")
+            st.metric("Procenat promena", f"{result['change_percentage']}%")
             c1, c2, c3 = st.columns(3)
-            c1.metric("Added lines", result["added_lines"])
-            c2.metric("Removed lines", result["removed_lines"])
-            c3.metric("Impact level", result["impact_level"].upper())
+            c1.metric("Dodate linije", result["added_lines"])
+            c2.metric("Uklonjene linije", result["removed_lines"])
+            c3.metric("Nivo uticaja", result["impact_level"].upper())
             with st.expander("Diff snippet"):
                 st.code(result["diff_snippet"], language="diff")
 

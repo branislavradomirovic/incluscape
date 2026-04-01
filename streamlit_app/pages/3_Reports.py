@@ -4,6 +4,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 import pandas as pd
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from geospatial.geocoder import Geocoder
@@ -13,14 +14,15 @@ from template_matching.template_manager import TemplateManager
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="Reports — SIPMT", page_icon="📊", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Izveštaji — SIPMT", page_icon="📊", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("📊 Report Generator")
+    st.title("📊 Generator Izveštaja")
 with col2:
-    render_help_button("📊 Reports")
+    render_help_button("📊 Izveštaji")
 
 db = DatabaseManager()
 db.initialize()
@@ -106,11 +108,11 @@ def _ensure_document_locations_ready(document_id: int) -> dict:
 # ── Select template ─────────────────────────────────────────────────────────
 templates = tm.list_templates(org_id)
 if not templates:
-    st.warning("No templates found. Go to **Templates** to create one first.")
+    st.warning("Nije pronađen nijedan šablon. Idite na **Šabloni** da kreirate prvi.")
     st.stop()
 
 template_options = {t["name"]: t["id"] for t in templates}
-selected_tmpl_name = st.selectbox("Select report template", list(template_options.keys()))
+selected_tmpl_name = st.selectbox("Izaberite šablon izveštaja", list(template_options.keys()))
 template_id = template_options[selected_tmpl_name]
 
 # ── Select source documents ─────────────────────────────────────────────────
@@ -120,17 +122,17 @@ docs = db.fetchall(
     (org_id,),
 )
 if not docs:
-    st.warning("No processed documents available. Upload documents first.")
+    st.warning("Nema obrađenih dokumenata. Prvo učitajte dokumente.")
     st.stop()
 
 doc_options = {f"{d['title']} ({d['document_type']})": d["id"] for d in docs}
-selected_doc_names = st.multiselect("Select source documents", list(doc_options.keys()))
+selected_doc_names = st.multiselect("Izaberite izvore dokumenata", list(doc_options.keys()))
 selected_doc_ids = [doc_options[n] for n in selected_doc_names]
 
-report_name = st.text_input("Report name", value=f"Report — {selected_tmpl_name}")
+report_name = st.text_input("Naziv izveštaja", value=f"Izveštaj — {selected_tmpl_name}")
 
-if st.button("🚀 Generate Report", type="primary") and selected_doc_ids:
-    with st.spinner("Extracting data and filling template…"):
+if st.button("🚀 Generiši izveštaj", type="primary") and selected_doc_ids:
+    with st.spinner("Ekstrakcija podataka i popunjavanje šablona…"):
         # Gather full text from selected documents
         texts = []
         for doc_id in selected_doc_ids:
@@ -163,7 +165,7 @@ if st.button("🚀 Generate Report", type="primary") and selected_doc_ids:
                     "confidence": filled[fk]["confidence"],
                 })
 
-    st.success(f"✅ Report '{report_name}' generated (id={report_id})")
+    st.success(f"✅ Izveštaj '{report_name}' generisan (id={report_id})")
 
     # Display result
     st.markdown("---")
@@ -192,10 +194,10 @@ reports = db.fetchall(
 if reports:
     st.dataframe(pd.DataFrame(reports), use_container_width=True, hide_index=True)
 else:
-    st.info("No reports generated yet.")
+    st.info("Nema generisanih izveštaja.")
 
 st.markdown("---")
-st.subheader("Executive Summary — Documents")
+st.subheader("Izvršni sažetak — Dokumenti")
 
 summary_rows = db.fetchall(
     """
@@ -242,7 +244,7 @@ if summary_rows:
             )
 
         selected_doc_id = st.selectbox(
-            "Select document from Executive Summary for interactive map",
+            "Izaberite dokument iz izvršnog sažetka za interaktivnu mapu",
             option_ids,
             format_func=_format_doc_option,
             key="reports_geo_selected_doc_id",
@@ -250,13 +252,13 @@ if summary_rows:
 
         prep_col, refresh_col = st.columns([4, 1])
         with refresh_col:
-            refresh_geo = st.button("Refresh geo", key="reports_geo_refresh", use_container_width=True)
+            refresh_geo = st.button("Osveži geo podatke", key="reports_geo_refresh", use_container_width=True)
 
         last_prepared_doc = st.session_state.get("reports_geo_last_prepared_doc")
         should_prepare = bool(refresh_geo) or (last_prepared_doc != selected_doc_id)
 
         if should_prepare:
-            with st.spinner("Preparing geospatial data for selected document..."):
+            with st.spinner("Priprema geospacijalnih podataka za izabrani dokument..."):
                 prep = _ensure_document_locations_ready(selected_doc_id)
             st.session_state["reports_geo_last_prepared_doc"] = selected_doc_id
             st.session_state["reports_geo_last_prep"] = prep
@@ -270,8 +272,8 @@ if summary_rows:
 
         with prep_col:
             st.caption(
-                f"Geocoding attempts: {prep.get('attempted', 0)} (newly geocoded: {prep.get('new_geocoded', 0)}). "
-                f"Total locations: {prep.get('total_locations', 0)} | geocoded: {prep.get('total_geocoded', 0)}"
+                f"Pokušaji geokodiranja: {prep.get('attempted', 0)} (novi geokodirani: {prep.get('new_geocoded', 0)}). "
+                f"Ukupno lokacija: {prep.get('total_locations', 0)} | geokodirano: {prep.get('total_geocoded', 0)}"
             )
 
         doc_locations = db.fetchall(
@@ -304,15 +306,15 @@ if summary_rows:
                 st.warning("`streamlit-folium` not installed. Run `pip install streamlit-folium`.")
         else:
             if not Config.ENABLE_GEOCODING:
-                st.info("Selected document has extracted locations, but geocoding is disabled (`ENABLE_GEOCODING=False`).")
+                st.info("Izabrani dokument ima izdvojene lokacije, ali geokodiranje je onemogućeno (`ENABLE_GEOCODING=False`).")
             else:
                 st.info(
-                    "Selected document has extracted locations but still no geocoded coordinates. "
-                    "Some place names may not resolve in free geocoding providers."
+                    "Izabrani dokument ima izdvojene lokacije, ali još uvek nema geokodiranih koordinata. "
+                    "Neki nazivi mesta možda neće biti rešeni u besplatnim geokodirnim provajderima."
                 )
     else:
-        st.info("No documents with extracted location mentions yet.")
+        st.info("Još nema dokumenata sa izdvojenim lokacijama.")
 else:
-    st.info("No active documents available for executive summary.")
+    st.info("Nema aktivnih dokumenata za izvršni sažetak.")
 
 render_page_disclaimer()

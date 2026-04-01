@@ -1,4 +1,8 @@
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
+
+
+enable_serbian_locale(st)
 
 
 def render_help_button(page_name: str) -> None:
@@ -38,7 +42,7 @@ def render_help_button(page_name: str) -> None:
     with btn_col:
         st.page_link(
             "pages/7_Help.py",
-            label="Help",
+            label="Pomoć",
             icon="❓",
-            help=f"Open full documentation for {page_name}",
+            help=f"Otvori kompletnu dokumentaciju za stranicu {page_name}",
         )

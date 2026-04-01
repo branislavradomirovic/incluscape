@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from streamlit_app.i18n import enable_serbian_locale
 from config import Config
 from database.db_manager import DatabaseManager
 from document_processing.processors.hrba_matcher import HRBAMatcher as SpaCyHRBAMatcher
@@ -11,19 +12,20 @@ from template_matching.hrba_matcher import HRBAMatcherLLM
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 from streamlit_app.components.help_button import render_help_button
 
-st.set_page_config(page_title="HRBA — SIPMT", page_icon="⚖️", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="HRBA uparivanje — SIPMT", page_icon="⚖️", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("⚖️ HRBA — AAAQ Matcher")
+    st.title("⚖️ HRBA — AAAQ alat za uparivanje dokumenata")
 with col2:
     render_help_button("⚖️ HRBA")
 
 st.markdown(
     """
-    Use the HRBA matcher to scan text for AAAQ indicators (Availability, Accessibility,
-    Acceptability, Quality). Select documents from the database for batch analysis or paste text below.
+    Koristite HRBA uparivač za analizu teksta kroz AAAQ indikatore (Availability, Accessibility,
+    Acceptability, Quality). Izaberite dokumente iz baze za grupnu analizu.
     """
 )
 
@@ -191,13 +193,13 @@ def build_hrba_executive_summary(parsed, seg_meta=None):
     represented = [key.capitalize() for key, count in top_category_counts.items() if count > 0]
 
     lines = [
-        f"Overall AAAQ signal: **{lead_category.capitalize()}** leads with average score **{lead_score:.0%}**.",
-        f"Coverage snapshot: **{completed_segments}/{total_segments}** segments completed, **{len(scored_items)}** structured Ollama outputs, average top-signal confidence **{avg_confidence:.0%}**.",
+        f"Ukupan AAAQ signal: **{lead_category.capitalize()}** vodi sa prosečnim rezultatom **{lead_score:.0%}**.",
+        f"Pregled pokrivenosti: **{completed_segments}/{total_segments}** segmenata završeno, **{len(scored_items)}** strukturiranih Ollama izlaza, prosečna pouzdanost glavnog signala **{avg_confidence:.0%}**.",
     ]
     if represented:
-        lines.append("Detected categories across the document: " + ", ".join(represented) + ".")
+        lines.append("Otkrivene kategorije u dokumentu: " + ", ".join(represented) + ".")
     if justification_count:
-        lines.append(f"Generated justifications for **{justification_count}** segment(s), providing an explainable trace for the strongest detected signals.")
+        lines.append(f"Generisane opravdane za **{justification_count}** segment(a), pružajući objašnjiv trag za najjače otkrivene signale.")
     return "\n\n".join(lines)
 
 
@@ -291,9 +293,9 @@ def render_hrba_shap_heatmap(shap_proxy, chart_key):
             hovertemplate="%{x}<br>Contribution=%{z:.2f}<extra></extra>",
         )
     )
-    figure.update_layout(height=260, margin=dict(l=10, r=10, t=35, b=10), title="SHAP-style contribution proxy")
+    figure.update_layout(height=260, margin=dict(l=10, r=10, t=35, b=10), title="SHAP prikaz proxy doprinosa AAAQ signala")
     st.plotly_chart(figure, use_container_width=True, key=chart_key)
-    st.caption("Positive values reinforce the document's AAAQ signal. This is a transparent proxy derived from structured scores, completion, and justification coverage.")
+    st.caption("Pozitivne vrednosti pojačavaju AAAQ signal dokumenta. Ovo je transparentan proxy izveden iz strukturiranih rezultata, završetka i pokrivenosti opravdanja.")
 
 
 def render_hrba_ollama_summary(doc_id, parsed, seg_meta, key_prefix):
@@ -306,7 +308,7 @@ def render_hrba_ollama_summary(doc_id, parsed, seg_meta, key_prefix):
     avg_scores = xai_metrics.get("avg_scores") or {}
     top_counts = xai_metrics.get("top_category_counts") or {}
 
-    st.markdown("**Ollama Executive Summary**")
+    st.markdown("**Ollama izvršni sažetak**")
     if executive_summary:
         st.info(executive_summary)
 
@@ -385,7 +387,7 @@ def render_live_process_chart(seg_meta, radar_container, rate_container, timelin
         rate_figure.update_layout(height=220, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
         rate_container.plotly_chart(rate_figure, use_container_width=True)
     else:
-        rate_container.info("Chunk-rate chart will appear after Ollama starts streaming tokens for the active segment.")
+        rate_container.info("Chunk-rate grafikon će se pojaviti nakon što Ollama počne da strimuje tokene za aktivni segment.")
 
     now = time.time()
     timeline_rows = []
@@ -444,7 +446,7 @@ def plot_seg_meta_timeline(seg_meta, container, focus_idx=None):
                 "status": m.get("status") or "pending",
             })
         if not rows:
-            container.info("Timeline will appear here as segments complete.")
+            container.info("Timeline će se pojaviti ovde kako se segmenti budu završavali.")
             return
         tdf = pd.DataFrame(rows)
         fig = px.timeline(tdf, x_start="start", x_end="end", y="Segment", color="status")
@@ -459,7 +461,7 @@ def plot_seg_meta_timeline(seg_meta, container, focus_idx=None):
         container.plotly_chart(fig, use_container_width=True)
     except Exception:
         try:
-            container.info("Unable to render timeline.")
+            container.info("Nije moguće prikazati timeline.")
         except Exception:
             pass
 
@@ -538,8 +540,8 @@ def run_llm_summary_with_progress(doc_id, texts):
         status = st.empty()
         preview_block = st.container(border=True)
         with preview_block:
-            st.markdown("**Live generation monitor**")
-            st.caption("Structured live diagnostics for Ollama streaming: progress, confidence evolution, throughput, and active-segment state.")
+            st.markdown("**Uživo dijagnostika monitor**")
+            st.caption("Strukturirani live dijagnostika za Ollama streaming: napredak, evolucija poverenja, protok i stanje aktivnog segmenta.")
             preview_kpis = st.empty()
             preview_left, preview_right = st.columns([1, 1])
             preview_table = preview_left.empty()
@@ -647,9 +649,9 @@ def run_llm_summary_with_progress(doc_id, texts):
         source_excerpt = clean_preview_text(texts[active_idx], 300)
         justification = clean_preview_text(meta.get("justification"), 280)
         draft_message = justification or (
-            "Generating structured AAAQ scores and justification. Raw token output is hidden; final structured results will appear below."
+            "Generisanje strukturiranih AAAQ ocena i opravdanja. Sirovi izlaz tokena je sakriven; konačni strukturirani rezultati će se pojaviti ispod."
             if meta.get("status") == "generating"
-            else "Awaiting model output for this segment."
+            else "Čeka se izlaz modela za ovaj segment."
         )
         category = meta.get("category") or "pending"
         confidence = meta.get("confidence")
@@ -750,20 +752,20 @@ docs = db.fetchall(
     (org_id,),
 )
 doc_options = [f"{d['id']}: {d['title']}" for d in docs]
-selected = st.multiselect("Select documents to analyze", options=doc_options, default=[])
+selected = st.multiselect("Izaberite dokumente za analizu", options=doc_options, default=[])
 
 col1, col2 = st.columns(2)
 analyze_selected_clicked = False
 analyze_all_clicked = False
 with col1:
-    analyze_selected_clicked = st.button("Analyze selected")
+    analyze_selected_clicked = st.button("Analiziraj izabrane")
     if analyze_selected_clicked and not selected:
-        st.warning("Select one or more documents to analyze.")
+        st.warning("Izaberite jedan ili više dokumenata za analizu.")
 
 with col2:
-    analyze_all_clicked = st.button("Analyze all documents")
+    analyze_all_clicked = st.button("Analiziraj sve dokumente")
     if analyze_all_clicked and not docs:
-        st.info("No documents available for this organisation.")
+        st.info("Nema dokumenata dostupnih za ovu organizaciju.")
 
 live_monitor_area = st.container()
 
@@ -781,7 +783,7 @@ if analyze_selected_clicked and selected:
                         final = ret["final"]
                         for a in final:
                             if isinstance(a, dict) and a.get("elapsed_seconds") and a["elapsed_seconds"] > 300:
-                                st.warning("LLM generation exceeded 300s for one or more segments — results may be partial.")
+                                st.warning("LLM generisanje je premašilo 300s za jedan ili više segmenata — rezultati mogu biti delimični.")
                         analysis = ret
                     else:
                         analysis = ret
@@ -794,7 +796,7 @@ if analyze_selected_clicked and selected:
         results[doc_id] = analysis
 
     st.session_state['hrba_last_results'] = results
-    st.success("Analysis complete — results available below.")
+    st.success("Analiza je završena — rezultati su dostupni ispod.")
 
 if analyze_all_clicked and docs:
     aggregate = {}
@@ -814,7 +816,7 @@ if analyze_all_clicked and docs:
                         analysis.extend([{"category": i["category"], "score": i["score"], "text": i["text"]} for i in insights])
                     aggregate[doc_id] = {"final": analysis, "seg_meta": build_static_seg_meta(texts)}
 
-    st.write("Batch analysis complete")
+    st.write("Grupna analiza je završena")
     for doc_id, analysis in aggregate.items():
         st.markdown(f"**Document {doc_id}**")
         parsed = analysis
@@ -843,7 +845,7 @@ if analyze_all_clicked and docs:
 if st.session_state.get('hrba_last_results'):
     results = st.session_state.get('hrba_last_results')
     st.markdown("---")
-    st.header("Analysis Results")
+    st.header("Rezultati analize")
     for doc_id, analysis in results.items():
         st.subheader(f"Document {doc_id} — {len(analysis['final']) if isinstance(analysis, dict) and 'final' in analysis else (len(analysis) if isinstance(analysis, (list, dict)) else 0)} matches")
         parsed = analysis
@@ -873,12 +875,12 @@ if st.session_state.get('hrba_last_results'):
 
 # Option to save results to DB
 st.markdown("---")
-if st.button("Save last analysis to DB"):
+if st.button("Sačuvaj poslednju analizu u bazu"):
     try:
         # Attempt to find last results in page state by checking `results` or `aggregate` variables
         to_save = locals().get("results") or locals().get("aggregate")
         if not to_save:
-            st.warning("No analysis results found to save. Run an analysis first.")
+            st.warning("Nema rezultata analize za čuvanje. Najpre pokrenite analizu.")
         else:
             saved_count = 0
             for doc_id, analysis in to_save.items():
@@ -890,9 +892,9 @@ if st.button("Save last analysis to DB"):
                 }
                 db.insert("semantic_analyses", payload)
                 saved_count += 1
-            st.success(f"Saved HRBA analyses for {saved_count} documents into semantic_analyses table.")
+            st.success(f"Sačuvane su HRBA analize za {saved_count} dokumenata u tabelu semantic_analyses.")
     except Exception as e:
-        st.error(f"Saving to DB failed: {e}")
+        st.error(f"Čuvanje u bazu nije uspelo: {e}")
 
 st.markdown("---")
 st.caption(f"spaCy model: {Config.SPACY_MODEL} — Ollama base: {Config.OLLAMA_BASE_URL}")

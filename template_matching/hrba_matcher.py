@@ -155,6 +155,7 @@ for Availability, Accessibility, Acceptability, and Quality (AAAQ).
 Return ONLY a JSON object with numeric scores between 0.0 and 1.0 for keys:
   availability, accessibility, acceptability, quality
 Also include a 'justification' key with 1-2 sentence explanation for the highest score.
+Write the 'justification' value in Serbian (Latin script).
 
 Text: """ + text_segment + """\n
 Provide the JSON object and nothing else.

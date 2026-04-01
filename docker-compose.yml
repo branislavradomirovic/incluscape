@@ -1,46 +1,84 @@
-version: "3.9"
-
 services:
   sipmt:
-    build: .
+    build:
+      context: .
     container_name: sipmt-app
+    depends_on:
+      ollama:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${SIPMT_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-replace-with-a-strong-password}@postgres:5432/${POSTGRES_DB:-sipmt}?sslmode=disable}
+      DATABASE_PATH: /app/data/sipmt.db
+      SQLITE_MIRROR_PATH: /app/data/sipmt.db
+      UPLOAD_FOLDER: /app/uploads
+      EXPORT_FOLDER: /app/exports
+      TEMP_FOLDER: /app/temp
+      LOG_FILE: /app/logs/sipmt.log
+      FORCE_POSTGRES: "True"
+      FORCE_SQLITE: "False"
+      ENABLE_SQLITE_MIRROR_SYNC: "False"
+      STORE_FILES_IN_DB: ${STORE_FILES_IN_DB:-false}
+      ENABLE_SEMANTIC_ANALYSIS: "True"
+      ENABLE_GEOCODING: "True"
+      SEMANTIC_LLM_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b-instruct}
+      OLLAMA_TIMEOUT_SEC: ${OLLAMA_TIMEOUT_SEC:-600}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-60m}
+      OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-4096}
+      OLLAMA_NUM_GPU: ${OLLAMA_NUM_GPU:--1}
+      OLLAMA_NUM_BATCH: ${OLLAMA_NUM_BATCH:-512}
     ports:
       - "8501:8501"
-    env_file:
-          container_name: sipmt-app
-    environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Natalija2006@postgres:5432/incluscape}
-      DATABASE_PATH: ${DATABASE_PATH:-/app/data/sipmt.db}
-      STORE_FILES_IN_DB: ${STORE_FILES_IN_DB:-false}
     volumes:
-            DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:Natalija2006@postgres:5432/incluscape}
-            DATABASE_PATH: ${DATABASE_PATH:-/app/data/sipmt.db}
+      - sipmt_uploads:/app/uploads
+      - sipmt_exports:/app/exports
       - sipmt_logs:/app/logs
-            - sipmt_uploads:/app/uploads
-            - sipmt_exports:/app/exports
-            - sipmt_logs:/app/logs
-            - sipmt_temp:/app/temp
-            - sipmt_data:/app/data
+      - sipmt_temp:/app/temp
+      - sipmt_data:/app/data
+    restart: unless-stopped
+
+  ollama:
+    build:
+      context: ./docker/ollama
+      args:
+        OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:14b-instruct}
+    container_name: sipmt-ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
     container_name: sipmt-postgres
     environment:
-      POSTGRES_DB: sipmt
-          container_name: sipmt-postgres
-      POSTGRES_PASSWORD: Natalija2006
-            POSTGRES_DB: sipmt
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: Natalija2006
+      POSTGRES_DB: ${POSTGRES_DB:-sipmt}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-replace-with-a-strong-password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sipmt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
       - sipmt_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
-            - sipmt_pgdata:/var/lib/postgresql/data
+volumes:
   sipmt_uploads:
   sipmt_exports:
-        sipmt_uploads:
-        sipmt_exports:
-        sipmt_logs:
-        sipmt_temp:
-        sipmt_data:
-        sipmt_pgdata:
+  sipmt_logs:
+  sipmt_temp:
+  sipmt_data:
+  sipmt_pgdata:

@@ -14,6 +14,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
+from streamlit_app.i18n import enable_serbian_locale
 
 from config import Config
 from database.db_manager import DatabaseManager
@@ -24,14 +25,15 @@ from streamlit_app.components.help_button import render_help_button
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 
-st.set_page_config(page_title="Compliance - SIPMT", page_icon="🔎", layout="wide")
+enable_serbian_locale(st)
+st.set_page_config(page_title="Usklađenost podataka - SIPMT", page_icon="🔎", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("🔎 Semantic Compliance Analysis")
+    st.title("🔎 Semantička analiza usklađenosti SIPMT")
 with col2:
-    render_help_button("🔎 Compliance")
+    render_help_button("🔎 Usklađenost")
 
 
 db = DatabaseManager()
@@ -40,15 +42,15 @@ org_id = st.session_state.get("org_id", db.get_or_create_organisation("Default O
 provider = Config.SEMANTIC_LLM_PROVIDER.lower()
 
 if not Config.ENABLE_SEMANTIC_ANALYSIS:
-    st.info("Semantic analysis is disabled. Set ENABLE_SEMANTIC_ANALYSIS=true in Streamlit Cloud Secrets (or .env locally).")
+    st.info("Semantička analiza je onemogućena. Postavite ENABLE_SEMANTIC_ANALYSIS=true u Streamlit Cloud Secrets (ili .env lokalno).")
     st.stop()
 
 if provider not in {"gemini", "ollama"}:
-    st.error("Unsupported semantic provider. Set SEMANTIC_LLM_PROVIDER=gemini or ollama.")
+    st.error("Nepodržani semantički provajder. Postavite SEMANTIC_LLM_PROVIDER=gemini ili ollama.")
     st.stop()
 
 if provider == "gemini" and not Config.GEMINI_API_KEY:
-    st.warning("Gemini API key not configured. Set GEMINI_API_KEY in .env.")
+    st.warning("Gemini API ključ nije konfigurisan. Postavite GEMINI_API_KEY u .env.")
     st.stop()
 
 
@@ -197,19 +199,19 @@ def _build_executive_summary(result: dict, elapsed: float) -> str:
         rating = "Low alignment"
 
     lines = [
-        f"Overall assessment: **{rating}** with compliance score **{score:.0%}** (analysis time {elapsed:.2f}s).",
-        f"Coverage snapshot: **{present} present**, **{missing} missing**, **{partial} partial** elements.",
+        f"Ukupna procena: **{rating}** sa skorom usklađenosti **{score:.0%}** (vreme analize {elapsed:.2f}s).",
+        f"Pregled pokrivenosti: **{present} prisutnih**, **{missing} nedostajućih**, **{partial} delimičnih** elemenata.",
     ]
     top_strengths = (result.get("strengths") or result.get("present_elements") or [])[:3]
     top_gaps = (result.get("gaps") or result.get("missing_elements") or [])[:3]
     if top_strengths:
-        lines.append("Top strengths: " + "; ".join(top_strengths))
+        lines.append("Najveće snage: " + "; ".join(top_strengths))
     if top_gaps:
-        lines.append("Top gaps: " + "; ".join(top_gaps))
+        lines.append("Najveće praznine: " + "; ".join(top_gaps))
     if top_recs:
-        lines.append("Priority actions: " + "; ".join(top_recs[:3]))
+        lines.append("Prioritetne akcije: " + "; ".join(top_recs[:3]))
     else:
-        lines.append("Priority actions: Continue monitoring and maintain current controls.")
+        lines.append("Prioritetne akcije: Nastavite sa praćenjem i održavajte trenutne kontrole.")
     return "\n\n".join(lines)
 
 
@@ -223,29 +225,29 @@ def _compute_shap_proxy(result: dict, xai_metrics: Optional[dict] = None) -> dic
 
     total = max(present + strengths + missing + partial + gaps + recs, 1)
     proxy = {
-        "Present elements": min(1.0, present / total * 2.2),
-        "Strengths": min(1.0, strengths / total * 2.2),
-        "Missing elements": -min(1.0, missing / total * 2.2),
-        "Partial elements": -min(1.0, partial / total * 1.8),
-        "Gaps": -min(1.0, gaps / total * 2.2),
-        "Recommendation pressure": -min(1.0, recs / total * 1.6),
+        "Prisustvo elemenata": min(1.0, present / total * 2.2),
+        "Snage": min(1.0, strengths / total * 2.2),
+        "Nedostajući elementi": -min(1.0, missing / total * 2.2),
+        "Delimični elementi": -min(1.0, partial / total * 1.8),
+        "Praznine": -min(1.0, gaps / total * 2.2),
+        "Pritisak preporuka": -min(1.0, recs / total * 1.6),
     }
 
     if xai_metrics:
-        proxy["Keyword coverage"] = float(xai_metrics.get("keyword_coverage", 0.0)) * 0.9
-        proxy["Requirement coverage"] = float(xai_metrics.get("requirements_coverage", 0.0)) * 1.0
-        proxy["Section coverage"] = float(xai_metrics.get("sections_coverage", 0.0)) * 0.8
+        proxy["Pokriće ključnih reči"] = float(xai_metrics.get("keyword_coverage", 0.0)) * 0.9
+        proxy["Pokriće zahteva"] = float(xai_metrics.get("requirements_coverage", 0.0)) * 1.0
+        proxy["Pokriće sekcija"] = float(xai_metrics.get("sections_coverage", 0.0)) * 0.8
 
     return {k: max(-1.0, min(1.0, float(v))) for k, v in proxy.items()}
 
 
 def _render_shap_heatmap(
     shap_proxy: dict,
-    chart_title: str = "SHAP-style heatmap (feature contribution proxy)",
+    chart_title: str = "SHAP-stil heat mapa (proxy doprinosa karakteristikama)",
     chart_key: Optional[str] = None,
 ) -> None:
     if not shap_proxy:
-        st.info("No SHAP proxy data available.")
+        st.info("Nema dostupnih SHAP proxy podataka.")
         return
 
     labels = list(shap_proxy.keys())
@@ -272,7 +274,7 @@ def _render_shap_heatmap(
     )
     fig.update_layout(title=chart_title, height=260, margin=dict(l=10, r=10, t=40, b=10))
     st.plotly_chart(fig, use_container_width=True, key=chart_key or "compliance-shap-heatmap")
-    st.caption("Positive values support compliance score; negative values reduce it. This is a transparent SHAP-style proxy, not model-internal SHAP.")
+    st.caption("Pozitivne vrednosti podržavaju ocenu usklađenosti; negativne vrednosti je smanjuju. Ovo je transparentan SHAP-stil proxy, a ne interno SHAP modela.")
 
 
 def _to_pdf_safe(text: str) -> str:
@@ -281,16 +283,16 @@ def _to_pdf_safe(text: str) -> str:
 
 def _suggest_url_fix(http_status: Optional[int], detail: str) -> str:
     if http_status == 404:
-        return "Source moved/removed. Update source_url to current official page."
+        return "Izvor je premešten/uklonjen. Ažurirajte source_url na trenutnu zvaničnu stranicu."
     if http_status == 403:
-        return "Access blocked. Use a public permalink/PDF URL or adjust source endpoint."
+        return "Pristup blokiran. Koristite javni permalink/PDF URL ili prilagodite izvorni endpoint."
     if http_status in (429, 500, 502, 503, 504):
-        return "Temporary server/rate issue. Retry later and keep current template active."
+        return "Privremeni problem sa serverom/stopom. Pokušajte kasnije i zadržite trenutni šablon aktivnim."
     if "No source_url configured" in detail:
-        return "Set source_url for this template before refresh."
+        return "Postavite source_url za ovaj šablon pre osvežavanja."
     if detail.startswith("Network error"):
-        return "Check internet/proxy/DNS connectivity from runtime environment."
-    return "No action needed."
+        return "Proverite internet/proksi/DNS konektivnost iz runtime okruženja."
+    return "Nema potrebne akcije."
 
 
 def _probe_source_url_health(template: dict, timeout_sec: int = 20) -> dict:
@@ -315,7 +317,7 @@ def _probe_source_url_health(template: dict, timeout_sec: int = 20) -> dict:
     }
 
     if not source_url:
-        row["Detail"] = "No source_url configured"
+        row["Detail"] = "Nema postavljenog source_url"
         row["Suggested fix"] = _suggest_url_fix(None, row["Detail"])
         return row
 
@@ -658,7 +660,7 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
                 key=f"{chart_key_prefix}-evolution-{chart_render_serial}",
             )
     elif chart_refresh_due:
-        slots["evolution_chart"].info("Confidence and score evolution will appear once streamed values are available.")
+        slots["evolution_chart"].info("Evolucija poverenja i rezultata će se pojaviti kada budu dostupne strimovane vrednosti.")
 
     if chunk_history:
         rate_df = pd.DataFrame(chunk_history)
@@ -678,8 +680,8 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
                 key=f"{chart_key_prefix}-rate-{chart_render_serial}",
             )
     elif chart_refresh_due:
-        slots["rate_chart"].info("Chunk-rate chart will appear after Ollama starts streaming output.")
-    slots["rate_caption"].caption(f"Current active rate: {active_rate:.1f} chars/s")
+        slots["rate_chart"].info("Grafikon brzine obrade chunk-ova će se pojaviti nakon što Ollama počne sa strimovanjem izlaza.")
+    slots["rate_caption"].caption(f"Trenutna aktivna brzina: {active_rate:.1f} znakova/s")
 
     if timeline_rows:
         timeline_df = pd.DataFrame(timeline_rows)
@@ -701,9 +703,9 @@ def _render_compliance_live_monitor(slots, state: dict) -> None:
                 key=f"{chart_key_prefix}-timeline-{chart_render_serial}",
             )
     elif chart_refresh_due:
-        slots["timeline_chart"].info("Timeline will appear once the Compliance run begins.")
+        slots["timeline_chart"].info("Timeline će se pojaviti kada analiza usklađenosti počne.")
 
-    detail_lines = [state.get("latest_message") or "Waiting for Compliance analysis to begin."]
+    detail_lines = [state.get("latest_message") or "Čekanje da analiza usklađenosti počne."]
     if state.get("detected_body") or state.get("detected_category"):
         detail_lines.append(
             f"Detected type: {(state.get('detected_body') or 'Unknown')} / {(state.get('detected_category') or 'Unknown')}"
@@ -908,7 +910,7 @@ def _render_ollama_tuning_diagnostics(health: dict) -> None:
             {"Metric": "Last run document", "Value": str(last_job.get("selected_label") or "-")},
         ]
         st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
-        st.caption("Use this box to compare settings vs latency while tuning Apple M1 performance.")
+        st.caption("Koristi ovaj okvir za upoređivanje postavki i latencije prilikom podešavanja performansi Apple M1.")
 
 
 
@@ -921,7 +923,7 @@ if "compliance_last_run_flash" not in st.session_state:
 if "compliance_run_state" not in st.session_state:
     st.session_state["compliance_run_state"] = {
         "state": "idle",
-        "message": "Ready to run compliance analysis.",
+        "message": "Spreman za pokretanje analize usklađenosti.",
         "updated_at": None,
     }
 if "compliance_live_monitor_state" not in st.session_state:
@@ -951,24 +953,24 @@ with health_btn_col:
 health = st.session_state["llm_health"]
 with health_col:
     if health.get("ok") is None:
-        st.info(f"{health.get('provider', provider).upper()} not probed yet — click **Refresh health** to check availability.")
+        st.info(f"{health.get('provider', provider).upper()} nije još testiran — kliknite **Osveži zdravlje** da proverite dostupnost.")
     elif health["ok"]:
-        st.success(f"{health['provider'].upper()} ready (model `{health['model']}`, probe {health['latency']:.2f}s).")
+        st.success(f"{health['provider'].upper()} spreman (model `{health['model']}`, probe {health['latency']:.2f}s).")
     else:
-        st.warning(f"{health['provider'].upper()} unavailable. Reason: {health['error'][:180]}")
+        st.warning(f"{health['provider'].upper()} nedostupan. Razlog: {health['error'][:180]}")
 
 if provider == "ollama":
     _render_ollama_tuning_diagnostics(health)
 
 st.markdown("---")
 _render_accent_section_heading(
-    "1 · Analysis Setup",
-    "Choose the document scope and reference strategy before starting the analysis.",
+    "1 · Priprema za analizu usklađenosti",
+    "Odaberite opseg dokumenata i strategiju referenci pre nego što započnete analizu.",
 )
 
 docs = _cached_get_documents(org_id)
 if not docs:
-    st.info("No processed documents found. Upload documents first.")
+    st.info("Nema obrađenih dokumenata. Prvo otpremite dokumente.")
     st.stop()
 
 category_order = {name: idx for idx, name in enumerate(Config.DOCUMENT_CATEGORIES)}
@@ -976,11 +978,11 @@ available_categories = sorted({d["document_type"] for d in docs}, key=lambda c: 
 
 setup_a, setup_b, setup_c = st.columns([2, 3, 3])
 with setup_a:
-    selected_category = st.selectbox("Document Category", available_categories, key="compliance_selected_category", on_change=_on_category_change)
+    selected_category = st.selectbox("Kategorija dokumenta", available_categories, key="compliance_selected_category", on_change=_on_category_change)
 
 filtered_docs = [d for d in docs if d.get("document_type") == selected_category]
 if not filtered_docs:
-    st.warning(f"No documents found for category '{selected_category}'.")
+    st.warning(f"Nema dokumenata za kategoriju '{selected_category}'.")
     st.stop()
 
 doc_options = {f"{d['title']} (ID {d['id']})": d["id"] for d in filtered_docs}
@@ -989,7 +991,7 @@ if st.session_state.get("compliance_selected_document") not in doc_labels:
     st.session_state["compliance_selected_document"] = doc_labels[0]
 
 with setup_b:
-    selected_label = st.selectbox("Document", doc_labels, key="compliance_selected_document")
+    selected_label = st.selectbox("Dokument", doc_labels, key="compliance_selected_document")
     document_id = doc_options[selected_label]
 
 all_templates = _cached_get_all_templates()
@@ -997,12 +999,12 @@ tmpl_options = {f"🤖 Auto-detect ({provider.upper()})": None}
 tmpl_options.update({f"{t['body']} — {t['name']}": t for t in all_templates})
 
 with setup_c:
-    selected_tmpl_label = st.selectbox("Reference template", list(tmpl_options.keys()))
+    selected_tmpl_label = st.selectbox("Referentni šablon", list(tmpl_options.keys()))
     chosen_template = tmpl_options[selected_tmpl_label]
     if chosen_template and chosen_template.get("source_url"):
-        st.caption(f"Reference source: {chosen_template.get('source_url')}")
+        st.caption(f"Izvor reference: {chosen_template.get('source_url')}")
 
-run_btn = st.button("🚀 Run Compliance Analysis", type="primary", use_container_width=True)
+run_btn = st.button("🚀 Pokreni analizu usklađenosti", type="primary", use_container_width=True)
 
 run_state = st.session_state.get("compliance_run_state") or {}
 run_state_status = str(run_state.get("state") or "idle")
@@ -1046,7 +1048,7 @@ if run_btn:
     }
     st.session_state["compliance_run_state"] = {
         "state": "running",
-        "message": f"Analysis in progress for {selected_label} using {provider.upper()} / {health.get('model', 'unknown')}...",
+        "message": f"Analiza u toku za {selected_label} koristeći {provider.upper()} / {health.get('model', 'unknown')}...",
         "updated_at": time.time(),
     }
     compliance_monitor_state = _create_compliance_monitor_state(selected_label)
@@ -1061,7 +1063,7 @@ if run_btn:
 
     compliance_progress("classify", "pending", {"message": "Queued for Compliance analysis."})
     with st.spinner(
-        f"Running compliance analysis with {provider.upper()} / {health.get('model', 'unknown')} — this may take 1–3 minutes..."
+        f"Radimo analizu usklađenosti sa {provider.upper()} / {health.get('model', 'unknown')} — ovo može potrajati 1–3 minuta..."
     ):
         try:
             pages_for_run = db.fetchall(
@@ -1070,10 +1072,10 @@ if run_btn:
             )
             doc_text_for_run = "\n".join(p["content"] for p in pages_for_run if p.get("content"))
             if not doc_text_for_run.strip():
-                st.error("No extracted text found for this document. Re-process it first.")
+                st.error("Nije pronađen tekst za ovaj dokument. Ponovo ga obradite prvo.")
                 st.session_state["compliance_run_state"] = {
                     "state": "failed",
-                    "message": "No extracted text found for this document. Re-process it first.",
+                    "message": "Nije pronađen tekst za ovaj dokument. Ponovo ga obradite prvo.",
                     "updated_at": time.time(),
                 }
             else:
@@ -1126,18 +1128,18 @@ if run_btn:
                 }
                 if _has_structured_output and not _error_text:
                     _status_state = "completed"
-                    _status_msg = f"Compliance analysis completed in {_elapsed:.2f}s with structured LLM output."
+                    _status_msg = f"Analiza usklađenosti završena za {_elapsed:.2f}s sa strukturiranim LLM izlazom."
                 elif _has_structured_output and _error_text:
                     _status_state = "completed_with_warnings"
                     _status_msg = (
-                        f"Compliance analysis completed in {_elapsed:.2f}s with partial output. "
-                        f"Model warning: {_error_text[:140]}"
+                        f"Analiza usklađenosti završena za {_elapsed:.2f}s sa delimičnim izlazom. "
+                        f"Upozorenje modela: {_error_text[:140]}"
                     )
                 else:
                     _status_state = "completed_with_warnings"
                     _status_msg = (
-                        f"Compliance analysis finished in {_elapsed:.2f}s but structured LLM output is empty. "
-                        "Review model warnings and raw payload below."
+                        f"Analiza usklađenosti završena za {_elapsed:.2f}s, ali strukturirani LLM izlaz je prazan. "
+                        "Pregledajte upozorenja modela i sirovi rezultat ispod."
                     )
 
                 st.session_state["compliance_run_state"] = {
@@ -1166,8 +1168,8 @@ latest_result = latest_payload.get("result") if isinstance(latest_payload, dict)
 
 if isinstance(latest_result, dict):
     _render_accent_section_heading(
-        "Latest LLM Output Snapshot",
-        "Immediate visibility of key outputs before reference/admin sections.",
+        "Poslednji LLM Output Snapshot",
+        "Odmah vidite ključne izlaze pre referentnih/admin sekcija.",
     )
     snapshot_score = latest_result.get("compliance_score") or 0.0
     try:
@@ -1239,13 +1241,13 @@ if isinstance(latest_result, dict):
     if snapshot_summary:
         st.info(snapshot_summary)
     elif latest_result.get("error"):
-        st.warning(f"Model warning: {latest_result.get('error')}")
+        st.warning(f"Upozorenje modela: {latest_result.get('error')}")
     else:
-        st.warning("LLM output is available but summary text is empty; see detailed tabs below.")
+        st.warning("LLM izlaz je dostupan, ali tekst sažetka je prazan; pogledajte detaljne kartice ispod.")
 
     if snapshot_xai_metrics or snapshot_shap_proxy:
         with st.container(border=True):
-            st.markdown("**XAI and SHAP snapshot**")
+            st.markdown("**XAI i SHAP snimak**")
             xai_col, shap_col = st.columns([1, 1])
             with xai_col:
                 xai_rows = [
@@ -1268,48 +1270,48 @@ if isinstance(latest_result, dict):
     with st.expander("LLM Output - Detailed Compliance Sections", expanded=True):
         col_a, col_b = st.columns(2)
         with col_a:
-            st.markdown("**GAP section**")
+            st.markdown("**GAP sekcija**")
             if snapshot_gaps:
                 for item in snapshot_gaps:
                     st.markdown(f"- {item}")
             else:
-                st.info("No explicit gap entries returned.")
+                st.info("Nema eksplicitnih unosa za praznine.")
 
-            st.markdown("**Missing elements**")
+            st.markdown("**Nedostajući elementi**")
             if snapshot_missing:
                 for item in snapshot_missing:
                     st.markdown(f"- ❌ {item}")
             else:
-                st.info("No missing elements returned.")
+                st.info("Nema nedostajućih elemenata.")
 
-            st.markdown("**Partial elements**")
+            st.markdown("**Delimični elementi**")
             if snapshot_partial:
                 for item in snapshot_partial:
                     st.markdown(f"- 🔶 {item}")
             else:
-                st.info("No partial elements returned.")
+                st.info("Nema delimičnih elemenata.")
 
         with col_b:
-            st.markdown("**Present elements**")
+            st.markdown("**Prisustvujući elementi**")
             if snapshot_present:
                 for item in snapshot_present:
                     st.markdown(f"- ✅ {item}")
             else:
-                st.info("No present elements returned.")
+                st.info("Nema prisustvujućih elemenata.")
 
-            st.markdown("**Strengths**")
+            st.markdown("**Snage**")
             if snapshot_strengths:
                 for item in snapshot_strengths:
                     st.markdown(f"- 💪 {item}")
             else:
-                st.info("No strengths returned.")
+                st.info("Nema snaga.")
 
-            st.markdown("**Recommendations**")
+            st.markdown("**Preporuke**")
             if snapshot_recs:
                 for idx, item in enumerate(snapshot_recs, 1):
                     st.markdown(f"{idx}. {item}")
             else:
-                st.info("No recommendations returned.")
+                st.info("Nema preporuka.")
 
         raw_payload = latest_result.get("full_response_json")
         parsed_payload = None
@@ -1326,12 +1328,12 @@ if isinstance(latest_result, dict):
             st.json(parsed_payload, expanded=False)
 
 _render_accent_section_heading(
-    "2 · Reference & Admin Tools",
-    "Refresh framework sources and review prior analyses for the selected document.",
+    "2 · Reference & Admin Alati",
+    "Osveže framework izvore i pregledajte prethodne analize za odabrani dokument.",
 )
 
-with st.expander("Show Tools", expanded=False):
-    if st.button(f"Refresh UN/OECD/EU/UNESCO references ({provider.capitalize()} enrichment)", use_container_width=True):
+with st.expander("Prikaži Alate", expanded=False):
+    if st.button(f"Osveži UN/OECD/EU/UNESCO reference ({provider.capitalize()} obogaćivanje)", use_container_width=True):
         checker.matcher.seed_database()
         updater = ReferenceTemplateUpdater(db)
         target_bodies = ["UN", "OECD", "EU", "UNESCO"]
@@ -1351,8 +1353,8 @@ with st.expander("Show Tools", expanded=False):
                 st.markdown(f"- [{row.get('body', 'Unknown')}] {row.get('name', '')}: {row.get('llm_error')}")
 
     st.markdown("---")
-    st.markdown("**Source URL health checker (pre-refresh diagnostics)**")
-    if st.button("Run source URL health checker", use_container_width=True):
+    st.markdown("**Provera ispravnosti URL izvora (pre-osvežavanja)**")
+    if st.button("Pokreni proveru URL izvora i njihovu ispravnost", use_container_width=True):
         target_bodies = {"UN", "OECD", "EU", "UNESCO"}
         templates_for_check = [
             t for t in (all_templates or [])
@@ -1386,14 +1388,14 @@ with st.expander("Show Tools", expanded=False):
                 use_container_width=True,
             )
         else:
-            st.success("All checked source URLs are currently healthy.")
+            st.success("Svi provereni URL izvori su trenutno ispravni.")
 
         updated_at = url_health.get("updated_at")
         if isinstance(updated_at, (int, float)):
-            st.caption(f"Last URL health check: {datetime.fromtimestamp(updated_at).strftime('%Y-%m-%d %H:%M:%S')}")
+            st.caption(f"Poslednja provera ispravnosti URL izvora: {datetime.fromtimestamp(updated_at).strftime('%Y-%m-%d %H:%M:%S')}")
 
     st.markdown("---")
-    st.markdown("**External reference documents for selected category**")
+    st.markdown("**Eksterne reference dokumenata za odabranu kategoriju**")
     external_refs = [
         t for t in (all_templates or [])
         if (t.get("category") or "").strip().lower() == (selected_category or "").strip().lower()
@@ -1413,10 +1415,10 @@ with st.expander("Show Tools", expanded=False):
         refs_df = refs_df.sort_values(by=["Body", "Name"], kind="stable")
         st.dataframe(refs_df, use_container_width=True, hide_index=True)
     else:
-        st.info(f"No external reference templates are attached to '{selected_category}' yet.")
+        st.info(f"Nema eksternih referentnih šablona pridruženih '{selected_category}' još.")
 
     st.markdown("---")
-    st.markdown("**Past analyses for selected document**")
+    st.markdown("**Prethodne analize za odabrani dokument**")
     past = _cached_get_analyses(document_id)
     if past:
         df = pd.DataFrame([
@@ -1432,7 +1434,7 @@ with st.expander("Show Tools", expanded=False):
         ])
         st.dataframe(df, use_container_width=True, hide_index=True)
     else:
-        st.info("No analyses run yet for this document.")
+        st.info("Još nisu izvršene analize za ovaj dokument.")
 
 latest_saved_analysis = past[0] if past else None
 
@@ -1470,7 +1472,7 @@ if _render_last_run:
             st.session_state["compliance_last_run"] = None
             st.session_state["compliance_run_state"] = {
                 "state": "idle",
-                "message": "Ready to run compliance analysis.",
+                "message": "Spreman za pokretanje analize usklađenosti.",
                 "updated_at": time.time(),
             }
             st.rerun()
@@ -1479,7 +1481,7 @@ if _render_last_run:
     job = last_run.get("job") or {}
 
     if not payload.get("ok"):
-        st.warning(f"Analysis returned warnings: {payload.get('error', 'Unknown worker status')}")
+        st.warning(f"Analize je vratila upozorenja: {payload.get('error', 'Nepoznat status sistema')}")
 
     try:
             result = payload.get("result") or {}
@@ -1517,11 +1519,11 @@ if _render_last_run:
 
             if not has_structured_output:
                 st.error(
-                    "LLM analysis returned an empty structured payload. "
-                    "The run completed, but no usable compliance fields were produced."
+                    "LLM analiza je vratila prazan strukturirani rezultat. "
+                    "Izvršavanje je završeno, ali nisu proizvedena upotrebljiva polja usklađenosti."
                 )
                 if result.get("error"):
-                    st.caption(f"Model error detail: {result.get('error')}")
+                    st.caption(f"Detalj greške modela: {result.get('error')}")
 
             try:
                 worker_elapsed = float(payload.get("elapsed_sec") or 0.0)
@@ -1532,8 +1534,8 @@ if _render_last_run:
             document_text = "\n".join(p["content"] for p in pages if p.get("content"))
 
             ref = result.get("reference_template") or {}
-            detected_body = result.get("body_detected") or "Unknown body"
-            detected_category = result.get("category_detected") or "Unknown category"
+            detected_body = result.get("body_detected") or "Nepoznata tela"
+            detected_category = result.get("category_detected") or "Nepoznata kategorija"
 
             # ── Cache heavy per-run artifacts so they are not recomputed on every
             # Streamlit rerender (tokenisation + scoring loop + PDF build are the
@@ -1617,14 +1619,14 @@ if _render_last_run:
             st.info(executive_summary)
             st.caption(f"Background worker time: {worker_elapsed:.2f}s")
 
-            with st.expander("Executive Summary - Full Detail", expanded=True):
-                st.markdown("**Top strengths**")
+            with st.expander("Konačan Izveštaj Sumarno - Puni Detalji", expanded=True):
+                st.markdown("**Top snage**")
                 for item in (result.get("strengths") or result.get("present_elements") or [])[:8]:
                     st.markdown(f"- {item}")
-                st.markdown("**Top gaps / risks**")
+                st.markdown("**Top nedostaci / rizici**")
                 for item in ((result.get("gaps") or []) + (result.get("missing_elements") or []))[:8]:
                     st.markdown(f"- {item}")
-                st.markdown("**Priority recommendations**")
+                st.markdown("**Prioritetne preporuke**")
                 for idx, item in enumerate((result.get("recommendations") or [])[:8], 1):
                     st.markdown(f"{idx}. {item}")
 
@@ -1632,9 +1634,9 @@ if _render_last_run:
                 st.warning(pdf_error)
             elif pdf_bytes:
                 filename = f"executive_compliance_brief_{job.get('document_id', document_id)}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
-                st.download_button("📄 Download Executive PDF", data=pdf_bytes, file_name=filename, mime="application/pdf", use_container_width=True)
+                st.download_button("📄 Preuzmi Konačni PDF", data=pdf_bytes, file_name=filename, mime="application/pdf", use_container_width=True)
 
-            st.markdown("**Detailed breakdown**")
+            st.markdown("**Detaljna analiza**")
             score = float(result.get("compliance_score") or 0.0)
             colour = "green" if score >= 0.7 else "orange" if score >= 0.4 else "red"
             st.markdown(
@@ -1650,11 +1652,11 @@ if _render_last_run:
                 st.markdown(f"Source reference: [Open official framework]({ref.get('source_url')})")
 
             st.markdown(f"**Model summary:** {result.get('summary', '')}")
-            st.caption("Tabs below provide the full executive detail pack for stakeholder review.")
+            st.caption("Dole prikazani tabovi pružaju puni izvršni detaljni paket za pregled zainteresovanih strana.")
             st.markdown("---")
 
             tab_gaps, tab_present, tab_rec, tab_xai, tab_ref = st.tabs(
-                ["⚠️ Gaps & Missing", "✅ Present Elements", "💡 Recommendations", "🧠 XAI", "📚 Reference"]
+                ["⚠️ Nedostaci & Nedostajući", "✅ Prisustvujući elementi", "💡 Preporuke", "🧠 XAI", "📚 Referenca"]
             )
 
             with tab_gaps:
@@ -1689,18 +1691,18 @@ if _render_last_run:
 
             with tab_xai:
                 metrics_df = pd.DataFrame([
-                    {"Metric": "LLM Provider", "Value": provider.upper()},
+                    {"Metric": "LLM Provajder", "Value": provider.upper()},
                     {"Metric": "LLM Model", "Value": health.get("model", "unknown")},
-                    {"Metric": "Detected Body", "Value": detected_body},
-                    {"Metric": "Detected Category", "Value": detected_category},
-                    {"Metric": "Compliance Score", "Value": f"{score:.0%}"},
-                    {"Metric": "Keyword coverage", "Value": f"{xai_metrics['keyword_coverage']:.0%}"},
-                    {"Metric": "Requirement coverage", "Value": f"{xai_metrics['requirements_coverage']:.0%}"},
-                    {"Metric": "Section coverage", "Value": f"{xai_metrics['sections_coverage']:.0%}"},
-                    {"Metric": "Worker elapsed", "Value": f"{worker_elapsed:.2f}s"},
+                    {"Metric": "Detektovano telo", "Value": detected_body},
+                    {"Metric": "Detektovana kategorija", "Value": detected_category},
+                    {"Metric": "Skor usklađenosti", "Value": f"{score:.0%}"},
+                    {"Metric": "Pokriće ključnih reči", "Value": f"{xai_metrics['keyword_coverage']:.0%}"},
+                    {"Metric": "Pokriće zahteva", "Value": f"{xai_metrics['requirements_coverage']:.0%}"},
+                    {"Metric": "Pokriće sekcija", "Value": f"{xai_metrics['sections_coverage']:.0%}"},
+                    {"Metric": "Proteklo vreme sistema", "Value": f"{worker_elapsed:.2f}s"},
                 ])
                 st.dataframe(metrics_df, use_container_width=True, hide_index=True)
-                st.caption("XAI breakdown: coverage scores show how many reference template keywords/requirements/sections appear in the document.")
+                st.caption("XAI prikaz: pokriće referenci pokazuje koliko ključnih reči/zahteva/sekcija iz referentnog šablona se pojavljuje u dokumentu.")
                 _render_shap_heatmap(
                     shap_proxy,
                     chart_key=f"compliance-shap-latest-{job.get('document_id', document_id)}-{int(last_run.get('finished_at', 0) or 0)}",
@@ -1712,37 +1714,37 @@ if _render_last_run:
                 else:
                     st.info("No reference templates scored.")
 
-            with st.expander("Show LLM reasoning trace", expanded=True):
-                st.caption("Step-by-step execution trace with evidence used to derive compliance output.")
+            with st.expander("Prikaži LLM razmišljanje", expanded=True):
+                st.caption("Korak-po-korak izvršni trag sa dokazima korišćenim za izvođenje rezultata usklađenosti.")
                 trace_rows = [
                     {
-                        "Step": "1. Input assembly",
-                        "Evidence": f"Document pages loaded: {len(pages)} | Token sample size: {len(doc_tokens)}"
+                        "Step": "1. Sastavljanje ulaza",
+                        "Evidence": f"Učitane stranice dokumenta: {len(pages)} | Veličina uzorka tokena: {len(doc_tokens)}"
                     },
                     {
-                        "Step": "2. Template routing",
-                        "Evidence": f"Detected body/category: {detected_body} / {detected_category} | Candidate templates: {len(candidate_templates)}"
+                        "Step": "2. Raspodela šablona",
+                        "Evidence": f"Detektovano telo/kategorija: {detected_body} / {detected_category} | Kandidatski šabloni: {len(candidate_templates)}"
                     },
                     {
-                        "Step": "3. LLM comparison",
-                        "Evidence": f"Provider/model: {provider.upper()} / {health.get('model', 'unknown')} | Worker time: {worker_elapsed:.2f}s"
+                        "Step": "3. Poređenje LLM-a",
+                        "Evidence": f"Pružalac/model: {provider.upper()} / {health.get('model', 'unknown')} | Vreme rada sistema: {worker_elapsed:.2f}s"
                     },
                     {
-                        "Step": "4. Element extraction",
-                        "Evidence": f"Present: {len(result.get('present_elements') or [])}, Missing: {len(result.get('missing_elements') or [])}, Partial: {len(result.get('partial_elements') or [])}"
+                        "Step": "4. Ekstrakcija elemenata",
+                        "Evidence": f"Prisutni: {len(result.get('present_elements') or [])}, Nedostajući: {len(result.get('missing_elements') or [])}, Delimični: {len(result.get('partial_elements') or [])}"
                     },
                     {
-                        "Step": "5. Final scoring",
-                        "Evidence": f"Compliance score: {score:.0%} | Gaps: {len(result.get('gaps') or [])} | Recommendations: {len(result.get('recommendations') or [])}"
+                        "Step": "5. Konačno ocenjivanje",
+                        "Evidence": f"Skor usklađenosti: {score:.0%} | Praznine: {len(result.get('gaps') or [])} | Preporuke: {len(result.get('recommendations') or [])}"
                     },
                 ]
                 st.dataframe(pd.DataFrame(trace_rows), use_container_width=True, hide_index=True)
 
-                st.markdown("**Top reference evidence used by scorer**")
+                st.markdown("**Top reference e korišćene od strane LLM skora**")
                 if reference_rows:
                     st.dataframe(pd.DataFrame(reference_rows[:5]), use_container_width=True, hide_index=True)
                 else:
-                    st.info("No reference evidence rows available.")
+                    st.info("Nema dostupnih redova referentnih dokaza.")
 
                 raw_payload = result.get("full_response_json")
                 parsed_payload = None
@@ -1755,10 +1757,10 @@ if _render_last_run:
                     parsed_payload = raw_payload
 
                 if parsed_payload:
-                    st.markdown("**Raw model payload (classification + comparison)**")
+                    st.markdown("**Sirovi model payload (classification + comparison)**")
                     st.json(parsed_payload, expanded=True)
                 else:
-                    st.info("Raw model payload is not available for this run.")
+                    st.info("Sirovi model payload nije dostupan za ovu analizu.")
 
     except Exception as _render_exc:
         import traceback as _tb
@@ -1767,10 +1769,10 @@ if _render_last_run:
             st.code(_tb.format_exc())
 elif latest_saved_analysis:
     # Fallback: always show the newest persisted analysis from DB after refreshes.
-    st.subheader("3 · Analysis Results")
+    st.subheader("3 · Rezultati analize")
     st.info(
-        f"Loaded latest saved analysis from history ({latest_saved_analysis.get('created_at', '-')}). "
-        "Run a new analysis to refresh these details."
+        f"Učitana najnovija sačuvana analiza iz istorije ({latest_saved_analysis.get('created_at', '-')}). "
+        "Pokrenite novu analizu da osvežite ove detalje."
     )
     try:
         saved_score = float(latest_saved_analysis.get("compliance_score") or 0.0)
@@ -1778,7 +1780,7 @@ elif latest_saved_analysis:
         saved_score = 0.0
     saved_colour = "green" if saved_score >= 0.7 else "orange" if saved_score >= 0.4 else "red"
     st.markdown(
-        f"### Compliance Score: <span style='color:{saved_colour};font-size:2rem;font-weight:bold'>{saved_score:.0%}</span>",
+        f"### Skor usklađenosti: <span style='color:{saved_colour};font-size:2rem;font-weight:bold'>{saved_score:.0%}</span>",
         unsafe_allow_html=True,
     )
 
@@ -1858,10 +1860,10 @@ elif latest_saved_analysis:
     if _saved_arts is None and not saved_details_loaded:
         load_col, _ = st.columns([3, 9])
         with load_col:
-            if st.button("Load detailed saved analysis", use_container_width=True):
+            if st.button("Učitaj detaljnu sačuvanu analizu", use_container_width=True):
                 st.session_state[_saved_details_loaded_key] = True
                 st.rerun()
-        st.caption("Detailed evidence (token diagnostics, ranked references, and PDF prep) loads on demand for faster page opening. XAI + SHAP are shown immediately using lightweight metrics.")
+        st.caption("Detaljni dokazi (dijagnostika tokena, rangirani reference i priprema PDF-a) se učitavaju na zahtev za brže otvaranje stranice. XAI + SHAP se prikazuju odmah koristeći lagane metrike.")
     elif _saved_arts is None:
         saved_pages = db.fetchall(
             "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
@@ -1950,58 +1952,58 @@ elif latest_saved_analysis:
         )
 
     st.caption(
-        f"Tokenization: {saved_token_debug['Token sample size']} tokens from {saved_token_debug['Document pages loaded']} pages | "
-        f"Candidates scored: {saved_token_debug['Reference candidates']}"
+        f"Tokenizacija: {saved_token_debug['Token sample size']} tokena iz {saved_token_debug['Document pages loaded']} stranica | "
+        f"Kandidati ocenjeni: {saved_token_debug['Reference candidates']}"
     )
 
     if saved_summary:
-        st.markdown(f"**Model summary:** {saved_summary}")
+        st.markdown(f"**Sažetak modela:** {saved_summary}")
 
-    with st.expander("LLM Output - Detailed Compliance Sections", expanded=True):
+    with st.expander("LLM Izlaz - Detaljne sekcije usklađenosti", expanded=True):
         col_a, col_b = st.columns(2)
         with col_a:
-            st.markdown("**GAP section**")
+            st.markdown("**GAP sekcija**")
             if saved_gaps:
                 for item in saved_gaps:
                     st.markdown(f"- {item}")
             else:
-                st.info("No explicit gap entries returned.")
+                st.info("Nema eksplicitnih unosa za GAP.")
 
-            st.markdown("**Missing elements**")
+            st.markdown("**Nedostajući elementi**")
             if saved_missing:
                 for item in saved_missing:
                     st.markdown(f"- ❌ {item}")
             else:
-                st.info("No missing elements returned.")
+                st.info("Nema nedostajućih elemenata.")
 
-            st.markdown("**Partial elements**")
+            st.markdown("**Delimični elementi**")
             if saved_partial:
                 for item in saved_partial:
                     st.markdown(f"- 🔶 {item}")
             else:
-                st.info("No partial elements returned.")
+                st.info("Nema delimičnih elemenata.")
 
         with col_b:
-            st.markdown("**Present elements**")
+            st.markdown("**Prisustvujući elementi**")
             if saved_present:
                 for item in saved_present:
                     st.markdown(f"- ✅ {item}")
             else:
-                st.info("No present elements returned.")
+                st.info("Nema prisustvujućih elemenata.")
 
-            st.markdown("**Strengths**")
+            st.markdown("**Snage**")
             if saved_strengths:
                 for item in saved_strengths:
                     st.markdown(f"- 💪 {item}")
             else:
-                st.info("No strengths returned.")
+                st.info("Nema snaga.")
 
-            st.markdown("**Recommendations**")
+            st.markdown("**Preporuke**")
             if saved_recs:
                 for idx, item in enumerate(saved_recs, 1):
                     st.markdown(f"{idx}. {item}")
             else:
-                st.info("No recommendations returned.")
+                st.info("Nema preporuka.")
 
         saved_raw_payload = latest_saved_analysis.get("full_response_json")
         saved_parsed_payload = None
@@ -2017,19 +2019,19 @@ elif latest_saved_analysis:
             st.markdown("**Raw model payload**")
             st.json(saved_parsed_payload, expanded=False)
 
-    with st.expander("Executive Summary - Full Detail", expanded=True):
-        st.markdown("**Top strengths**")
+    with st.expander("SUmarni prikaz analize - Kompletni detalji", expanded=True):
+        st.markdown("**Top snage**")
         for item in (saved_strengths or saved_present)[:8]:
             st.markdown(f"- {item}")
-        st.markdown("**Top gaps / risks**")
+        st.markdown("**Top nedostaci / rizici**")
         for item in (saved_gaps + saved_missing)[:8]:
             st.markdown(f"- {item}")
-        st.markdown("**Priority recommendations**")
+        st.markdown("**Prioritetne preporuke**")
         for idx, item in enumerate(saved_recs[:8], 1):
             st.markdown(f"{idx}. {item}")
 
     tab_gaps, tab_present, tab_rec, tab_xai, tab_ref = st.tabs(
-        ["⚠️ Gaps & Missing", "✅ Present Elements", "💡 Recommendations", "🧠 XAI", "📚 Reference"]
+        ["⚠️ Nedostaci & Nedostajući", "✅ Prisustvujući elementi", "💡 Preporuke", "🧠 XAI", "📚 Referenca"]
     )
 
     with tab_gaps:
@@ -2041,7 +2043,7 @@ elif latest_saved_analysis:
             for p_el in saved_partial:
                 st.markdown(f"- 🔶 {p_el}")
         else:
-            st.info("No gaps or missing elements detected.")
+            st.info("Nema nedostajućih ili delimičnih elemenata.")
 
     with tab_present:
         if saved_present or saved_strengths:
@@ -2050,36 +2052,36 @@ elif latest_saved_analysis:
             for s in saved_strengths:
                 st.markdown(f"- 💪 {s}")
         else:
-            st.info("No present elements recorded.")
+            st.info("Nema prisustvujućih elemenata.")
 
     with tab_rec:
         if saved_recs:
             for i, rec in enumerate(saved_recs, 1):
                 st.markdown(f"**{i}.** {rec}")
         else:
-            st.info("No specific recommendations.")
+            st.info("Nema specifičnih preporuka.")
 
     with tab_xai:
         xai_df = pd.DataFrame([
-            {"Metric": "LLM Provider", "Value": provider.upper()},
+            {"Metric": "LLM Provajder", "Value": provider.upper()},
             {"Metric": "Model", "Value": latest_saved_analysis.get("model_used", "unknown")},
-            {"Metric": "Detected Body", "Value": detected_body_saved},
-            {"Metric": "Detected Category", "Value": detected_category_saved},
-            {"Metric": "Compliance Score", "Value": f"{saved_score:.0%}"},
-            {"Metric": "Present elements", "Value": str(len(saved_present))},
-            {"Metric": "Missing elements", "Value": str(len(saved_missing))},
-            {"Metric": "Partial elements", "Value": str(len(saved_partial))},
-            {"Metric": "Token sample size", "Value": str(saved_token_debug["Token sample size"])},
-            {"Metric": "Reference candidates", "Value": str(saved_token_debug["Reference candidates"])},
-            {"Metric": "Keyword coverage", "Value": f"{saved_xai_metrics['keyword_coverage']:.0%}"},
-            {"Metric": "Requirement coverage", "Value": f"{saved_xai_metrics['requirements_coverage']:.0%}"},
-            {"Metric": "Section coverage", "Value": f"{saved_xai_metrics['sections_coverage']:.0%}"},
+            {"Metric": "Detektovano telo", "Value": detected_body_saved},
+            {"Metric": "Detektovana kategorija", "Value": detected_category_saved},
+            {"Metric": "Skor usklađenosti", "Value": f"{saved_score:.0%}"},
+            {"Metric": "Prisustvujući elementi", "Value": str(len(saved_present))},
+            {"Metric": "Nedostajući elementi", "Value": str(len(saved_missing))},
+            {"Metric": "Delimični elementi", "Value": str(len(saved_partial))},
+            {"Metric": "Veličina uzorka tokena", "Value": str(saved_token_debug["Token sample size"])},
+            {"Metric": "Kandidati za referencu", "Value": str(saved_token_debug["Reference candidates"])},
+            {"Metric": "Pokriće ključnih reči", "Value": f"{saved_xai_metrics['keyword_coverage']:.0%}"},
+            {"Metric": "Pokriće zahteva", "Value": f"{saved_xai_metrics['requirements_coverage']:.0%}"},
+            {"Metric": "Pokriće sekcija", "Value": f"{saved_xai_metrics['sections_coverage']:.0%}"},
         ])
         st.dataframe(xai_df, use_container_width=True, hide_index=True)
         if _saved_arts is None and not saved_details_loaded:
-            st.caption("Quick XAI mode: SHAP proxy is computed from saved compliance outputs. Click 'Load detailed saved analysis' for token/reference coverage diagnostics.")
+            st.caption("Brzi XAI mode: SHAP proxy je izrađen iz sačuvanih izlaza usklađenosti. Kliknite 'Load detailed saved analysis' za dijagnostiku pokrića tokena/referenci.")
         else:
-            st.caption("This XAI view includes tokenization diagnostics and scoring coverage used for SHAP-style attribution.")
+            st.caption("Ovaj XAI prikaz uključuje dijagnostiku tokenizacije i pokriće ocenjivanja korišćeno za SHAP-stil atribucije.")
         _render_shap_heatmap(
             saved_shap_proxy,
             chart_key=f"compliance-shap-saved-{document_id}-{saved_analysis_id}",
@@ -2088,10 +2090,10 @@ elif latest_saved_analysis:
         with st.expander("Tokenization diagnostics", expanded=False):
             st.dataframe(
                 pd.DataFrame([
-                    {"Metric": "Document pages loaded", "Value": saved_token_debug["Document pages loaded"]},
-                    {"Metric": "Token sample size", "Value": saved_token_debug["Token sample size"]},
-                    {"Metric": "Tokenization char limit", "Value": saved_token_debug["Tokenization char limit"]},
-                    {"Metric": "Reference candidates", "Value": saved_token_debug["Reference candidates"]},
+                    {"Metric": "Učitane stranice dokumenata", "Value": saved_token_debug["Document pages loaded"]},
+                    {"Metric": "Veličina uzorka tokena", "Value": saved_token_debug["Token sample size"]},
+                    {"Metric": "Ograničenje karaktera za tokenizaciju", "Value": saved_token_debug["Tokenization char limit"]},
+                    {"Metric": "Kandidati za referencu", "Value": saved_token_debug["Reference candidates"]},
                 ]),
                 use_container_width=True,
                 hide_index=True,
