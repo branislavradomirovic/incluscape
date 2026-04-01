@@ -338,25 +338,93 @@ Before pushing to `main`, confirm all items below:
 
 ## Container Deployment
 
-### Docker (single container)
+### Docker (single container, SQLite-backed)
 
 ```bash
 docker build -t sipmt:latest .
 docker run --rm -p 8501:8501 \
   --env-file .env \
-    -e DATABASE_URL="postgresql://postgres:replace-with-password@127.0.0.1:5432/incluscape?sslmode=disable" \
+    -v sipmt-data:/app/data \
+    -v sipmt-uploads:/app/uploads \
+    -v sipmt-exports:/app/exports \
+    -v sipmt-logs:/app/logs \
+    -v sipmt-temp:/app/temp \
     sipmt:latest
 ```
 
-### Docker Compose (app + bundled PostgreSQL)
+This mode is appropriate for demos and lightweight single-user installs. It persists local application data in Docker volumes, but SQLite is still not the preferred option for multi-user deployments.
+
+If the single container must connect to a PostgreSQL server running on the Docker host, use `host.docker.internal` on Docker Desktop instead of `127.0.0.1`:
 
 ```bash
-docker compose up --build
+docker run --rm -p 8501:8501 \
+    --env-file .env \
+    -e DATABASE_URL="postgresql://postgres:replace-with-password@host.docker.internal:5432/sipmt?sslmode=disable" \
+    -e FORCE_POSTGRES=True \
+    sipmt:latest
+```
+
+### Docker Compose (production bundle: app + PostgreSQL + Ollama)
+
+```bash
+cp .env.example .env
+bash scripts/release_bundle.sh
 ```
 
 Then open: `http://localhost:8501`
 
+The Compose stack provides:
+- The Streamlit application on port `8501`
+- A bundled PostgreSQL 16 instance for persistent application data
+- A bundled `ollama/ollama:latest` service with the selected model baked into the image
+- Persistent Docker volumes for uploads, exports, logs, temp files, SQLite fallback data, and PostgreSQL storage
+- Internet-enabled runtime features such as geocoding and external reference refresh, assuming the customer network permits outbound access
+
+If `DATABASE_URL` is left empty in `.env`, Compose injects an internal default that points the app at the bundled `postgres` service.
+
+If `OLLAMA_MODEL` is left unchanged, the offline bundle preloads `qwen2.5:14b-instruct`, which matches the current machine defaults in this repository.
+
+Important packaging behavior:
+- The first `docker compose build` is heavy because the Ollama image bakes the selected model into the image layer.
+- After that build completes, the stack can run semantic analysis without downloading the Ollama model at startup.
+- This bundle is offline for Ollama inference after build, while internet-capable app features still work during customer use: geocoding, external source refresh, and Gemini if enabled.
+
+The most useful override variables are:
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `OLLAMA_MODEL`
+- `SIPMT_DATABASE_URL` if you explicitly want the app to use an external PostgreSQL server instead of the bundled one
+
+To stop the stack:
+
+```bash
+docker compose down
+```
+
+To stop it and remove all persisted volumes too:
+
+```bash
+docker compose down -v
+```
+
 For shipping to customers, replace the containerized Postgres service with the packaged Windows service you include in the installer while keeping the Streamlit container/image unchanged.
+
+If you want a new offline bundle with a different Ollama model, rebuild after changing `OLLAMA_MODEL` in `.env`:
+
+```bash
+docker compose build --no-cache ollama sipmt
+docker compose up -d
+```
+
+For customer-side installs with internet access, the recommended flow is:
+
+```bash
+cp .env.example .env
+bash scripts/release_bundle.sh
+```
+
+That command builds the app image, builds the Ollama image with the selected model baked in, starts PostgreSQL, and brings the full SIPMT stack online.
 
 ## Project Structure
 
