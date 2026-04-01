@@ -39,3 +39,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Local Docker Desktop development override
+docker-compose.override.yml
