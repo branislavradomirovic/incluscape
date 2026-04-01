@@ -7,7 +7,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 import streamlit as st
 from streamlit_app.i18n import enable_serbian_locale
 from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
-from streamlit_app.components.sidebar import render_page_disclaimer, render_sidebar
 
 
 enable_serbian_locale(st)
@@ -20,100 +19,100 @@ HELP_IMAGE_ROOTS = [
 ]
 
 VISUAL_CALLOUTS = {
-   "Home": {
-      "focus": "Dashboard overview",
+   "Početna": {
+      "focus": "Prikaz glavnog ekrana sa KPI karticama i mapom obuhvata.",
       "highlights": [
-         "The KPI cards at the top summarize the current workspace state: documents, templates, reports, and detected changes.",
-         "The geo-scope panel underneath shows where extracted locations are concentrated and whether the dashboard is using policy-only or fallback geocoded data.",
-         "This screen is the fastest place to confirm that ingestion, reporting, and geospatial extraction are all populated.",
+         "KPI kartice na vrhu sumiraju trenutno stanje radnog prostora: dokumente, šablone, izveštaje i otkrivene promene.",
+         "Panel geografske pokrivenosti ispod pokazuje gde su koncentrisane izvučene lokacije i da li kontrolna tabla koristi samo podatke iz politika ili rezervne geokodirane podatke.",
+         "Ovaj ekran je najbrže mesto za potvrdu da su unos, izveštavanje i geografska ekstrakcija svi popunjeni.",
       ],
    },
-   "Documents": {
-      "focus": "Upload and library workflow",
+   "Dokumenti": {
+      "focus": "Tok rada za učitavanje i biblioteku dokumenata",
       "highlights": [
-         "The upload controls are the entry point for new PDFs, Word files, and spreadsheets.",
-         "The document library beneath the uploader is the operational list where users review titles, document type, processing state, and available actions.",
-         "This screenshot is intended to show both ingestion and post-processing management in one frame.",
+         "Kontrole za učitavanje su ulazna tačka za nove PDF, Word fajlove i tabele.",
+         "Biblioteka dokumenata ispod učitavača je operativna lista gde korisnici pregledaju naslove, tip dokumenta, stanje obrade i dostupne akcije.",
+         "Ova snimka ekrana je namenjena da pokaže i unos i upravljanje nakon obrade u jednom okviru.",
       ],
    },
-   "Templates": {
-      "focus": "Template builder",
+   "Šabloni": {
+      "focus": "Izrada šablona",
       "highlights": [
-         "The main form defines the template name and the extraction schema that downstream reports rely on.",
-         "Field rows represent the exact structure SIPMT will try to populate from uploaded documents.",
-         "This screen is the reference view for how a reporting schema is authored before extraction begins.",
+         "Glavni obrazac definiše naziv šablona i šemu ekstrakcije na koju se oslanjaju izveštaji.",
+         "Redovi polja predstavljaju tačnu strukturu koju SIPMT pokušava da popuni iz učitanih dokumenata.",
+         "Ovaj ekran je referentni prikaz kako se kreira šema izveštaja pre nego što ekstrakcija počne.",
       ],
    },
-   "Reports": {
-      "focus": "Report generation flow",
+   "Izveštaji": {
+      "focus": "Tok generisanja izveštaja",
       "highlights": [
-         "The top selectors determine which template and which documents are used for the extraction run.",
-         "The results region shows extracted values, confidence signals, and generated report outputs once processing completes.",
-         "This image should help users connect report setup with the saved/generated outputs that appear lower on the page.",
+         "Gornji selektori određuju koji šablon i koji dokumenti se koriste za pokretanje ekstrakcije.",
+         "Region rezultata prikazuje izvučene vrednosti, signale poverenja i generisane izlaze izveštaja nakon završetka obrade.",
+         "Ova slika treba da pomogne korisnicima da povežu postavke izveštaja sa sačuvanim/generisanim izlazima koji se pojavljuju niže na stranici.",
       ],
    },
-   "Changes": {
-      "focus": "Version comparison view",
+   "Promene": {
+      "focus": "Pregled upoređivanja verzija",
       "highlights": [
-         "Recent change entries summarize which document revisions were detected and when they were stored.",
-         "The comparison widget is where two versions are placed side-by-side to inspect additions, deletions, and modifications.",
-         "This screenshot emphasizes the audit trail and the detailed diff workflow together.",
+         "Unosi nedavnih promena sumiraju koje revizije dokumenata su otkrivene i kada su sačuvane.",
+         "Vidžet za upoređivanje je mesto gde se dve verzije postavljaju jedna pored druge kako bi se pregledale dodatke, brisanja i izmene.",
+         "Ova snimka ekrana naglašava trag revizije i detaljan tok rada sa razlikama zajedno.",
       ],
    },
    "Map": {
       "focus": "Geospatial exploration",
       "highlights": [
-         "The map itself is the primary widget, showing geocoded locations extracted from documents.",
-         "Supporting panels such as the extraction summary and location list explain what was found and from which documents it came.",
-         "This image should orient users to both the visual map and the underlying extracted location records.",
+         "Mapa sama po sebi je primarni vidžet, prikazujući geokodirane lokacije izvučene iz dokumenata.",
+         "Pomoćni paneli, kao što su rezime ekstrakcije i lista lokacija, objašnjavaju šta je pronađeno i iz kojih dokumenata potiče.",
+         "Ova slika treba da orijentiše korisnike kako prema vizuelnoj mapi, tako i prema osnovnim zapisima o izvučenim lokacijama.",
       ],
    },
-   "KPIs & Charts": {
-      "focus": "Metric interpretation",
+   "KPI & Grafikoni": {
+      "focus": "Tumačenje metrika",
       "highlights": [
-         "The screenshot anchors the KPI explanations to a real dashboard view so users can identify each metric card visually.",
-         "It also shows where the map/chart region sits relative to the numeric summary cards.",
-         "Use this callout when explaining what the dashboard is counting and where those values come from.",
+         "Snimak ekrana povezuje objašnjenja KPI sa stvarnim prikazom kontrolne table kako bi korisnici mogli vizuelno da identifikuju svaku karticu metrike.",
+         "Takođe pokazuje gde se region mape/šema nalazi u odnosu na numeričke kartice sažetka.",
+         "Koristite ovaj poziv kada objašnjavate šta kontrolna tabla broji i odakle ti podaci dolaze.",
       ],
    },
-   "Sources": {
-      "focus": "Reference source management",
+   "Izvori": {
+      "focus": "Upravljanje referentnim izvorima",
       "highlights": [
-         "The catalogue region displays the currently managed sources grouped by body, category, and refresh status.",
-         "The source creation and refresh widgets drive how external standards are fetched and transformed into internal reference templates.",
-         "This screenshot should make the governance workflow for compliance source material visible at a glance.",
+         "Katalog prikazuje trenutno upravljane izvore grupisane po telu, kategoriji i statusu osvežavanja.",
+         "Vidžeti za kreiranje i osvežavanje izvora određuju kako se eksterni standardi preuzimaju i transformišu u interne referentne šablone.",
+         "Ova snimka ekrana treba da učini vidljivim tok upravljanja materijalom za usklađenost na prvi pogled.",
       ],
    },
-   "Compliance": {
-      "focus": "Semantic analysis workspace",
+   "Usaglašenost": {
+      "focus": "Radna površina za semantičku analizu",
       "highlights": [
-         "The provider selection, document selection, and reference template controls define the analysis run configuration.",
-         "Score summaries and charts explain both the final alignment result and the evidence behind it.",
-         "This image is meant to show the full path from setup controls to analysis output in a single visual summary.",
+         "Kontrole za izbor provajdera, dokumenata i referentnog šablona definišu konfiguraciju pokretanja analize.",
+         "Sumarni izveštaji i grafikoni objašnjavaju kako konačni rezultat usklađivanja, tako i dokaze iza njega.",
+         "Ova slika je namenjena da pokaže ceo put od kontrola postavki do izlaza analize u jednom vizuelnom prikazu.",
       ],
    },
    "HRBA": {
-      "focus": "AAAQ matching workflow",
+      "focus": "AAAQ usklađivanje tok rada",
       "highlights": [
-         "The central view shows the document-level AAAQ matching process and any generated matches or scores.",
-         "Live output or timeline panels expose how the selected model produced the result over time.",
-         "This screenshot should help users understand that HRBA is both an analysis tool and an evidence capture workflow.",
+         "Centralni prikaz pokazuje proces AAAQ usklađivanja na nivou dokumenata i sve generisane rezultate ili ocene.",
+         "Paneli za uživo prikaz ili vremensku liniju otkrivaju kako je odabrani model proizveo rezultat tokom vremena.",
+         "Ova snimka ekrana treba da pomogne korisnicima da razumeju da je HRBA i alat za analizu i tok rada za prikupljanje dokaza.",
       ],
    },
-   "HRBA Insights": {
-      "focus": "Saved analysis review",
+   "HRBA Prikazi": {
+      "focus": "Pregled sačuvane analize",
       "highlights": [
-         "The saved justifications table is the historical record of previously persisted HRBA findings.",
-         "The raw entries section gives audit-level visibility into the stored payloads and explanations.",
-         "This view is designed for review and evidence tracing rather than new analysis generation.",
+         "Tabela sačuvanih opravdanja je istorijski zapis prethodno sačuvanih HRBA nalaza.",
+         "Sekcija sirovih unosa pruža vidljivost na nivou revizije u sačuvane podatke i objašnjenja.",
+         "Ovaj prikaz je dizajniran za pregled i praćenje dokaza, a ne za generisanje nove analize.",
       ],
    },
    "Developer & Admin": {
-      "focus": "Operational controls",
+      "focus": "Operativne kontrole",
       "highlights": [
-         "This section is the operational reference for environment variables, troubleshooting steps, and maintenance commands.",
-         "The paired screenshot should help administrators connect the written setup guidance with the visible admin interface.",
-         "Use it when onboarding maintainers or diagnosing deployment and runtime configuration issues.",
+         "Ovaj odeljak je operativna referenca za promenljive okruženja, korake za rešavanje problema i komande za održavanje.",
+         "Povezani snimak ekrana treba da pomogne administratorima da povežu pisana uputstva za postavljanje sa vidljivim administratorskim interfejsom.",
+         "Koristite ga prilikom uvođenja održavalaca ili dijagnostikovanja problema sa implementacijom i konfiguracijom u toku rada.",
       ],
    },
 }
@@ -130,33 +129,59 @@ def _resolve_help_image(*candidates: str) -> Optional[Path]:
 
 def render_help_screenshot(section_name: str, caption: str, *candidates: str) -> None:
    image_path = _resolve_help_image(*candidates)
-   callout = VISUAL_CALLOUTS.get(section_name, {})
 
-   left_col, right_col = st.columns([1.75, 1.0], gap="large")
+   # Try to find a localized callout: exact match, english->serbian map, or case-insensitive
+   callout = VISUAL_CALLOUTS.get(section_name)
+   if callout is None:
+      EN_TO_SR = {
+         "Home": "Početna",
+         "Documents": "Dokumenti",
+         "Templates": "Šabloni",
+         "Reports": "Izveštaji",
+         "Changes": "Promene",
+         "Map": "Map",
+         "Sources": "Izvori",
+         "Compliance": "Compliance",
+         "HRBA": "HRBA",
+         "HRBA Insights": "HRBA Prikazi",
+         "Documents": "Dokumenti",
+      }
+      mapped = EN_TO_SR.get(section_name)
+      if mapped:
+         callout = VISUAL_CALLOUTS.get(mapped)
+      else:
+         # fallback: case-insensitive search through keys
+         for k in VISUAL_CALLOUTS.keys():
+            if k.lower() == section_name.lower():
+               callout = VISUAL_CALLOUTS.get(k)
+               break
+
+   left_col, right_col = st.columns([2, 1], gap="large")
    with left_col:
       if image_path:
-         st.image(str(image_path), width="stretch", caption=caption)
+         st.image(str(image_path), use_container_width=True, caption=caption)
       else:
          joined_candidates = ", ".join(candidates)
          st.info(
-            f"Screenshot for {section_name} will appear here when an asset is added as one of: {joined_candidates}."
+            f"Slika ekrana za '{section_name}' će se pojaviti ovde kada se doda kao jedan od: {joined_candidates}."
          )
 
    with right_col:
-      focus_label = callout.get("focus", "Fokus ekrana")
-      highlights = callout.get("highlights", [])
+      focus_label = callout.get("focus", "Fokus ekrana") if callout else "Fokus ekrana"
+      highlights = callout.get("highlights", []) if callout else []
       st.markdown("### Vizuelni fokus")
       st.markdown(f"**Primarni fokus:** {focus_label}")
       if highlights:
          st.markdown("**Na šta obratiti pažnju**")
          for item in highlights:
             st.markdown(f"- {item}")
-      st.markdown("**Upotreba slike u pomoći**")
+      st.markdown("**Kako koristiti ovaj snimak**")
       st.markdown(
-         "Koristite ovaj snimak kao vizuelnu referencu dok čitate smernice u nastavku sekcije. "
-         "Cilj je da poveže pisana uputstva sa stvarnim kontrolama i rezultatima na stranici."
+         "1. Povežite elemente na snimku sa opisima u tekstualnom delu sekcije."
+         "  \n2. Obratite pažnju na oblasti označene kao ključne za verifikaciju podataka."
+         "  \n3. Ako slika nije dostupna, koristite kratki opis iznad da brzo locirate kontrolu u aplikaciji."
       )
-   st.markdown("")
+   st.markdown("---")
 
 st.set_page_config(page_title="Pomoć — SIPMT", page_icon="❓", layout="wide")
 render_sidebar()
@@ -300,7 +325,7 @@ with st.expander("🌐 Izvori"):
 """
    )
 
-with st.expander("⚖️ HRBA"):
+with st.expander("⚖️ HRBA uparivanje"):
    render_help_screenshot(
       "HRBA",
       "AAAQ analiza i tok obrade po segmentima.",
@@ -344,7 +369,7 @@ with st.expander("⚙️ Konfiguracija", expanded=False):
    )
 
 st.markdown("---")
-with st.expander("💡 Saveti", expanded=False):
+with st.expander("💡 Saveti za korišćenje", expanded=False):
    st.markdown(
       """
 - Koristite jasna imena dokumenata i verzija.
@@ -360,360 +385,360 @@ st.stop()
 # ──────────────────────────────────────────────────────────────────────────
 # HOME
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🏠 **Home** — Overview Dashboard", expanded=True):
+with st.expander("🏠 **Početak** — Početni Glavni Prikaz", expanded=True):
    render_help_screenshot(
-      "Home",
-      "Current dashboard screenshot showing KPI cards and the geo-scope area.",
+      "Početna",
+      "Trenutni prikaz kontrolne table sa KPI karticama i geografskim opsegom.",
       "home.png",
       "dashboard.png",
       "Dashboard.png",
    )
    st.markdown("""
-    The **Home** page is your workspace dashboard, providing at-a-glance metrics and overview of your data.
+   **Početna** stranica je glavna stranica koja prikazuje vaš radni prostor, pružajući pregled metrika i uvid u vaše podatke.
 
-    #### Key Features:
+    #### Glavne funkcije:
 
-    **📊 Metrics Overview**
-    - **Documents**: Total number of uploaded documents in the system
-    - **Templates**: Number of defined report templates available
-    - **Reports**: Count of generated reports from template + document combinations
-    - **Changes Detected**: Number of change instances discovered via document version comparison
+    **📊 Pregled metrika**
+    - **Dokumenti**: Ukupan broj učitanih dokumenata u sistemu
+    - **Šabloni**: Broj definisanih šablona izveštaja
+    - **Izveštaji**: Broj generisanih izveštaja iz kombinacija šablona i dokumenata
+    - **Promene otkrivene**: Broj instanci promena otkrivenih upoređivanjem verzija dokumenata
 
-    **📍 Document Scope Map**
-    - Displays an interactive map of all geographic locations extracted from **Policies** documents
-    - Helps you visualize the geographic scope of your policy framework
-    - Requires documents to be processed with location extraction enabled
-    - Locations are geocoded (if `ENABLE_GEOCODING=True` in `.env`) and marked on an OpenStreetMap layer
+    **📍 Mapa obuhvata dokumenata**
+    - Prikazuje interaktivnu mapu svih geografskih lokacija izvučenih iz **Policies** dokumenata
+    - Pomaže vam da vizualizujete geografski obuhvat vašeg okvira politika
+    - Zahteva da dokumenti budu obrađeni sa omogućenom ekstrakcijom lokacija
+    - Lokacije su geokodirane (ako je `ENABLE_GEOCODING=True` u `.env`) i označene na OpenStreetMap sloju
 
-    #### When to Use:
-    - When you first open SIPMT to see workspace statistics
-    - To understand the geographic reach of your policies
-    - As a quick health check that documents are being processed
+    #### Kada koristiti:
+    - Kada prvi put otvorite SIPMT da biste videli statistiku radnog prostora
+    - Da biste razumeli geografski obuhvat vaših politika
+    - Kao brzu proveru da li se dokumenti obrađuju
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# DOCUMENTS
+# DOKUMENTA
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("📄 **Documents** — Upload & Manage Source Files"):
+with st.expander("📄 **Dokumenta** — Upload & Upravljanje Izvornim Fajlovima"):
    render_help_screenshot(
-      "Documents",
-      "Documents page screenshot with upload controls, categorisation options, and processing results.",
+      "Dokumenta",
+      "Stranica dokumenta — Prikaz stranice sa kontrolama za upload, opcijama kategorizacije i rezultatima obrade.",
       "documents.png",
       "Documents.png",
       "page_documents.png",
    )
    st.markdown("""
-    The **Documents** page is where you upload and manage all your source files.
+    The **Dokumenta** stranica je mesto gde možete da učitate i upravljate svim vašim izvornim fajlovima.
     
-    #### Supported File Formats:
-    - **PDF** — Scanned documents, policy documents, reports (with or without embedded text)
-    - **DOCX** — Microsoft Word documents, forms, instructions
-    - **XLSX** — Excel spreadsheets, data tables, monitoring data
+    #### Podržani formati fajlova:
+    - **PDF** — Skenirani dokumenti, dokumenti politika, izveštaji (sa ili bez ugrađenog teksta)
+    - **DOCX** — Microsoft Word dokumenti, obrasci, uputstva
+    - **XLSX** — Excel tabele, podaci, monitoring podaci
 
-    #### File Size & Constraints:
-    - **Maximum size per file**: 20 MB
-    - **Multiple uploads**: You can upload multiple files at once
-    - **Duplicate detection**: Files with identical content are automatically flagged and can be skipped
+    #### Veličina fajla i ograničenja:
+    - **Maksimalna veličina po fajlu**: 20 MB
+    - **Višestruki upload**: Možete učitati više fajlova odjednom
+    - **Detekcija duplikata**: Fajlovi sa identičnim sadržajem se automatski označavaju i mogu biti preskočeni
 
-    #### Processing Steps:
-    1. **Upload**: Select one or more files from your computer
-    2. **Categorize**: Assign each file to one of six document types:
-       - **Questionnaire** — Surveys, forms for data collection
-       - **Policies** — Official policy frameworks, guidelines
-       - **Instructions** — How-to guides, operational manuals
-       - **Forms** — Templates, application forms, compliance forms
-       - **Reports** — Monitoring reports, assessment reports, evaluations
-       - **Monitoring** — Ongoing tracking documents, dashboards, KPI reports
-    3. **Extract**: System automatically extracts:
-       - **Text** — All text content from documents
-       - **Tables** — Structured data formatted as CSV
-       - **Named Entities** — People, organizations, locations identified via NLP
-       - **Locations** — Geographic place names (countries, cities, regions)
-    4. **Store**: Processed content is saved to the database for analysis
+    #### Koraci obrade:
+    1. **Upload**: Izaberite jedan ili više fajlova sa vašeg računara
+    2. **Kategorizacija**: Dodelite svaki fajl jednoj od šest vrsta dokumenata:
+       - **Upitnik** — Ankete, obrasci za prikupljanje podataka
+       - **Policies** — Zvanični okviri politika, smernice
+       - **Instructions** — Uputstva, operativni priručnici
+       - **Forms** — Šabloni, obrasci za prijavu, obrasci za usklađenost
+       - **Reports** — Izveštaji o praćenju, izveštaji o proceni, evaluacije
+       - **Monitoring** — Dokumenti za kontinuirano praćenje, kontrolne table, KPI izveštaji
+    3. **Extract**: Sistem automatski izvlači:
+       - **Text** — Sav tekstualni sadržaj iz dokumenata
+       - **Tables** — Struktuirani podaci formatirani kao CSV
+       - **Named Entities** — Ljudi, organizacije, lokacije identifikovani putem NLP
+       - **Locations** — Geografska imena mesta (države, gradovi, regioni)
+    4. **Store**: Procesirani sadržaj se čuva u bazi podataka za analizu
 
-    #### Advanced Features:
-    - **Re-process button**: For older documents that weren't fully extracted, re-run the entire pipeline
-    - **View extracted text**: Click "View" next to a document to see extracted content
-    - **Deletion**: Remove documents you no longer need (soft delete)
+    #### Napredne funkcije:
+    - **Re-process dugme**: Za starije dokumente koji nisu u potpunosti obrađeni, ponovo pokrenite ceo pipeline
+    - **Pregled izvlačenog teksta**: Kliknite na "View" pored dokumenta da biste videli izvlačeni sadržaj
+    - **Brisanje**: Uklonite dokumente koje više ne trebate (soft delete)
 
-    #### When to Use:
-    - To onboard new documents for analysis
-    - To prepare documents for report generation or compliance checking
-    - To update your data scope with new policy versions
+    #### Kada koristiti:
+    - Kada dodajete nove dokumente za analizu
+    - Da biste pripremili dokumente za generisanje izveštaja ili proveru usklađenosti
+    - Kada ažurirate obim podataka sa novim verzijama politika
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# TEMPLATES
+# ŠABLONI
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("📋 **Templates** — Define Data Extraction Fields"):
+with st.expander("📋 **Šabloni** — Definišite polja za ekstrakciju podataka"):
    render_help_screenshot(
       "Templates",
-      "Templates page screenshot with template form fields and extraction schema editor.",
+      "Stranica Šablona — Prikaz stranice sa poljima obrasca i uređivačem šeme ekstrakcije.",
       "templates.png",
       "Templates.png",
       "page_templates.png",
    )
    st.markdown("""
-    The **Templates** page lets you create reusable field definitions for automated data extraction.
+    The **Šabloni** stranica omogućava kreiranje ponovo upotrebljivih definicija polja za automatsku ekstrakciju podataka.
     
-    #### What is a Template?
-    A **report template** is a structured specification of the information you want to extract from documents:
-    - A **name** that describes what the template captures (e.g., "Social Inclusion Indicators", "Health Policy Compliance Check")
-    - A **set of fields**, each with:
-      - **Field name** — A descriptive label (e.g., "Target Population", "Implementation Date")
-      - **Field type** — The data type SIPMT will look for:
-        - **Text** — Free-form text fields (e.g., description, summary)
-        - **Number** — Numeric values (e.g., budget amount, percentage)
-        - **Date** — Calendar dates (e.g., effective date, review date)
+    #### Šta je Šablon?
+    A **Šablon izveštaja** je strukturisana specifikacija informacija koje želite da izdvojite iz dokumenata:
+    - A **naziv** that describes what the template captures (e.g., "Social Inclusion Indicators", "Health Policy Compliance Check")
+    - A **skup polja**, each with:
+      - **Naziv polja** — A descriptive label (e.g., "Target Population", "Implementation Date")
+      - **Tip polja** — The data type SIPMT will look for:
+        - **Tekst** — Free-form text fields (e.g., description, summary)
+        - **Broj** — Numeric values (e.g., budget amount, percentage)
+        - **Datum** — Calendar dates (e.g., effective date, review date)
         - **Boolean** — Yes/No fields (e.g., "Is monitoring required?")
-        - **List** — Comma-separated or bulleted values (e.g., stakeholder names)
-        - **Location** — Place names, regions, countries
-      - **Description** (optional) — Context to help the extractor
-      - **Priority** — Whether field is Required or Optional
+        - **Lista** — Comma-separated or bulleted values (e.g., stakeholder names)
+        - **Lokacija** — Place names, regions, countries
+      - **Opis** (optional) — Context to help the extractor
+      - **Prioritet** — Whether field is Required or Optional
 
-    #### Template Matching Process:
-    Once you create a template, SIPMT uses **fuzzy matching** to automatically find corresponding values in documents:
-    1. Field name is compared against extracted document text
-    2. Semantic analyzer (Gemini or Ollama) helps interpret intent
-    3. Matched values are auto-filled in generated reports
+    #### Proces podudaranja šablona:
+    Kada kreirate šablon, SIPMT koristi **fuzzy matching** da automatski pronađe odgovarajuće vrednosti u dokumentima:
+    1. Naziv polja se upoređuje sa izvlačenim tekstom iz dokumenta
+    2. Semantički analizator (Gemini ili Ollama) pomaže u tumačenju namere
+    3. Podudarne vrednosti se automatski popunjavaju u generisanim izveštajima
 
-    #### Creating a Template:
-    1. Click **"Create New Template"**
-    2. Enter template name
-    3. Add fields using the table widget:
-       - Specify field name, type, description
-       - Mark Required/Optional
-    4. Click "Save Template"
+    #### Kreiranje šablona:
+    1. Kliknite **"kreiraj novi šablon"**
+    2. Unesite naziv šablona
+    3. Dodajte polja koristeći tabelu:
+       - Navedite naziv polja, tip, opis
+       - Obeležite kao Obavezno/Neobavezno
+    4. Kliknite "Sačuvaj šablon"
 
-    #### Use Cases:
-    - Define fields for different document types (policies, reports, questionnaires)
-    - Create institution-specific templates for consistent data extraction
-    - Enable standardized reporting across multiple documents
+    #### Slučajevi upotrebe:
+    - Definišite polja za različite tipove dokumenata (politike, izveštaji, upitnici)
+    - Kreirajte šablone specifične za institucije za doslednu ekstrakciju podataka
+    - Omogućite standardizovano izveštavanje preko više dokumenata
 
-    #### When to Use:
-    - Before generating reports — define the structure first
-    - When you want consistent data extraction across similar documents
-    - To standardize information collection
+    #### Kada koristiti:
+    - Kada dodajete nove dokumente za analizu
+    - Da biste pripremili dokumente za generisanje izveštaja ili proveru usklađenosti
+    - Kada ažurirate obim podataka sa novim verzijama politika
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# REPORTS
+# Iveštaji
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("📊 **Reports** — Generate Structured Data Extracts"):
+with st.expander("📊 **Izveštaji** — Generiše Struktuirane Skupove Podataka"):
    render_help_screenshot(
-      "Reports",
-      "Reports page screenshot with template selection, document selection, extracted values, and export actions.",
+      "Izveštaji",
+      "Stranica izveštaja — Prikaz stranice sa izborom šablona, izborom dokumenata, izvučenim vrednostima i akcijama izvoza.",
       "reports.png",
       "Reports.png",
       "page_reports.png",
    )
    st.markdown("""
-    The **Reports** page handles automated extraction of structured data using templates.
+    The **Izveštaji** stranica upravlja automatskom ekstrakcijom strukturiranih podataka koristeći šablone.
     
-    #### The Report Generation Workflow:
-    1. **Select Template** — Choose which template defines the extraction fields
-    2. **Select Documents** — Pick one or more source documents to extract from
-    3. **Run Extraction** — System processes the documents with fuzzy matching + semantic analysis
-    4. **Review Results** — View extracted values, confidence scores, and any missing fields
-    5. **Export Report** — Save as CSV, JSON, or Excel for downstream analysis
+    #### Radni tok generisanja izveštaja:
+    1. **Izaberite šablon** — Odaberite koji šablon definiše polja za ekstrakciju
+    2. **Izaberite dokumente** — Odaberite jedan ili više izvora dokumenata za ekstrakciju
+    3. **Pokrenite ekstrakciju** — Sistem obrađuje dokumente koristeći fuzzy matching + semantičku analizu
+    4. **Pregled rezultata** — Pregledajte izvučene vrednosti, ocene poverenja i eventualna nedostajuća polja
+    5. **Izvoz izveštaja** — Sačuvajte kao CSV, JSON ili Excel za dalju analizu
 
-    #### Extraction Confidence:
-    - Each extracted field includes a **confidence score** (0–100%)
-    - **High confidence** (>80%) — Field was clearly identified in the source
-    - **Medium confidence** (50–80%) — Field found but with some uncertainty
-    - **Low confidence** (<50%) — Weak match; manual review recommended
-    - **Missing** — Field not found in any of the selected documents
+    #### Poverenje u ekstrakciju:
+    - Svako izvučeno polje uključuje **ocenu poverenja** (0–100%)
+    - **Visoko poverenje** (>80%) — Polje je jasno identifikovano u izvoru
+    - **Srednje poverenje** (50–80%) — Polje je pronađeno, ali sa određenom nesigurnošću
+    - **Nisko poverenje** (<50%) — Slabo podudaranje; preporučuje se ručna provera
+    - **Nedostaje** — Polje nije pronađeno ni u jednom od odabranih dokumenata
 
-    #### Feature Highlights:
-    - **Batch extraction** — Process multiple documents at once against same template
-    - **Field review** — Manually edit extracted values before export
-    - **Audit trail** — Each report captures which documents were used and when
-    - **Storage** — All generated reports are saved to the database
-    - **Export formats** — CSV (spreadsheet), JSON (system integration), PDF (sharing)
+    #### Istaknute funkcionalnosti:
+    - **Batch ekstrakcija** — Obrada više dokumenata odjednom koristeći isti šablon
+    - **Pregled polja** — Ručno uređivanje izvučenih vrednosti pre izvoza
+    - **Audit trail** — Svaki izveštaj beleži koji su dokumenti korišćeni i kada
+    - **Skladištenje** — Svi generisani izveštaji se čuvaju u bazi podataka
+    - **Formati izvoza** — CSV (tabela), JSON (sistemska integracija), PDF (deljenje)
 
-    #### When to Use:
-    - To fill standardized reporting forms automatically
-    - To compile consistent data from many similar documents
-    - To create CSVs for further analysis or visualization
-    - When you need verified extracted values with confidence scores
+    #### Kada koristiti:
+    - Za automatsko popunjavanje standardizovanih obrazaca izveštaja
+    - Za prikupljanje doslednih podataka iz mnogih sličnih dokumenata
+    - Za kreiranje CSV fajlova za dalju analizu ili vizualizaciju
+    - Kada su vam potrebne verifikovane izvučene vrednosti sa ocenama poverenja
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# CHANGES
+# PROMENE
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🔍 **Changes** — Track Document Versions"):
+with st.expander("🔍 **Promene** — Praćenje verzija dokumenata"):
    render_help_screenshot(
-      "Changes",
-      "Changes page screenshot with version comparison output and detected differences.",
+      "Promene",
+      "Snimak ekrana stranice Promene sa izlazom poređenja verzija i detektovanim razlikama.",
       "changes.png",
       "Changes.png",
       "page_changes.png",
    )
    st.markdown("""
-    The **Changes** page detects and visualizes differences between document versions.
+    The **Promene** stranica prati i vizualizuje razlike između verzija dokumenata.
     
-    #### Change Tracking Workflow:
-    1. **Automatic Detection** — When you upload a revised version of an existing document,
-       SIPMT detects it has the same name but different content
-    2. **Diff Generation** — The system runs a comparison to identify:
-       - **Added** — New sections, paragraphs, or content
-       - **Removed** — Sections deleted in the new version
-       - **Modified** — Text that changed but wasn't added/removed
-    3. **Visualization** — Side-by-side display with color highlighting:
-       - 🟢 **Green** — Added content
-       - 🔴 **Red** — Removed content
-       - 🟡 **Yellow** — Modified content
+    #### Radni tok praćenja promena:
+    1. **Automatsko otkrivanje** — Kada otpremite revidiranu verziju postojećeg dokumenta,
+       SIPMT otkriva da ima isto ime, ali različit sadržaj
+    2. **Generisanje razlika** — Sistem izvršava poređenje kako bi identifikovao:
+       - **Dodato** — Nove sekcije, pasusi ili sadržaj
+       - **Uklonjeno** — Sekcije obrisane u novoj verziji
+       - **Izmenjeno** — Tekst koji je promenjen, ali nije dodat/uklonjen
+    3. **Vizualizacija** — Prikaz jedan pored drugog sa isticanjem boja:
+       - 🟢 **Zeleno** — Dodati sadržaj
+       - 🔴 **Crveno** — Uklonjeni sadržaj
+       - 🟡 **Žuto** — Izmenjeni sadržaj
 
-    #### Change Audit:
-    - **Timestamp** — Exactly when each version was uploaded
-    - **Size delta** — How many bytes changed between versions
-    - **Persistent storage** — All detected changes are saved for compliance auditing
+    #### Revizija promena:
+    - **Vremenska oznaka** — Tačno kada je svaka verzija otpremljena
+    - **Promena veličine** — Koliko bajtova se promenilo između verzija
+    - **Trajno skladištenje** — Sve detektovane promene se čuvaju za potrebe revizije
 
-    #### Use Cases:
-    - Track policy evolution over time
-    - Monitor when instructions or procedures have been updated
-    - Ensure you're aware of all changes to reference documents
-    - Create a versioning audit trail for compliance reporting
+    #### Primeri upotrebe:
+    - Praćenje evolucije politika tokom vremena
+    - Praćenje kada su uputstva ili procedure ažurirane
+    - Osiguranje da ste svesni svih promena u referentnim dokumentima
+    - Kreiranje revizijskog traga verzija za izveštavanje o usklađenosti
 
-    #### When to Use:
-    - When you upload a new version of an existing document
-    - To review what changed in a policy update
-    - For compliance audits that require change tracking
-    - Before adopting a new document version
+    #### Kada koristiti:
+    - Kada otpremite novu verziju postojećeg dokumenta
+    - Za pregled šta se promenilo u ažuriranju politike
+    - Za revizije usklađenosti koje zahtevaju praćenje promena
+    - Pre usvajanja nove verzije dokumenta
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# MAP
+# MAPA
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🗺️ **Map** — Geospatial Visualization"):
+with st.expander("🗺️ **Mapa** — Prostorna Vizualizacija"):
    render_help_screenshot(
-      "Map",
-      "Map page screenshot with document location markers and geographic filters.",
+      "Mapa",
+      "Snimak ekrana stranice Mapa sa oznakama lokacija dokumenata i geografskim filterima.",
       "map.png",
       "Map.png",
       "page_map.png",
    )
    st.markdown("""
-    The **Map** page provides interactive geographic visualization of extracted locations.
+    The **Mapa** stranica omogućava interaktivnu prostornu vizualizaciju izvučenih lokacija.
     
-    #### How It Works:
-    1. **Location Extraction** — When documents are processed, place names are identified using:
-       - **Pattern matching** — Recognizes known country/region strings
-       - **NLP (spaCy)** — Named Entity Recognition for place mentions
+    #### Kako funkcioniše:
+    1. **Ekstrakcija lokacija** — Kada se dokumenti obrade, imena mesta se identifikuju koristeći:
+       - **Prepoznavanje obrazaca** — Prepoznaje poznate stringove zemalja/regija
+       - **NLP (spaCy)** — Prepoznavanje imenovanih entiteta za pominjanje mesta
     2. **Geocoding** (optional):
-       - If `ENABLE_GEOCODING=True` in `.env`, each place name is converted to latitude/longitude
-       - Uses **Nominatim** (OpenStreetMap's free geocoding service)
-       - Requires internet connectivity
-    3. **Visualization** — Interactive map shows:
-       - **Markers** — Each location pinned on OpenStreetMap
-       - **Pop-ups** — Click marker to see document source and context
-       - **Zoom/Pan** — Explore the geographic scope interactively
+       - Ako je `ENABLE_GEOCODING=True` u `.env`, svako ime mesta se konvertuje u geografske koordinate (latitude/longitude)
+       - Koristi **Nominatim** (besplatna geokodirajuća usluga OpenStreetMap-a)
+       - Zahteva internet konekciju
+    3. **Vizualizacija** — Interaktivna mapa prikazuje:
+       - **Oznake** — Svaka lokacija je označena na OpenStreetMap-u
+       - **Pop-up prozori** — Klik na oznaku da vidite izvor dokumenta i kontekst
+       - **Zumiranje/Pomeranje** — Istražite geografsku oblast interaktivno
 
-    #### Map Features:
-    - **Filter by document type** — Show only locations from Policies, Reports, Monitoring, etc.
-    - **Zoom to region** — Focus on a specific geographic area
-    - **Export map** — Save as HTML or screenshot for presentations
+    #### Karakteristike mape:
+    - **Filtriranje po tipu dokumenta** — Prikazuje samo lokacije iz Politika, Izveštaja, Monitoring-a, itd.
+    - **Zumiranje na region** — Fokusirajte se na određenu geografsku oblast
+    - **Izvoz mape** — Sačuvajte kao HTML ili snimak ekrana za prezentacije
 
-    #### Configuration:
-    - **Enable geocoding**: Set `ENABLE_GEOCODING=True` in your `.env` file
-    - **Select documents**: Choose which documents to visualize
-    - **Update locations**: Re-process documents to extract new locations
+    #### Konfiguracija:
+    - **Omogući geokodiranje**: Postavite `ENABLE_GEOCODING=True` u vašem `.env` fajlu
+    - **Izaberite dokumente**: Odaberite koje dokumente želite da vizualizujete
+    - **Ažurirajte lokacije**: Ponovo obradite dokumente da biste izvukli nove lokacije
 
-    #### Use Cases:
-    - Visualize coverage area of policies and programs
-    - Identify geographic gaps in implementations
-    - Share scope with stakeholders in an interactive format
-    - Plan regional expansion or resource allocation
+    #### Primeri upotrebe:
+    - Vizualizujte pokrivenost politika i programa
+    - Identifikujte geografske praznine u implementacijama
+    - Podelite obim sa zainteresovanim stranama u interaktivnom formatu
+    - Planirajte regionalnu ekspanziju ili raspodelu resursa
 
-    #### When to Use:
-    - After uploading Policies or Programs documents
+    #### Kada koristiti:
+    - Nakon otpremanja dokumenata Politika ili Programa
     - To brief stakeholders on geographic scope
     - For regional analysis and planning
     - In presentations or reports to show coverage
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# KPIS & CHARTS
+# KPIS & GRAFIKONI
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("📈 **KPIs & Charts — Definitions, Data Sources, and Population Details", expanded=False):
+with st.expander("📈 **KPIs & GrafikonI — Definicije, Izvori Podataka i Detalji Populacije", expanded=False):
    render_help_screenshot(
-      "KPIs & Charts",
-      "Dashboard screenshot used as a reference for KPI cards and the geo-scope overview chart area.",
+      "KPIs & GrafikonI",
+      "Grafikoni se koriste kao referenca za KPI kartice i preglednu mapu geo-opsega.",
       "dashboard.png",
       "Dashboard.png",
       "kpis.png",
    )
    st.markdown("""
-      This section explains every KPI shown on the **Home** dashboard and every chart used across the application: what each metric represents, which DB tables and queries populate it, how often it updates, and any caveats.
+      Ovaj odeljak objašnjava svaki KPI prikazan na **Početnoj** tabli i svaki grafikon korišćen u aplikaciji: šta svaki metrik predstavlja, koje DB tabele i upiti ga popunjavaju, koliko često se ažurira i sve napomene.
 
-      **General notes**
-      - All KPIs on the dashboard are read-only aggregates run against the `documents`, `report_templates`, `reports`, and `document_changes` tables.
-      - Charts may be rendered from aggregated SQL queries or from in-memory analysis payloads saved in JSON columns (for semantic analyses and reports).
-      - Dashboard values are computed at render time; they reflect the current contents of the database when the page is loaded or when the user navigates to the page.
+      **Opšte napomene**
+      - Svi KPI-ji na tabli su samo za čitanje i agregati se izvršavaju nad tabelama `documents`, `report_templates`, `reports` i `document_changes`.
+      - Grafikoni mogu biti prikazani iz agregiranih SQL upita ili iz analiza u memoriji sačuvanih u JSON kolonama (za semantičke analize i izveštaje).
+      - Vrednosti na tabli se izračunavaju u trenutku prikaza; one odražavaju trenutni sadržaj baze podataka kada se stranica učita ili kada korisnik navigira na stranicu.
 
       ---
 
-      **Dashboard KPIs (Home page)**
+      **Dashboard KPIs (Početna stranica)**
 
-      - **Documents** (label: "📄 Documents")
-         - What it represents: Total count of document records stored for the current organisation.
-         - Data source / SQL: `SELECT COUNT(*) FROM documents WHERE organisation_id = ?`
-         - How it's created: incremented when a new document is uploaded and processed; deletions reduce the count (soft-deletes respect `status` field).
+      - **Documents** (label: "📄 Documenta")
+         - Šta predstavlja: Ukupan broj zapisa dokumenata sačuvanih za trenutnu organizaciju.
+         - Izvor podataka / SQL: `SELECT COUNT(*) FROM documents WHERE organisation_id = ?`
+         - Kako se kreira: povećava se kada se novi dokument otpremi i obradi; brisanja smanjuju broj (soft-delete poštuje polje `status`).
          - Update frequency: real-time at page render.
 
-      - **Templates** (label: "📋 Templates")
-         - What it represents: Number of saved report templates available for extraction & reporting.
-         - Data source / SQL: `SELECT COUNT(*) FROM report_templates`
-         - How it's created: created via the Templates page when the user saves a new template.
-         - Caveats: template bodies may include large JSON; the KPI counts templates regardless of body size or source (DB or file-imported).
+      - **Templates** (label: "📋 Šabloni")
+         - Šta predstavlja: Broj sačuvanih šablona izveštaja dostupnih za ekstrakciju i izveštavanje.
+         - Izvor podataka / SQL: `SELECT COUNT(*) FROM report_templates`
+         - Kako se kreira: kreira se putem stranice Šabloni kada korisnik sačuva novi šablon.
+         - Napomene: tela šablona mogu uključivati velike JSON podatke; KPI broji šablone bez obzira na veličinu tela ili izvor (DB ili uvezeni fajl).
 
-      - **Reports** (label: "📊 Reports")
-         - What it represents: Count of generated reports (structured extraction outputs) stored in `reports` table.
-         - Data source / SQL: `SELECT COUNT(*) FROM reports WHERE organisation_id = ?`
-         - How it's created: when a user runs extraction against documents and saves or exports results.
+      - **Reports** (label: "📊 Izveštaji")
+         - Šta predstavlja: Broj generisanih izveštaja (strukturirani izlazi ekstrakcije) sačuvanih u tabeli `reports`.
+         - Izvor podataka / SQL: `SELECT COUNT(*) FROM reports WHERE organisation_id = ?`
+         - Kako se kreira: kada korisnik pokrene ekstrakciju nad dokumentima i sačuva ili izveze rezultate.
 
-      - **Changes detected** (label: "🔍 Changes detected")
-         - What it represents: Number of detected change instances (diff records) between document versions.
-         - Data source / SQL: `SELECT COUNT(*) FROM document_changes WHERE organisation_id = ?`
-         - How it's created: when a new upload is identified as a new version of an existing document and the diff process creates change rows.
-
-      ---
-
-      **Map & Location Data**
-      - The scope map shows geocoded `locations` joined to `documents` (see `locations` table).
-      - Primary SQL used for the dashboard map (Policies-preferred):
-         - Policies restricted: SELECT rows from `locations` JOIN `documents` WHERE `document_type = 'Policies'` AND `geocoded = 1`.
-         - Fallback: all geocoded locations when Policies have none.
-      - How markers are populated: each geocoded `location` row provides `latitude`/`longitude`, `place_name`, `context` and `document_title` used in the pop-up.
+      - **Changes detected** (label: "🔍 Detektovane promene")
+         - Šta predstavlja: Broj detektovanih promena (diff zapisa) između verzija dokumenata.
+         - Izvor podataka / SQL: `SELECT COUNT(*) FROM document_changes WHERE organisation_id = ?`
+         - Kako se kreira: kada se novi upload identifikuje kao nova verzija postojećeg dokumenta i proces diff kreira zapise promena.
 
       ---
 
-      **Compliance page charts & KPIs**
-      - **Compliance Score**
-         - What it represents: a normalized alignment score (0–1) computed by `ComplianceChecker` combining keyword, requirement, and section coverage with small body/category bonuses.
-         - How it's computed: see `_score_reference_template` and `_build_executive_summary` in the compliance page code — the algorithm combines token-coverage metrics and applies weights (keywords 45%, requirements 35%, sections 20% plus bonuses).
-         - Source: analysis payloads stored in `semantic_analyses` and the temporary result in-memory while running the analysis.
-
-      - **SHAP-style heatmap (feature contribution proxy)**
-         - What it represents: an explainability proxy that shows which factors (Present elements, Strengths, Missing, Partial, Gaps, Recommendation pressure, Keyword/Requirement/Section coverage) contributed positively or negatively to the final compliance score.
-         - How it's created: `_compute_shap_proxy` aggregates counts from the analysis result and returns normalized contribution values between -1 and +1.
-         - Chart population: uses Plotly Heatmap with a single-row `z` array of contributions and an explicit color scale centered at 0.
-
-      - **Classification & Comparison score histories (line/points)**
-         - What they represent: time-series of the classifier confidence and template comparison scores for the current monitor session or historical analyses.
-         - Source: `classification_confidence_history` and `comparison_score_history` arrays maintained in the compliance monitor state; persisted analyses are available via `checker.get_analyses(document_id)`.
-         - How populated: appended as the monitor runs each stage (classify, match, compare, persist). Charts use Plotly `scatter` or `line` traces with points recorded in `*_points` lists.
-
-      - **Gantt-style timeline (per-segment timeline)**
-         - What it represents: per-segment generation timing when streaming LLM outputs; bars are sized by score and colored by AAAQ label.
-         - Source: streaming chunks processed during Ollama/Gemini runs, each tracked with start/end and assigned category/score.
-         - How populated: compliance monitor records chunk timestamps and scores into `chunk_history`; the timeline is rendered from those records.
+      **Mapa i podaci o lokaciji**
+      - Mapa opsega prikazuje geokodirane `locations` povezane sa `documents` (pogledajte tabelu `locations`).
+      - Primarni SQL korišćen za mapu na tabli (preferirano za Politike):
+         - Ograničeno na Politike: SELECT redove iz `locations` JOIN `documents` WHERE `document_type = 'Policies'` AND `geocoded = 1`.
+         - Fallback: sve geokodirane lokacije kada Politike nemaju nijednu.
+      - Kako se markeri popunjavaju: svaki geokodirani red `location` pruža `latitude`/`longitude`, `place_name`, `context` i `document_title` koji se koriste u iskačućem prozoru.
 
       ---
 
-      **HRBA page visuals**
-      - **Live streaming preview**: incremental text from the LLM while running a HRBA analysis. Populated by streaming HTTP responses from Ollama (if supported) or replaced by final JSON when streaming not available.
-      - **Per-segment Gantt**: same mechanism as Compliance timeline — segments are generated and timed during model runs.
+      **Usklađenost stranica grafikon i KPI-jevi**
+      - **Rezultat usklađenosti**
+         - Šta predstavlja: normalizovani skor usklađenosti (0–1) izračunat od strane `ComplianceChecker` kombinujući pokrivenost ključnih reči, zahteva i sekcija sa malim bonusima za telo/kategoriju.
+         - Kako se izračunava: pogledajte `_score_reference_template` i `_build_executive_summary` u kodu stranice za usklađenost — algoritam kombinuje metrike pokrivenosti tokena i primenjuje težine (ključne reči 45%, zahtevi 35%, sekcije 20% plus bonusi).
+         - Izvor: analitički payload-ovi sačuvani u `semantic_analyses` i privremeni rezultat u memoriji tokom izvođenja analize.
+
+      - **SHAP mapa (proxy za doprinos karakteristika)**
+         - Šta predstavlja: proxy za objašnjivost koji pokazuje koji faktori (Prisustvo elemenata, Snage, Nedostaci, Delimično, Praznine, Pritisak preporuka, Pokrivenost ključnih reči/zahteva/sekcija) su pozitivno ili negativno doprineli konačnom rezultatu usklađenosti.
+         - Kako se kreira: `_compute_shap_proxy` agregira brojeve iz rezultata analize i vraća normalizovane vrednosti doprinosa između -1 i +1.
+         - Popunjavanje grafikona: koristi Plotly Heatmap sa jednim redom `z` niza doprinosa i eksplicitnom skalom boja centriranom na 0.
+
+      - **Klasifikacija i poređenje skorova (line/points)**
+         - Šta predstavljaju: vremenske serije poverenja klasifikatora i rezultata poređenja šablona za trenutnu sesiju monitora ili istorijske analize.
+         - Izvor: nizovi `classification_confidence_history` i `comparison_score_history` održavani u stanju monitora usklađenosti; sačuvane analize su dostupne putem `checker.get_analyses(document_id)`.
+         - Kako se popunjavaju: dodaju se dok monitor prolazi kroz svaku fazu (classify, match, compare, persist). Grafikoni koriste Plotly `scatter` ili `line` tragove sa tačkama zabeleženim u listama `*_points`.
+
+      - **Gantt prikaz vremenskog dijagrama (po segmentima)**
+         - Šta predstavlja: vremenska linija po segmentima generisanja prilikom strimovanja LLM izlaza; trake su veličine prema skoru i obojene prema AAAQ oznaci.
+         - Izvor: strimovani delovi obrađeni tokom Ollama/Gemini pokretanja, svaki praćen sa početkom/krajem i dodeljenom kategorijom/skorom.
+         - Kako se popunjava: monitor usklađenosti beleži vremenske oznake i skorove delova u `chunk_history`; vremenska linija se prikazuje iz tih zapisa.
+
+      ---
+
+      **HRBA prikaz usaglašenosti**
+      - **Live streaming preview**: inkrementalni tekst iz LLM tokom izvođenja HRBA analize. Popunjava se strimovanim HTTP odgovorima od Ollama (ako je podržano) ili se zamenjuje finalnim JSON-om kada strimovanje nije dostupno.
+      - **Per-segment Gantt**: isti mehanizam kao vremenska linija usklađenosti — segmenti se generišu i vremenski prate tokom pokretanja modela.
 
       ---
 
@@ -723,135 +748,135 @@ with st.expander("📈 **KPIs & Charts — Definitions, Data Sources, and Popula
 
       ---
 
-      **Troubleshooting & caveats**
-      - If a KPI is unexpectedly zero or stale, check whether your organisation filter (`organisation_id`) is set and whether documents have `status='active'`.
-      - Semantic analysis-derived charts rely on cached analysis payloads; re-run analyses or clear cache if you believe stale results are shown.
-      - Charts that rely on LLM streaming require the selected provider to support streaming; otherwise charts will update once the final response arrives.
+      **Problemi i saveti**
+      - Ako je neki KPI neočekivano nula ili zastarela, proverite da li je vaš filter organizacije (`organisation_id`) postavljen i da li dokumenti imaju `status='active'`.
+      - Grafikoni izvedeni iz semantičke analize oslanjaju se na keširane analize; ponovo pokrenite analize ili očistite keš ako mislite da se prikazuju zastareli rezultati.
+      - Grafikoni koji se oslanjaju na LLM strimovanje zahtevaju da izabrani provajder podržava strimovanje; u suprotnom, grafikoni će se ažurirati kada stigne konačni odgovor.
 
       """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# SOURCES
+# IZVORI
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🌐 **Sources** — Reference Catalogue & Refresh Workflow"):
+with st.expander("🌐 **Izvori** — Katalog referenci i radni tok osvežavanja"):
    render_help_screenshot(
-      "Sources",
-      "Sources page screenshot showing the reference catalogue, source management, and refresh controls.",
+      "Izvori",
+      "Screenshot stranice Izvori prikazuje katalog referenci, upravljanje izvorima i kontrole osvežavanja.",
       "sources.png",
       "Sources.png",
       "page_sources.png",
    )
    st.markdown("""
-    The **Sources** page manages the official external reference material used by the compliance engine.
+    The **Izvori** stranica upravlja zvaničnim spoljnim referentnim materijalom koji koristi motor za usklađenost.
 
-    #### What This Page Does:
-    - Lists all configured source catalog entries and reference bodies
-    - Lets you add new official URLs for standards, directives, and guidance notes
-    - Runs refresh workflows to fetch source pages and update the internal template database
-    - Shows a current database snapshot of the active reference set
+    #### Šta ova stranica radi:
+    - Prikazuje sve konfigurisane unose u katalogu izvora i referentna tela
+    - Omogućava dodavanje novih zvaničnih URL-ova za standarde, direktive i smernice
+    - Pokreće radne tokove osvežavanja za preuzimanje stranica izvora i ažuriranje interne baze šablona
+    - Prikazuje trenutni snimak baze podataka aktivnog skupa referenci
 
-    #### Main Interface Elements:
-    - **Catalogue table** — Displays the current source records, grouped by body and category
-    - **Add new source form** — Creates a new source entry with body, label, URL, and file hint
-    - **Fetch / enrich controls** — Pulls source content from the internet, then enriches it with the selected provider
-    - **DB snapshot section** — Shows the currently materialized template records used by compliance analysis
+    #### Glavni elementi interfejsa:
+    - **Tabela kataloga** — Prikazuje trenutne zapise izvora, grupisane po telu i kategoriji
+    - **Forma za dodavanje novog izvora** — Kreira novi unos izvora sa telom, oznakom, URL-om i naznakom fajla
+    - **Kontrole za preuzimanje / obogaćivanje** — Preuzima sadržaj izvora sa interneta, zatim ga obogaćuje odabranim provajderom
+    - **Sekcija snimka baze podataka** — Prikazuje trenutno materijalizovane zapise šablona koji se koriste za analizu usklađenosti
 
-    #### When to Use:
-    - When new international or institutional guidance needs to be added
+    #### Kada koristiti:
+    - Kada je potrebno dodati nova međunarodna ili institucionalna uputstva
     - When existing external URLs changed and references must be refreshed
     - Before running compliance analyses that depend on newly updated source material
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# COMPLIANCE
+# USAGLAŠENOST
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🔎 **Compliance** — Semantic Analysis Against Standards"):
+with st.expander("🔎 **Usaglašenost** — Semantička analiza prema standardima"):
    render_help_screenshot(
-      "Compliance",
-      "Compliance page screenshot with provider selector, reference template selection, score outputs, and charts.",
+      "Usaglašenost",
+      "Screenshot stranice Usaglašenost sa selektorom provajdera, izborom referentnog šablona, prikazom rezultata i grafikona.",
       "compliance.png",
       "Compliance.png",
       "page_compliance.png",
    )
    st.markdown("""
-    The **Compliance** page provides advanced AI-powered semantic analysis of your documents
-    against international reference frameworks.
+    The **Usaglašenost** stranica omogućava naprednu AI podržanu semantičku analizu vaših dokumenata
+    prema međunarodnim referentnim okvirima.
     
-    #### Semantic Analysis Workflow:
-    1. **Provider Selection** — Choose your AI backend:
-       - **Google Gemini** (cloud, requires API key) — Advanced reasoning, internet connectivity
-       - **Ollama** (local, self-hosted) — Privacy-preserving, offline operation
-    2. **Health Check** — Verify the selected AI provider is reachable and working
-    3. **Document Selection** — Choose which document to analyze
-    4. **Reference Template** — Select an international framework (UN, UNESCO, EU, etc.)
-    5. **Run Analysis** — AI compares document against reference framework
-    6. **Review Report** — Structured compliance assessment with recommendations
+    #### Radni tok semantičke analize:
+    1. **Izbor provajdera** — Odaberite vaš AI backend:
+       - **Google Gemini** (cloud, zahteva API ključ) — Napredno rezonovanje, internet konektivnost
+       - **Ollama** (lokalno, self-hosted) — Privatnost, offline rad
+    2. **Provera zdravlja** — Proverite da li je odabrani AI provajder dostupan i funkcionalan
+    3. **Izbor dokumenta** — Odaberite dokument koji želite analizirati
+    4. **Referentni šablon** — Odaberite međunarodni okvir (UN, UNESCO, EU, itd.)
+    5. **Pokretanje analize** — AI upoređuje dokument sa referentnim okvirom
+    6. **Pregled izveštaja** — Struktuirana procena usaglašenosti sa preporukama
 
-    #### Reference Frameworks Available:
-    - **UN Human Rights** — Universal Declaration of Human Rights frameworks
-    - **UN Sustainable Development Goals (SDGs)** — Goal 10 (Reduced Inequalities) focused
-    - **UNESCO Education** — Inclusive education standards and guidelines
-    - **EU Equality Directive** — EU equality and non-discrimination standards
-    - **EU Social Inclusion** — Social cohesion and inclusion directives
+    #### Dostupni referentni okviri:
+    - **UN Human Rights** — Okviri Univerzalne deklaracije o ljudskim pravima
+    - **UN Sustainable Development Goals (SDGs)** — Fokus na Cilj 10 (Smanjenje nejednakosti)
+    - **UNESCO Education** — Standardi i smernice za inkluzivno obrazovanje
+    - **EU Equality Directive** — EU standardi za jednakost i nediskriminaciju
+    - **EU Social Inclusion** — Direktive za socijalnu koheziju i inkluziju
 
-    #### Compliance Report Structure:
-    - **Document Classification** — AI categorizes the document type/scope
-    - **Compliance Score** — 0–100% alignment with reference framework
-    - **Present Elements** — Which requirements are already addressed
-    - **Identified Gaps** — Missing or underspecified areas
-    - **Recommendations** — Actionable steps to improve compliance
-    - **Source References** — Links to relevant external standards
+    #### Struktura izveštaja o usaglašenosti:
+    - **Klasifikacija dokumenta** — AI kategorizuje tip/opseg dokumenta
+    - **Compliance Score** — 0–100% usklađenost sa referentnim okvirom
+    - **Present Elements** — Koji zahtevi su već ispunjeni
+    - **Identified Gaps** — Nedostajući ili nedovoljno specificirani delovi
+    - **Recommendations** — Preporučeni koraci za poboljšanje usaglašenosti
+    - **Source References** — Linkovi ka relevantnim spoljnim standardima
 
-    #### Advanced Features:
-    - **Template Version History** — Admin view of reference template updates and lineage
-    - **Refresh Sources** — Manually update reference templates from external sources
-    - **Error Transparency** — Clear error messages if provider is down
+    #### Napredne funkcije:
+    - **Template Version History** — Pregled ažuriranja i porekla referentnih šablona za administratore
+    - **Refresh Sources** — Ručno ažuriranje referentnih šablona sa spoljnjih izvora
+    - **Error Transparency** — Jasne poruke o greškama ako provajder nije dostupan
 
-    #### Model Configuration:
-    - **Gemini**: Requires `GEMINI_API_KEY` in `.env`, set `SEMANTIC_LLM_PROVIDER=gemini`
-    - **Ollama**: Requires Ollama service running locally, set `SEMANTIC_LLM_PROVIDER=ollama`
-    - **Model selection**: Configure via `OLLAMA_MODEL` in `.env` (default: qwen2.5:14b-instruct)
+    #### Konfiguracija modela:
+    - **Gemini**: Zahteva `GEMINI_API_KEY` u `.env`, postavite `SEMANTIC_LLM_PROVIDER=gemini`
+    - **Ollama**: Zahteva da Ollama servis radi lokalno, postavite `SEMANTIC_LLM_PROVIDER=ollama`
+    - **Izbor modela**: Konfigurišite putem `OLLAMA_MODEL` u `.env` (podrazumevano: qwen2.5:14b-instruct)
 
-    #### When to Use:
-    - To assess policy alignment with international standards
-    - For compliance reporting and auditing
-    - To identify gaps in your social inclusion framework
-    - Before finalizing new policies or procedures
-    - For stakeholder reporting on standards compliance
+    #### Kada koristiti:
+    - Za procenu usklađenosti politika sa međunarodnim standardima
+    - Za izveštavanje i reviziju usaglašenosti
+    - Za identifikaciju nedostataka u okviru socijalne inkluzije
+    - Pre finalizacije novih politika ili procedura
+    - Za izveštavanje zainteresovanih strana o usaglašenosti sa standardima
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# CONFIGURATION
+# KONFIGURACIJA
 # ──────────────────────────────────────────────────────────────────────────
 st.markdown("---")
-with st.expander("⚙️ **Configuration** — Environment Setup"):
+with st.expander("⚙️ **Konfiguracija** — Podešavanje okruženja"):
     st.markdown("""
-    #### Key Configuration Options (in `.env` file)
+    #### Ključne opcije konfiguracije (u `.env` fajlu)
 
-    **Document Processing**
-    - `UPLOAD_FOLDER` — Directory where uploaded files are stored
-    - `ALLOWED_EXTENSIONS` — File types to accept (pdf, docx, xlsx)
-    - `MAX_FILE_SIZE_MB` — Server-side file size limit
-    - `ENABLE_OCR` — Extract text from scanned/image documents
+    **Obrada dokumenata**
+    - `UPLOAD_FOLDER` — Direktorijum gde se čuvaju otpremljeni fajlovi
+    - `ALLOWED_EXTENSIONS` — Tipovi fajlova koje prihvatamo (pdf, docx, xlsx)
+    - `MAX_FILE_SIZE_MB` — Ograničenje veličine fajla na serveru
+    - `ENABLE_OCR` — Ekstrakcija teksta iz skeniranih/slikovnih dokumenata
 
-    **Semantic Analysis**
-    - `ENABLE_SEMANTIC_ANALYSIS` — Turn semantic compliance analysis on/off
-    - `SEMANTIC_LLM_PROVIDER` — Choose `gemini` or `ollama`
-    - `GEMINI_API_KEY` — Your Google Gemini API key (for cloud analysis)
-    - `GEMINI_MODEL` — Model name (default: `gemini-2.0-flash`)
-    - `OLLAMA_BASE_URL` — Ollama service endpoint (default: `http://localhost:11434`)
-    - `OLLAMA_MODEL` — Local model to use (default: `qwen2.5:14b-instruct`)
+    **Semantička analiza**
+    - `ENABLE_SEMANTIC_ANALYSIS` — Uključivanje/isključivanje semantičke analize usaglašenosti
+    - `SEMANTIC_LLM_PROVIDER` — Izbor `gemini` ili `ollama`
+    - `GEMINI_API_KEY` — Vaš Google Gemini API ključ (za cloud analizu)
+    - `GEMINI_MODEL` — Naziv modela (podrazumevano: `gemini-2.0-flash`)
+    - `OLLAMA_BASE_URL` — Endpoint Ollama servisa (podrazumevano: `http://localhost:11434`)
+    - `OLLAMA_MODEL` — Lokalni model za korišćenje (podrazumevano: `qwen2.5:14b-instruct`)
 
     **Geospatial**
-    - `ENABLE_GEOCODING` — Enable automatic geocoding of locations (requires internet)
+    - `ENABLE_GEOCODING` — Omogućavanje automatskog geokodiranja lokacija (zahteva internet)
 
     **Logging**
-    - `LOG_FILE` — Path to application logs
-    - `LOG_LEVEL` — Verbosity (DEBUG, INFO, WARNING, ERROR)
+    - `LOG_FILE` — Putanja do log fajlova aplikacije
+    - `LOG_LEVEL` — Nivo detaljnosti logovanja (DEBUG, INFO, WARNING, ERROR)
 
-    #### Getting Started with Different Providers:
+    #### Početak rada sa različitim provajderima:
 
-    **Using Google Gemini**
+    **Korišćenje Google Gemini**
     ```
     SEMANTIC_LLM_PROVIDER=gemini
     GEMINI_API_KEY=your-api-key-here
@@ -859,7 +884,7 @@ with st.expander("⚙️ **Configuration** — Environment Setup"):
     ```
     [Get API key →](https://ai.google.dev)
 
-    **Using Ollama (Local)**
+    **Korišćenje Ollama (lokalno)**
     ```
     SEMANTIC_LLM_PROVIDER=ollama
     OLLAMA_BASE_URL=http://localhost:11434
@@ -867,7 +892,7 @@ with st.expander("⚙️ **Configuration** — Environment Setup"):
     ```
     [Ollama Installation →](https://ollama.ai)
 
-    Then pull the model:
+    Zatim povucite model:
     ```bash
     ollama pull qwen2.5:14b-instruct
     ```
@@ -876,68 +901,68 @@ with st.expander("⚙️ **Configuration** — Environment Setup"):
 # ──────────────────────────────────────────────────────────────────────────
 # HRBA
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("⚖️ **HRBA — AAAQ Matching & Insights"):
+with st.expander("⚖️ **HRBA — AAAQ Usaglašenost & Prikazi"):
    render_help_screenshot(
       "HRBA",
-      "HRBA page screenshot with AAAQ matches, live output, and timeline visualisations.",
+      "HRBA stranica screenshot sa AAAQ usaglašenostima, live izlazom i vremenskim prikazima.",
       "hrba.png",
       "HRBA.png",
       "page_hrba.png",
    )
    st.markdown("""
-      The **HRBA** page scans documents for AAAQ indicators (Availability, Accessibility,
-      Acceptability, Quality) using either a fast `spaCy` matcher or the local Ollama LLM.
+      The **HRBA** stranica skenira dokumente za AAAQ indikatore (Dostupnost, Pristupačnost,
+      Prihvatljivost, Kvalitet) koristeći ili brzi `spaCy` matcher ili lokalni Ollama LLM.
 
-      Key features:
-      - **Live streaming generation**: When using Ollama the app displays a live text preview
-         of the model's output in a right-side pane while the model is generating.
-      - **Per-segment timeline (Gantt)**: The page records per-segment start/end times during
-         streaming and renders a Gantt-style timeline showing when each segment was generated.
-         Bars are sized by score and colored by the highest-scoring AAAQ category.
-      - **Save analyses**: Store full JSON justifications into `semantic_analyses` for later review
-         on the **HRBA Insights** page.
+      Glavne funkcionalnosti:
+      - **Live streaming generation**: Kada koristite Ollama, aplikacija prikazuje uživo pregled teksta
+         izlaza modela u desnom panelu dok model generiše.
+      - **Per-segment timeline (Gantt)**: Stranica beleži početne/krajnje vremenske tačke po segmentu tokom
+         streaminga i prikazuje Gantt-ov stil vremenske linije koja pokazuje kada je svaki segment generisan.
+         Trake su veličine prema rezultatu i obojene prema najvišoj AAAQ kategoriji.
+      - **Save analyses**: Sačuvajte kompletne JSON opravdanja u `semantic_analyses` za kasniji pregled
+         na stranici **HRBA Insights**.
 
-      How to interpret the UI:
-      - The **live preview** shows incremental text as the model streams. If the model returns
-         only a final JSON object, the preview will update when the final content arrives.
-      - The **timeline** visualises per-document generation events. Longer bars indicate
-         higher scoring results (length is proportional to score). Use the timeline to spot
-         slow segments or clustering of analyses by document.
+      Kako interpretirati korisnički interfejs:
+      - **Live preview** prikazuje inkrementalni tekst dok model generiše. Ako model vraća
+         samo konačni JSON objekat, pregled će se ažurirati kada konačni sadržaj stigne.
+      - **Timeline** vizualizuje događaje generisanja po dokumentu. Duže trake označavaju
+         rezultate sa višim ocenama (dužina je proporcionalna oceni). Koristite timeline da uočite
+         spore segmente ili grupisanje analiza po dokumentu.
 
-      Troubleshooting:
-      - If you see no streaming chunks, ensure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are correct
-         and the Ollama service is running. Some models may not stream intermediate fragments.
-      - For long-running generations, increase `OLLAMA_TIMEOUT` in your environment (seconds).
-      - If generation appears slow, warm the model or restart the Ollama process.
+      Ispravke i saveti:
+      - Ako ne vidite nijedan streaming fragment, proverite da li su `OLLAMA_BASE_URL` i `OLLAMA_MODEL` ispravni
+         i da li je Ollama servis pokrenut. Neki modeli možda neće streamovati međufragmente.
+      - Za dugotrajne generacije, povećajte `OLLAMA_TIMEOUT` u vašem okruženju (sekunde).
+      - Ako generacija izgleda sporo, zagrejte model ili restartujte Ollama proces.
       """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# HRBA INSIGHTS
+# HRBA PRIKAZI
 # ──────────────────────────────────────────────────────────────────────────
-with st.expander("🧾 **HRBA Insights** — Saved Justifications & Review"):
+with st.expander("🧾 **HRBA Prikazi** — Sačuvana opravdanja & Pregled"):
    render_help_screenshot(
-      "HRBA Insights",
-      "HRBA Insights screenshot showing saved justifications, aggregated views, and raw saved entries.",
+      "HRBA Prikazi",
+      "HRBA Prikazi screenshot showing saved justifications, aggregated views, and raw saved entries.",
       "hrba_insights.png",
       "HRBA_Insights.png",
       "page_hrba_insights.png",
    )
    st.markdown("""
-    The **HRBA Insights** page is the review workspace for previously saved AAAQ analyses.
+    The **HRBA Prikazi** stranica je prostor za pregled prethodno sačuvanih AAAQ analiza.
 
-    #### What You See Here:
-    - **Saved Justifications table** — A structured view of all persisted HRBA justifications
-    - **Filters and grouping** — Lets you narrow results by document or analysis context
-    - **Raw entries** — Full stored payloads for auditing, export, or manual inspection
+    #### Šta vidite ovde:
+    - **Tabela sačuvanih opravdanja** — Struktuirani pregled svih sačuvanih HRBA opravdanja
+    - **Filteri i grupisanje** — Omogućava sužavanje rezultata po dokumentu ili kontekstu analize
+    - **Sirovi unosi** — Puni sačuvani podaci za reviziju, izvoz ili ručnu inspekciju
 
-    #### What It Represents:
-    - Each row corresponds to a saved analysis record previously stored from the HRBA match workflow
-    - This page is not generating new analyses; it is reading historical records from storage
+    #### Šta predstavlja:
+    - Svaki red odgovara jednom sačuvanom zapisu analize prethodno pohranjenom iz HRBA match workflow-a
+    - Ova stranica ne generiše nove analize; čita istorijske zapise iz skladišta
 
-    #### When to Use:
-    - To review previously generated human-rights-based analyses
-    - To compare justification quality across documents
-    - To audit the saved evidence that supports HRBA findings
+    #### Kada koristiti:
+    - Za pregled prethodno generisanih analiza zasnovanih na ljudskim pravima
+    - Za poređenje kvaliteta opravdanja između dokumenata
+    - Za reviziju sačuvanih dokaza koji podržavaju HRBA nalaze
     """)
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -946,102 +971,102 @@ with st.expander("🧾 **HRBA Insights** — Saved Justifications & Review"):
 with st.expander("🛠️ Developer & Admin — Setup, Env vars, Troubleshooting", expanded=False):
    render_help_screenshot(
       "Developer & Admin",
-      "Developer and admin screenshot with environment, maintenance, and troubleshooting utilities.",
+      "Developer and admin stranica sa okruženjem, održavanjem i alatima za rešavanje problema.",
       "developer_admin.png",
       "Developer_Admin.png",
       "page_admin.png",
    )
    st.markdown("""
-      This section covers environment variables, common admin tasks, and troubleshooting steps.
+      Ovaj odeljak pokriva promenljive okruženja, uobičajene administrativne zadatke i korake za rešavanje problema.
 
-      Environment variables (important):
-      - `DATABASE_URL`: full PostgreSQL connection string. If not present, `DATABASE_PATH` (SQLite) is used.
-      - `DATABASE_PATH`: path to fallback SQLite database (default `./data/sipmt.db`).
-      - `FORCE_POSTGRES`: if set to `1`, force use of `DATABASE_URL` even when it points to localhost.
-      - `SEMANTIC_LLM_PROVIDER`: `gemini` or `ollama`.
-      - `GEMINI_API_KEY`: required when `SEMANTIC_LLM_PROVIDER=gemini`.
-      - `OLLAMA_BASE_URL`: local Ollama endpoint (default `http://localhost:11434`).
-      - `OLLAMA_MODEL`: Ollama model name (e.g., `qwen2.5:14b-instruct`).
-      - `OLLAMA_TIMEOUT`: HTTP timeout for Ollama requests (seconds). Default 120.
-      - `ENABLE_GEOCODING`: `true`/`false` to enable geocoding of extracted locations.
+      Promenljive okruženja (važno):
+      - `DATABASE_URL`: puna PostgreSQL konekcija. Ako nije prisutna, koristi se `DATABASE_PATH` (SQLite).
+      - `DATABASE_PATH`: putanja do rezervne SQLite baze podataka (podrazumevano `./data/sipmt.db`).
+      - `FORCE_POSTGRES`: ako je postavljeno na `1`, forsira korišćenje `DATABASE_URL` čak i kada pokazuje na localhost.
+      - `SEMANTIC_LLM_PROVIDER`: `gemini` ili `ollama`.
+      - `GEMINI_API_KEY`: obavezno kada je `SEMANTIC_LLM_PROVIDER=gemini`.
+      - `OLLAMA_BASE_URL`: lokalni Ollama endpoint (podrazumevano `http://localhost:11434`).
+      - `OLLAMA_MODEL`: ime Ollama modela (npr. `qwen2.5:14b-instruct`).
+      - `OLLAMA_TIMEOUT`: HTTP timeout za Ollama zahteve (sekunde). Podrazumevano 120.
+      - `ENABLE_GEOCODING`: `true`/`false` za omogućavanje geokodiranja izvučenih lokacija.
 
-      Common admin tasks:
-      - Initialize DB and directories:
+      Uobičajeni administrativni zadaci:
+      - Inicijalizacija baze podataka i direktorijuma:
          ```bash
          python setup.py
          ```
-      - Migrate existing SQLite demo data to Postgres:
+      - Migracija postojećih SQLite demo podataka u Postgres:
          ```bash
          python scripts/migrate_sqlite_to_postgres.py --sqlite-path ./data/sipmt.db --postgres-url <YOUR_URL>
          ```
-      - Pull Ollama model (local machine):
+      - Preuzimanje Ollama modela (lokalna mašina):
          ```bash
          ollama pull qwen2.5:14b-instruct
          ```
 
-      Troubleshooting tips:
-      - App fails to start: run `bash scripts/pre_deploy_check.sh` to locate syntax or config issues.
-      - Ollama unreachable: confirm `OLLAMA_BASE_URL`, try `curl http://localhost:11434/`.
-      - Slow semantic analysis: increase `OLLAMA_TIMEOUT`, warm the model by making a small request, or choose a smaller model.
-      - Missing extracted text: verify OCR settings and re-run the document extractor pipeline.
+      Koraci za rešavanje problema:
+      - Aplikacija ne može da se pokrene: pokrenite `bash scripts/pre_deploy_check.sh` da locirate sintaksne ili konfiguracione probleme.
+      - Ollama nedostupan: proverite `OLLAMA_BASE_URL`, pokušajte `curl http://localhost:11434/`.
+      - Spora semantička analiza: povećajte `OLLAMA_TIMEOUT`, zagrejte model malim zahtevom ili izaberite manji model.
+      - Nedostaje izvučeni tekst: proverite OCR podešavanja i ponovo pokrenite pipeline za ekstrakciju dokumenata.
 
-      Logs and diagnostics:
-      - Check `logs/` for recent app logs.
-      - Streamlit console shows startup errors; consult server logs for stack traces.
+      Logs i dijagnostika:
+      - Proverite `logs/` za nedavne logove aplikacije.
+      - Streamlit konzola prikazuje greške pri pokretanju; konsultujte server logove za stack trace.
 
-      Security & secrets:
-      - Never commit secrets (API keys, DB passwords) to git. Use platform secrets or an `.env` file excluded from VCS.
-      - Rotate API keys if they are accidentally exposed.
+      Bezbednost i tajne:
+      - Nikada ne komitujte tajne (API ključeve, lozinke za bazu) u git. Koristite platformske tajne ili `.env` fajl isključen iz VCS.
+      - Rotirajte API ključeve ako su slučajno otkriveni.
       """)
 
 # ──────────────────────────────────────────────────────────────────────────
-# TIPS & BEST PRACTICES
+# SAVETI I NAJBOLE PRAKSE
 # ──────────────────────────────────────────────────────────────────────────
 st.markdown("---")
-with st.expander("💡 **Tips & Best Practices"):
+with st.expander("💡 **Savet i najbolje prakse**"):
     st.markdown("""
-    #### Document Upload Tips
-    - **Quality matters**: Ensure scanned PDFs have good resolution (≥200 DPI) for better text extraction
-    - **File naming**: Use descriptive names (e.g., `Policy_2024_Social_Inclusion.pdf`) for easy tracking
-    - **Organize by type**: Categorize documents correctly — this helps template matching
-    - **Version control**: Upload versioned documents (v1, v2) to track evolution
+    #### Saveti za učitavanje dokumenata
+    - **Kvalitet je važan**: Osigurajte da skenirani PDF-ovi imaju dobru rezoluciju (≥200 DPI) za bolje izdvajanje teksta
+    - **Nazivanje fajlova**: Koristite opisne nazive (npr. `Policy_2024_Social_Inclusion.pdf`) radi lakšeg praćenja
+    - **Organizujte po tipu**: Kategorizujte dokumente ispravno — ovo pomaže u podudaranju šablona
+    - **Kontrola verzija**: Učitajte verzirane dokumente (v1, v2) da pratite evoluciju
 
-    #### Template Design
-    - **Be specific**: More detailed field descriptions help the matcher find values
-    - **Use consistent naming**: Similar fields across templates should have similar names
-    - **Set realistic priorities**: Mark truly required fields, keep others optional
-    - **Test first**: Create a template and test with 1–2 documents before batch processing
+    #### Dizajn šablona
+    - **Budite specifični**: Detaljniji opisi polja pomažu matcher-u da pronađe vrednosti
+    - **Koristite dosledna imena**: Slična polja u različitim šablonima treba da imaju slična imena
+    - **Postavite realne prioritete**: Obeležite zaista obavezna polja, ostala držite kao opcionalna
+    - **Testirajte prvo**: Kreirajte šablon i testirajte sa 1–2 dokumenta pre obrade u seriji
 
-    #### Report Generation
-    - **Review low-confidence fields**: Always verify extractions with <70% confidence
-    - **Document sources**: Keep records of which documents were used for each report
-    - **Export regularly**: Save reports as CSV/JSON for backup and integration with other tools
+    #### Generisanje izveštaja
+    - **Pregledajte polja sa niskim poverenjem**: Uvek proverite izdvojene podatke sa <70% poverenja
+    - **Izvori dokumenata**: Vodite evidenciju o tome koji dokumenti su korišćeni za svaki izveštaj
+    - **Redovno izvozite**: Sačuvajte izveštaje kao CSV/JSON za rezervne kopije i integraciju sa drugim alatima
 
-    #### Compliance Analysis
-    - **Read recommendations**: AI-generated gaps often contain actionable improvements
-    - **Cross-check references**: Verify external links in recommendations are correct
-    - **Track changes**: Re-run analysis after document updates to show progress
-    - **Use version history**: Review how reference templates evolve over time
+    #### Analiza usklađenosti
+    - **Pročitajte preporuke**: AI-generisane praznine često sadrže primenljive poboljšanja
+    - **Proverite reference**: Verifikujte da su spoljašnji linkovi u preporukama tačni
+    - **Pratite promene**: Ponovo pokrenite analizu nakon ažuriranja dokumenata da biste prikazali napredak
+    - **Koristite istoriju verzija**: Pregledajte kako se referentni šabloni razvijaju tokom vremena
 
-    #### Performance Tips
-    - **Batch processing**: Upload multiple documents at once for efficiency
-    - **Local Ollama**: Use Ollama instead of Gemini for faster, offline analysis
-    - **Disable geocoding**: Turn off if you don't need location mapping (faster processing)
-    - **Clean up old data**: Archive or delete documents you no longer analyze
+    #### Saveti za performanse
+    - **Obrada u serijama**: Učitajte više dokumenata odjednom radi efikasnosti
+    - **Local Ollama**: Koristite Ollama umesto Gemini za bržu, offline analizu
+    - **Onemogućite geokodiranje**: Isključite ako vam nije potrebno mapiranje lokacija (brža obrada)
+    - **Očistite stare podatke**: Arhivirajte ili obrišite dokumente koje više ne analizirate
 
-    #### Troubleshooting
-    - **Upload fails**: Ensure file is <20 MB and is PDF/DOCX/XLSX format
-    - **No extracted text**: Use "Re-process" button on Documents page
-    - **Compliance analysis slow**: Check internet connection (for Gemini) or Ollama service status
-    - **Map shows no locations**: Ensure documents were categorized as "Policies"
+    #### Greške i rešavanje problema
+    - **Upload ne uspeva**: Osigurajte da je fajl <20 MB i u PDF/DOCX/XLSX formatu
+    - **Nema izvučenog teksta**: Koristite dugme "Ponovo obradi" na stranici Dokumenti
+    - **Analiza usklađenosti spora**: Proverite internet konekciju (za Gemini) ili status Ollama servisa
+    - **Mapa ne prikazuje lokacije**: Osigurajte da su dokumenti kategorizovani kao "Politike"
     """)
 
 st.markdown("---")
 st.markdown("""
-#### 📞 Need More Help?
-- **Check the sidebar** — Navigation and quick tips on every page
-- **Hover tooltips** — Many UI elements have context help on hover
-- **Report issues** — Contact your system administrator with error messages
+#### 📞 Trebate dodatnu pomoć?
+- **Proverite bočnu traku** — Navigacija i brzi saveti na svakoj stranici
+- **Tooltipovi** — Mnogi UI elementi imaju kontekstualnu pomoć pri prelasku mišem
+- **Prijavite probleme** — Kontaktirajte svog sistem administratora sa porukama o greškama
 
 ---
 *Last updated: March 2026 | SIPMT v1.0*

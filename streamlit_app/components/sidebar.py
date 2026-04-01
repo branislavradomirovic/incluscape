@@ -133,7 +133,7 @@ def render_sidebar() -> None:
 
         st.markdown("### 📚 Pomoć i resursi")
 
-        st.page_link("pages/7_Help.py", label="📖 Kompletna dokumentacija", icon="❓")
+        st.page_link("pages/7_Help.py", label="📖 Dokumentacija", icon="❓")
         
         # Quick reference in expander
         with st.expander("⚡ Brzi vodič", expanded=False):

@@ -13,14 +13,14 @@ from streamlit_app.components.sidebar import render_page_disclaimer, render_side
 from streamlit_app.components.help_button import render_help_button
 
 enable_serbian_locale(st)
-st.set_page_config(page_title="HRBA uvidi — SIPMT", page_icon="⚖️", layout="wide")
+st.set_page_config(page_title="HRBA prikazi — SIPMT", page_icon="⚖️", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("⚖️ HRBA Insights — Saved Justifications")
+    st.title("⚖️ HRBA Prikazi podataka — Sačuvana opravdanja")
 with col2:
-    render_help_button("⚖️ HRBA Insights")
+    render_help_button("⚖️ HRBA Prikazi")
 
 st.markdown(
     """

@@ -13,14 +13,14 @@ from streamlit_app.components.sidebar import render_page_disclaimer, render_side
 from streamlit_app.components.help_button import render_help_button
 
 enable_serbian_locale(st)
-st.set_page_config(page_title="Nadzor izmena — SIPMT", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Nadzor izmena dokumenata — SIPMT", page_icon="🔍", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("🔍 Change Monitor")
+    st.title("🔍 Nadzor izmena dokumenata")
 with col2:
-    render_help_button("🔍 Changes")
+    render_help_button("🔍 Nadzor izmena")
 
 db = DatabaseManager()
 db.initialize()
@@ -40,7 +40,7 @@ changes = db.fetchall(
     (org_id,),
 )
 if not changes:
-    st.info("Nisu detektovane izmene. Prosledi novu verziju dokumenta da bi se utvrdili izmene.")
+    st.info("Nisu detektovane izmene. Prosledi novu verziju dokumenta da bi se utvrdile izmene.")
 else:
     IMPACT_COLOUR = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}
     rows = []
@@ -73,7 +73,7 @@ docs = db.fetchall(
     (org_id,),
 )
 if len(docs) < 2:
-    st.info("Upload at least two documents to compare.")
+    st.info("Uploadujte najmanje dva dokumenta za upoređivanje.")
 else:
     doc_labels = {f"{d['title']} v{d['version']} (id={d['id']})": d["id"] for d in docs}
     col1, col2 = st.columns(2)
@@ -82,7 +82,7 @@ else:
     old_id = doc_labels[old_label]
     new_id = doc_labels[new_label]
 
-    if st.button("Compare", type="primary"):
+    if st.button("Uporedi", type="primary"):
         def get_text(doc_id):
             pages = db.fetchall(
                 "SELECT content FROM document_pages WHERE document_id = ? ORDER BY page_number",
@@ -93,14 +93,14 @@ else:
         old_text = get_text(old_id)
         new_text = get_text(new_id)
         if not old_text or not new_text:
-            st.error("One or both documents have no extracted text.")
+            st.error("Jedan ili oba dokumenta nemaju izdvojeni tekst.")
         else:
             result = cd.compare(old_text, new_text)
-            st.metric("Change percentage", f"{result['change_percentage']}%")
+            st.metric("Procenat promena", f"{result['change_percentage']}%")
             c1, c2, c3 = st.columns(3)
-            c1.metric("Added lines", result["added_lines"])
-            c2.metric("Removed lines", result["removed_lines"])
-            c3.metric("Impact level", result["impact_level"].upper())
+            c1.metric("Dodate linije", result["added_lines"])
+            c2.metric("Uklonjene linije", result["removed_lines"])
+            c3.metric("Nivo uticaja", result["impact_level"].upper())
             with st.expander("Diff snippet"):
                 st.code(result["diff_snippet"], language="diff")
 

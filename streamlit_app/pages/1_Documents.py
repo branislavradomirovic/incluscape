@@ -48,7 +48,7 @@ def _fmt_date(val):
 
 
 # ── Upload ──────────────────────────────────────────────────────────────────
-with st.expander("📤 Otpremi novi dokument", expanded=True):
+with st.expander("📤 Pošalji novi dokument", expanded=True):
     uploaded_files = st.file_uploader(
         "Choose files (PDF, DOCX, XLSX) — max 20 MB each",
         type=Config.ALLOWED_EXTENSIONS,
@@ -56,7 +56,7 @@ with st.expander("📤 Otpremi novi dokument", expanded=True):
     )
     doc_type = st.selectbox("Kategorija dokumenta", Config.DOCUMENT_CATEGORIES)
 
-    if uploaded_files and st.button("Process & Save", type="primary", use_container_width=True):
+    if uploaded_files and st.button("Obradi i snimi", type="primary", use_container_width=True):
         progress = st.progress(0)
         for i, uf in enumerate(uploaded_files):
 
@@ -71,7 +71,7 @@ with st.expander("📤 Otpremi novi dokument", expanded=True):
                 progress.progress((i + 1) / len(uploaded_files))
                 continue
 
-            with st.spinner(f"Processing {uf.name}…"):
+            with st.spinner(f"Obrađuje se {uf.name}…"):
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=Path(uf.name).suffix,
                     dir=Config.TEMP_FOLDER,
@@ -84,7 +84,7 @@ with st.expander("📤 Otpremi novi dokument", expanded=True):
                     file_hash = file_handler.hash_file(tmp_path)
                     from change_tracking.version_manager import VersionManager
                     if VersionManager(db).is_duplicate(file_hash, org_id):
-                        st.warning(f"⚠️ **{uf.name}** already exists (same content). Skipped.")
+                        st.warning(f"⚠️ **{uf.name}** već postoji u bazi (identičan fajl hash). Preskočeno.")
                     else:
                         proc = pipeline.process(tmp_path)
                         result = proc["result"]
@@ -202,7 +202,7 @@ if st.session_state.get("_reprocess") == selected_id:
             selected_id, sel["file_name"], Config.TEMP_FOLDER
         )
         if not temp_materialized_path:
-            st.error("Stored file content is missing in database for this document.")
+            st.error("Snimljeni sadržaj fajla nedostaje u bazi za ovaj dokument.")
             st.session_state.pop("_reprocess", None)
             st.stop()
         file_path = temp_materialized_path
@@ -214,16 +214,16 @@ if st.session_state.get("_reprocess") == selected_id:
         if temp_materialized_path:
             file_path = temp_materialized_path
         else:
-            st.error(f"File not found on disk: `{file_path}`")
+            st.error(f"Fajl nije pronađen na disku: `{file_path}`")
             st.session_state.pop("_reprocess", None)
             st.stop()
 
     try:
-        with st.spinner(f"Re-processing {sel['file_name']}…"):
+        with st.spinner(f"Ponovo obrađuje se {sel['file_name']}…"):
             proc = pipeline.process(file_path)
             result = proc["result"]
             if not result:
-                st.error(f"Processing failed: {proc.get('error')}")
+                st.error(f"Obrada nije uspela: {proc.get('error')}")
             else:
                 db.execute("DELETE FROM document_pages WHERE document_id = ?", (selected_id,))
                 db.execute("DELETE FROM extracted_entities WHERE document_id = ?", (selected_id,))
@@ -252,16 +252,16 @@ if st.session_state.get("_reprocess") == selected_id:
 # ── Delete confirmation ───────────────────────────────────────────────────────
 if st.session_state.get("_confirm_delete") == selected_id:
     st.warning(
-        f"⚠️ Delete **{sel['title']}** permanently? "
-        "This will remove the file and all extracted data and cannot be undone."
+        f"⚠️ Obriši **{sel['title']}** zauvek? "
+        "Ovo će ukloniti fajl i sve izdvojene podatke i ne može se opozvati."
     )
     c1, c2 = st.columns(2)
     if c1.button("✅ Yes, delete", type="primary", use_container_width=True):
         db.delete_document(selected_id)
         st.session_state.pop("_confirm_delete", None)
-        st.success(f"'{sel['title']}' deleted.")
+        st.success(f"'{sel['title']}' obrisano.")
         st.rerun()
-    if c2.button("❌ Cancel", use_container_width=True):
+    if c2.button("❌ Prekini", use_container_width=True):
         st.session_state.pop("_confirm_delete", None)
         st.rerun()
 
@@ -295,10 +295,10 @@ if pages:
             label_visibility="collapsed",
         )
 else:
-    st.info("No extracted text available for this document.")
+    st.info("Nema izdvojenog teksta za ovaj dokument.")
 
 if entities:
-    with st.expander(f"🔍 Extracted Entities ({len(entities)})", expanded=False):
+    with st.expander(f"🔍 Izdvojeni entiteti ({len(entities)})", expanded=False):
         st.dataframe(pd.DataFrame(entities), use_container_width=True, hide_index=True)
 
 render_page_disclaimer()

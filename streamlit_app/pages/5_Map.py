@@ -14,12 +14,12 @@ from streamlit_app.components.sidebar import render_page_disclaimer, render_side
 from streamlit_app.components.help_button import render_help_button
 
 enable_serbian_locale(st)
-st.set_page_config(page_title="Mapa — SIPMT", page_icon="🗺️", layout="wide")
+st.set_page_config(page_title="Mapa podataka — SIPMT", page_icon="🗺️", layout="wide")
 render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("🗺️ Geospatial View")
+    st.title("🗺️ Geografski prikaz SIPMT podataka iz baze")
 with col2:
     render_help_button("🗺️ Map")
 
@@ -147,26 +147,26 @@ def _render_diagnostics(documents: list[dict], selected_ids: list[int]) -> None:
     })
 
     metric_cols = st.columns(4)
-    metric_cols[0].metric("Active docs", len(documents))
-    metric_cols[1].metric("Selected docs", len(selected_ids))
-    metric_cols[2].metric("Saved locations", int(saved_count_row.get("count", 0)))
-    metric_cols[3].metric("Geocoding", "On" if Config.ENABLE_GEOCODING else "Off")
+    metric_cols[0].metric("Aktivnih dokumenata", len(documents))
+    metric_cols[1].metric("Izabrani dokumenti", len(selected_ids))
+    metric_cols[2].metric("Sačuvane lokacije", int(saved_count_row.get("count", 0)))
+    metric_cols[3].metric("Geokodiranje", "Uključeno" if Config.ENABLE_GEOCODING else "Isključeno")
 
     if not diagnostics["spacy_ready"]:
         st.warning(
-            f"spaCy location model unavailable: {diagnostics['spacy_model']} | {diagnostics['spacy_error'][:220]}"
+            f"spaCy lokacijski model nedostupan: {diagnostics['spacy_model']} | {diagnostics['spacy_error'][:220]}"
         )
     else:
-        st.success(f"spaCy location model ready: {diagnostics['spacy_model']}")
+        st.success(f"spaCy lokacijski model spreman: {diagnostics['spacy_model']}")
 
-    with st.expander("Extraction diagnostics", expanded=False):
+    with st.expander("Dijagnostika ekstrakcije", expanded=False):
         st.dataframe(
             pd.DataFrame([
-                {"Check": "spaCy model", "Value": diagnostics["spacy_model"]},
-                {"Check": "spaCy ready", "Value": "Yes" if diagnostics["spacy_ready"] else "No"},
-                {"Check": "Rule patterns", "Value": diagnostics["rule_patterns"]},
-                {"Check": "Known places", "Value": diagnostics["known_places"]},
-                {"Check": "Selected types", "Value": ", ".join(selected_types) if selected_types else "-"},
+                {"Provera": "spaCy model", "Vrednost": diagnostics["spacy_model"]},
+                {"Provera": "spaCy spreman", "Vrednost": "Da" if diagnostics["spacy_ready"] else "Ne"},
+                {"Provera": "Pravila obrazaca", "Vrednost": diagnostics["rule_patterns"]},
+                {"Provera": "Poznata mesta", "Vrednost": diagnostics["known_places"]},
+                {"Provera": "Izabrani tipovi", "Vrednost": ", ".join(selected_types) if selected_types else "-"},
             ]),
             use_container_width=True,
             hide_index=True,
@@ -195,23 +195,23 @@ docs_by_id = {d["id"]: d for d in docs}
 doc_labels = {f"{d['title']} (id={d['id']})": d["id"] for d in docs}
 
 selected = st.multiselect(
-    "Select documents to extract locations from",
+    "Odaberite dokumente za ekstrakciju lokacija",
     list(doc_labels.keys()),
     default=list(doc_labels.keys())[:5],
     key="map_selected_documents",
 )
 selected_ids = [doc_labels[label] for label in selected]
 force_reextract = st.checkbox(
-    "Force re-extract selected documents",
+    "Primoraj ponovnu ekstrakciju izabranih dokumenata",
     value=False,
-    help="Delete saved location rows for the selected documents and rebuild them from document text.",
+    help="Obriši sačuvane lokacije za izabrane dokumente i ponovo ih izgradi iz teksta dokumenta.",
     key="map_force_reextract",
 )
 
 _render_diagnostics(docs, selected_ids)
 
-if st.button("🔍 Extract & Map Locations", type="primary") and selected:
-    with st.spinner("Extracting and geocoding locations..."):
+if st.button("🔍 Ekstraktuj i prikaži lokacije na mapi", type="primary") and selected:
+    with st.spinner("Ekstraktovanje i geokodiranje lokacija..."):
         _run_extraction(selected_ids, force_reextract=force_reextract)
 
 last_locations = st.session_state.get("map_last_locations") or []
@@ -219,7 +219,7 @@ last_stats = st.session_state.get("map_last_extraction_stats") or []
 last_selected_ids = st.session_state.get("map_last_selected_ids") or []
 
 if last_locations:
-    st.info(f"Found **{len(last_locations)}** location mentions.")
+    st.info(f"Pronađeno **{len(last_locations)}** lokacijskih oznaka.")
 
     summary_rows = _build_doc_stats_rows(last_stats, docs_by_id)
     summary_df = pd.DataFrame(summary_rows)
@@ -272,16 +272,16 @@ if last_locations:
             )
         except ImportError:
             st.warning(
-                "`streamlit-folium` not installed. Run `pip install streamlit-folium`."
+                "`streamlit-folium` nije instaliran. Pokrenite `pip install streamlit-folium`."
             )
     else:
         st.warning(
-            "No geocoded locations to display. "
-            "Enable `ENABLE_GEOCODING=true` in Streamlit Cloud Secrets (or .env locally) and re-run."
+            "Nema geokodiranih lokacija za prikaz. "
+            "Omogućite `ENABLE_GEOCODING=true` u Streamlit Cloud Secrets (ili .env lokalno) i ponovo pokrenite."
         )
 
     # Table view
-    st.subheader("Location list")
+    st.subheader("Lista lokacija")
     table_rows = _build_locations_table_rows(display_locations)
     st.dataframe(
         pd.DataFrame(table_rows, columns=_LOCATION_TABLE_COLUMNS),
@@ -289,6 +289,6 @@ if last_locations:
         hide_index=True,
     )
 elif selected:
-    st.info("Click **Extract & Map Locations** to build or refresh the map for selected documents.")
+    st.info("Kliknite **Ekstraktuj i prikaži lokacije na mapi** da biste izgradili ili osvežili mapu za izabrane dokumente.")
 
 render_page_disclaimer()

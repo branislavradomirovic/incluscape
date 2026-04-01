@@ -18,7 +18,7 @@ render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("⚖️ HRBA — AAAQ Matcher")
+    st.title("⚖️ HRBA — AAAQ alat za uparivanje dokumenata")
 with col2:
     render_help_button("⚖️ HRBA")
 
@@ -193,13 +193,13 @@ def build_hrba_executive_summary(parsed, seg_meta=None):
     represented = [key.capitalize() for key, count in top_category_counts.items() if count > 0]
 
     lines = [
-        f"Overall AAAQ signal: **{lead_category.capitalize()}** leads with average score **{lead_score:.0%}**.",
-        f"Coverage snapshot: **{completed_segments}/{total_segments}** segments completed, **{len(scored_items)}** structured Ollama outputs, average top-signal confidence **{avg_confidence:.0%}**.",
+        f"Ukupan AAAQ signal: **{lead_category.capitalize()}** vodi sa prosečnim rezultatom **{lead_score:.0%}**.",
+        f"Pregled pokrivenosti: **{completed_segments}/{total_segments}** segmenata završeno, **{len(scored_items)}** strukturiranih Ollama izlaza, prosečna pouzdanost glavnog signala **{avg_confidence:.0%}**.",
     ]
     if represented:
-        lines.append("Detected categories across the document: " + ", ".join(represented) + ".")
+        lines.append("Otkrivene kategorije u dokumentu: " + ", ".join(represented) + ".")
     if justification_count:
-        lines.append(f"Generated justifications for **{justification_count}** segment(s), providing an explainable trace for the strongest detected signals.")
+        lines.append(f"Generisane opravdane za **{justification_count}** segment(a), pružajući objašnjiv trag za najjače otkrivene signale.")
     return "\n\n".join(lines)
 
 
@@ -293,9 +293,9 @@ def render_hrba_shap_heatmap(shap_proxy, chart_key):
             hovertemplate="%{x}<br>Contribution=%{z:.2f}<extra></extra>",
         )
     )
-    figure.update_layout(height=260, margin=dict(l=10, r=10, t=35, b=10), title="SHAP-style contribution proxy")
+    figure.update_layout(height=260, margin=dict(l=10, r=10, t=35, b=10), title="SHAP prikaz proxy doprinosa AAAQ signala")
     st.plotly_chart(figure, use_container_width=True, key=chart_key)
-    st.caption("Positive values reinforce the document's AAAQ signal. This is a transparent proxy derived from structured scores, completion, and justification coverage.")
+    st.caption("Pozitivne vrednosti pojačavaju AAAQ signal dokumenta. Ovo je transparentan proxy izveden iz strukturiranih rezultata, završetka i pokrivenosti opravdanja.")
 
 
 def render_hrba_ollama_summary(doc_id, parsed, seg_meta, key_prefix):
@@ -387,7 +387,7 @@ def render_live_process_chart(seg_meta, radar_container, rate_container, timelin
         rate_figure.update_layout(height=220, margin=dict(l=20, r=20, t=50, b=20), xaxis_title="Elapsed (s)", yaxis_title="Chars/s")
         rate_container.plotly_chart(rate_figure, use_container_width=True)
     else:
-        rate_container.info("Chunk-rate chart will appear after Ollama starts streaming tokens for the active segment.")
+        rate_container.info("Chunk-rate grafikon će se pojaviti nakon što Ollama počne da strimuje tokene za aktivni segment.")
 
     now = time.time()
     timeline_rows = []
@@ -446,7 +446,7 @@ def plot_seg_meta_timeline(seg_meta, container, focus_idx=None):
                 "status": m.get("status") or "pending",
             })
         if not rows:
-            container.info("Timeline will appear here as segments complete.")
+            container.info("Timeline će se pojaviti ovde kako se segmenti budu završavali.")
             return
         tdf = pd.DataFrame(rows)
         fig = px.timeline(tdf, x_start="start", x_end="end", y="Segment", color="status")
@@ -461,7 +461,7 @@ def plot_seg_meta_timeline(seg_meta, container, focus_idx=None):
         container.plotly_chart(fig, use_container_width=True)
     except Exception:
         try:
-            container.info("Unable to render timeline.")
+            container.info("Nije moguće prikazati timeline.")
         except Exception:
             pass
 
@@ -540,8 +540,8 @@ def run_llm_summary_with_progress(doc_id, texts):
         status = st.empty()
         preview_block = st.container(border=True)
         with preview_block:
-            st.markdown("**Live generation monitor**")
-            st.caption("Structured live diagnostics for Ollama streaming: progress, confidence evolution, throughput, and active-segment state.")
+            st.markdown("**Uživo dijagnostika monitor**")
+            st.caption("Strukturirani live dijagnostika za Ollama streaming: napredak, evolucija poverenja, protok i stanje aktivnog segmenta.")
             preview_kpis = st.empty()
             preview_left, preview_right = st.columns([1, 1])
             preview_table = preview_left.empty()
@@ -649,9 +649,9 @@ def run_llm_summary_with_progress(doc_id, texts):
         source_excerpt = clean_preview_text(texts[active_idx], 300)
         justification = clean_preview_text(meta.get("justification"), 280)
         draft_message = justification or (
-            "Generating structured AAAQ scores and justification. Raw token output is hidden; final structured results will appear below."
+            "Generisanje strukturiranih AAAQ ocena i opravdanja. Sirovi izlaz tokena je sakriven; konačni strukturirani rezultati će se pojaviti ispod."
             if meta.get("status") == "generating"
-            else "Awaiting model output for this segment."
+            else "Čeka se izlaz modela za ovaj segment."
         )
         category = meta.get("category") or "pending"
         confidence = meta.get("confidence")
@@ -765,7 +765,7 @@ with col1:
 with col2:
     analyze_all_clicked = st.button("Analiziraj sve dokumente")
     if analyze_all_clicked and not docs:
-        st.info("No documents available for this organisation.")
+        st.info("Nema dokumenata dostupnih za ovu organizaciju.")
 
 live_monitor_area = st.container()
 
@@ -783,7 +783,7 @@ if analyze_selected_clicked and selected:
                         final = ret["final"]
                         for a in final:
                             if isinstance(a, dict) and a.get("elapsed_seconds") and a["elapsed_seconds"] > 300:
-                                st.warning("LLM generation exceeded 300s for one or more segments — results may be partial.")
+                                st.warning("LLM generisanje je premašilo 300s za jedan ili više segmenata — rezultati mogu biti delimični.")
                         analysis = ret
                     else:
                         analysis = ret

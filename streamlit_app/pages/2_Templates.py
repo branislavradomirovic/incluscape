@@ -16,9 +16,9 @@ render_sidebar()
 
 col1, col2 = st.columns([14, 4])
 with col1:
-    st.title("📋 Template Manager")
+    st.title("📋 Upravljanje Šablonima")
 with col2:
-    render_help_button("📋 Templates")
+    render_help_button("📋 Šabloni")
 
 db = DatabaseManager()
 db.initialize()
