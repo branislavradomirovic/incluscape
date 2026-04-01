@@ -367,7 +367,7 @@ docker run --rm -p 8501:8501 \
 ### Docker Compose (production bundle: app + PostgreSQL + Ollama)
 
 ```bash
-cp .env.example .env
+cp .env.production .env
 bash scripts/release_bundle.sh
 ```
 
@@ -395,6 +395,7 @@ The most useful override variables are:
 - `POSTGRES_PASSWORD`
 - `OLLAMA_MODEL`
 - `SIPMT_DATABASE_URL` if you explicitly want the app to use an external PostgreSQL server instead of the bundled one
+- `.env.production` is the recommended customer-facing template for production installs
 
 To stop the stack:
 
@@ -420,11 +421,20 @@ docker compose up -d
 For customer-side installs with internet access, the recommended flow is:
 
 ```bash
-cp .env.example .env
+cp .env.production .env
 bash scripts/release_bundle.sh
 ```
 
-That command builds the app image, builds the Ollama image with the selected model baked in, starts PostgreSQL, and brings the full SIPMT stack online.
+That command builds the app image, builds the Ollama image with the selected model baked in, starts PostgreSQL, and brings the full SIPMT stack online. It also runs the smoke test automatically.
+
+Manual smoke test:
+
+```bash
+bash scripts/smoke_test_bundle.sh
+```
+
+Customer handover checklist:
+- [CUSTOMER_RELEASE_CHECKLIST.md](CUSTOMER_RELEASE_CHECKLIST.md)
 
 ## Project Structure
 
