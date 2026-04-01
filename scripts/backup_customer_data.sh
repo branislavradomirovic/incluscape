@@ -7,6 +7,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$REPO_ROOT"
 
+COMPOSE_ARGS=(-f docker-compose.yml)
+
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-incluscape}"
 BACKUP_ROOT="${1:-$REPO_ROOT/backups}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
@@ -44,7 +46,7 @@ backup_volume() {
 echo "[INFO] Creating customer backup in $BACKUP_DIR"
 
 echo "[INFO] Exporting PostgreSQL database"
-docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" > "$BACKUP_DIR/postgres.sql"
+docker compose "${COMPOSE_ARGS[@]}" exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" > "$BACKUP_DIR/postgres.sql"
 
 backup_volume "sipmt_uploads"
 backup_volume "sipmt_exports"

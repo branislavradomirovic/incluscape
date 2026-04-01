@@ -7,6 +7,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$REPO_ROOT"
 
+COMPOSE_ARGS=(-f docker-compose.yml)
+
 APP_URL="${APP_URL:-http://localhost:8501/_stcore/health}"
 OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434/api/tags}"
 MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-180}"
@@ -33,7 +35,7 @@ wait_for_http() {
 
 wait_for_pg() {
   while true; do
-    if docker compose exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-sipmt}" >/dev/null 2>&1; then
+    if docker compose "${COMPOSE_ARGS[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-postgres}" -d "${POSTGRES_DB:-sipmt}" >/dev/null 2>&1; then
       echo "[OK] PostgreSQL is accepting connections"
       return 0
     fi

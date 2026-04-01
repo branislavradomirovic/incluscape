@@ -7,6 +7,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$REPO_ROOT"
 
+COMPOSE_ARGS=(-f docker-compose.yml)
+
 if [[ ! -f .env ]]; then
   if [[ -f .env.production ]]; then
     cp .env.production .env
@@ -18,10 +20,10 @@ if [[ ! -f .env ]]; then
 fi
 
 echo "Building SIPMT production bundle..."
-docker compose build sipmt ollama
+docker compose "${COMPOSE_ARGS[@]}" build sipmt ollama
 
 echo "Starting SIPMT stack..."
-docker compose up -d postgres ollama sipmt
+docker compose "${COMPOSE_ARGS[@]}" up -d postgres ollama sipmt
 
 echo "Running smoke test..."
 bash scripts/smoke_test_bundle.sh
